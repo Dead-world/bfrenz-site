@@ -14,6 +14,12 @@ const RULES = {
 };
 
 export async function POST(request) {
+  if (!process.env.BLOB_READ_WRITE_TOKEN) {
+    return NextResponse.json(
+      { error: 'Uploads are not set up yet: connect a Blob store in Vercel (Storage tab). You can paste a link instead.' },
+      { status: 400 }
+    );
+  }
   const body = await request.json();
   try {
     const result = await handleUpload({
