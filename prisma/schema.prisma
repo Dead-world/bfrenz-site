@@ -1,0 +1,135 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String @id @default(cuid())
+  username     String @unique
+  email        String @unique
+  passwordHash String
+  displayName  String
+
+  headline String @default("")
+  mood     String @default("")
+  gender   String @default("")
+  age      Int?
+  location String @default("")
+
+  aboutMe          String @default("")
+  meet             String @default("")
+  interestsGeneral String @default("")
+  interestsMusic   String @default("")
+  interestsMovies  String @default("")
+  interestsTv      String @default("")
+  interestsBooks   String @default("")
+  interestsHeroes  String @default("")
+
+  customCss  String @default("")
+  avatarUrl  String @default("")
+  songUrl    String @default("")
+  songTitle  String @default("")
+  songArtist String @default("")
+
+  profileViews Int       @default(0)
+  lastSeen     DateTime?
+  createdAt    DateTime  @default(now())
+
+  sentRequests     Friendship[] @relation("requester")
+  receivedRequests Friendship[] @relation("addressee")
+  topFriends       TopFriend[]  @relation("owner")
+  inTopOf          TopFriend[]  @relation("friend")
+  commentsReceived Comment[]    @relation("profile")
+  commentsWritten  Comment[]    @relation("author")
+  bulletins        Bulletin[]
+  sentMessages     Message[]    @relation("sender")
+  receivedMessages Message[]    @relation("recipient")
+  photos           Photo[]
+}
+
+model Friendship {
+  id          String   @id @default(cuid())
+  requesterId String
+  addresseeId String
+  status      String   @default("PENDING") // PENDING | ACCEPTED
+  createdAt   DateTime @default(now())
+
+  requester User @relation("requester", fields: [requesterId], references: [id], onDelete: Cascade)
+  addressee User @relation("addressee", fields: [addresseeId], references: [id], onDelete: Cascade)
+
+  @@unique([requesterId, addresseeId])
+  @@index([addresseeId, status])
+  @@index([requesterId, status])
+}
+
+model TopFriend {
+  id       String @id @default(cuid())
+  userId   String
+  friendId String
+  position Int
+
+  user   User @relation("owner", fields: [userId], references: [id], onDelete: Cascade)
+  friend User @relation("friend", fields: [friendId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, position])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  profileId String
+  authorId  String
+  body      String
+  createdAt DateTime @default(now())
+
+  profile User @relation("profile", fields: [profileId], references: [id], onDelete: Cascade)
+  author  User @relation("author", fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([profileId, createdAt])
+}
+
+model Bulletin {
+  id        String   @id @default(cuid())
+  authorId  String
+  subject   String
+  body      String
+  createdAt DateTime @default(now())
+
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+  @@index([authorId, createdAt])
+}
+
+model Message {
+  id               String   @id @default(cuid())
+  senderId         String
+  recipientId      String
+  subject          String
+  body             String
+  read             Boolean  @default(false)
+  senderDeleted    Boolean  @default(false)
+  recipientDeleted Boolean  @default(false)
+  createdAt        DateTime @default(now())
+
+  sender    User @relation("sender", fields: [senderId], references: [id], onDelete: Cascade)
+  recipient User @relation("recipient", fields: [recipientId], references: [id], onDelete: Cascade)
+
+  @@index([recipientId, createdAt])
+  @@index([senderId, createdAt])
+}
+
+model Photo {
+  id        String   @id @default(cuid())
+  userId    String
+  url       String
+  caption   String   @default("")
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
