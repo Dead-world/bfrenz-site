@@ -67,29 +67,25 @@ header {
   gap: 14px;
 }
 .logo {
-  font-family: var(--display);
-  font-size: 26px;
-  font-weight: 700;
-  letter-spacing: -1px;
-  color: #fff;
   display: flex;
   align-items: center;
-  gap: 8px;
+  flex-shrink: 0;
 }
-.logo::before {
-  content: 'b';
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 9px;
-  background: linear-gradient(135deg, var(--orange-hot), var(--orange-deep));
-  color: #000;
-  font-size: 22px;
-  font-weight: 800;
+.logo img {
+  display: block;
+  height: 44px;
+  width: auto;
+  filter: drop-shadow(0 2px 8px rgba(255, 122, 26, 0.35));
+  transition: transform 0.15s;
 }
-.logo span { color: var(--orange); font-size: 15px; letter-spacing: 0; }
-.logo:hover { color: #fff; }
+.logo:hover img { transform: scale(1.04) rotate(-1deg); }
+.splash-logo {
+  display: block;
+  width: min(420px, 100%);
+  height: auto;
+  margin: 0 0 18px -6px;
+  filter: drop-shadow(0 6px 24px rgba(255, 122, 26, 0.45));
+}
 
 .topsearch { display: flex; gap: 6px; flex: 1; max-width: 360px; }
 .topsearch input {
@@ -460,6 +456,7 @@ pre.code { background: var(--surface-2); border: 1px solid var(--line); border-r
 
 /* ---------- phones ---------- */
 @media (max-width: 860px) {
+  .logo img { height: 36px; }
   .cols { flex-direction: column; }
   .col-left { width: 100% !important; }
   .topbar { height: auto; flex-wrap: wrap; padding: 10px 0; }

@@ -17,6 +17,7 @@ export default async function Splash() {
     <div className="cols">
       <div className="col-right">
         <div className="splash-hero">
+          <img src="/logo.png" alt="bfrenz" className="splash-logo" width={420} height={127} />
           <h1>
             Where your <em>frenz</em>
             <br />

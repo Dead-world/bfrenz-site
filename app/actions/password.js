@@ -51,7 +51,7 @@ export async function requestPasswordReset(formData) {
             `If this wasn't you, just ignore this email. Your password won't change.\n\n- BFRENZ.com`,
           html:
             `<div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;background:#0b0b0c;color:#f2f2f3;padding:28px;border-radius:14px">` +
-            `<div style="font-size:26px;font-weight:bold;color:#fff">bfrenz<span style="color:#ff7a1a">.com</span></div>` +
+            `<img src="${siteUrl()}/logo.png" alt="bfrenz" width="160" style="display:block;height:auto">` +
             `<p>Hi ${name},</p><p>Someone asked to reset the password for your BFRENZ account (@${escapeHtml(user.username)}).</p>` +
             `<p style="text-align:center;margin:28px 0"><a href="${link}" style="background:#ff7a1a;color:#0b0b0c;padding:12px 24px;border-radius:999px;font-weight:bold;text-decoration:none">Reset my password</a></p>` +
             `<p style="color:#a4a4ab;font-size:13px">This link works once and expires in 1 hour. If this wasn't you, ignore this email and your password won't change.</p></div>`,

@@ -16,8 +16,8 @@ export default async function Header() {
   return (
     <header>
       <div className="topbar">
-        <Link href="/" className="logo">
-          bfrenz<span>.com</span>
+        <Link href="/" className="logo" aria-label="BFRENZ home">
+          <img src="/logo.png" alt="bfrenz" width={198} height={60} />
         </Link>
         <form action="/browse" className="topsearch">
           <input name="q" placeholder="Find your frenz…" aria-label="Search people" />
