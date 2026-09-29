@@ -2,9 +2,25 @@ import './globals.css';
 import Link from 'next/link';
 import Header from '@/components/Header';
 
+const DESCRIPTION = 'BFRENZ — make a profile, pick your Top 8, post bulletins and leave comments for your frenz.';
+
 export const metadata = {
+  metadataBase: new URL(process.env.SITE_URL || 'https://www.bfrenz.com'),
   title: 'BFRENZ.com | where your frenz are at',
-  description: 'BFRENZ — make a profile, pick your Top 8, post bulletins and leave comments for your frenz.',
+  description: DESCRIPTION,
+  // Link previews (Facebook, iMessage, Discord, X, etc.). The share picture
+  // itself comes from app/opengraph-image.png and app/twitter-image.png.
+  openGraph: {
+    siteName: 'BFRENZ',
+    type: 'website',
+    title: 'BFRENZ.com | where your frenz are at',
+    description: DESCRIPTION,
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'BFRENZ.com | where your frenz are at',
+    description: DESCRIPTION,
+  },
 };
 
 export const viewport = { themeColor: '#0b0b0c' };
