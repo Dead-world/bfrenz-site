@@ -5,7 +5,7 @@ import { prisma } from '@/lib/db';
 import { requireUser } from '@/lib/auth';
 import { stripe, stripeConfigured } from '@/lib/stripe';
 import { siteUrl } from '@/lib/email';
-import { PRICES, FEATURE_DAYS, SONG_BOOST_DAYS, SPONSOR_HOURS, money } from '@/lib/pricing';
+import { PRICES, FEATURE_DAYS, SONG_BOOST_DAYS, SPONSOR_HOURS, TAX_CODE, money } from '@/lib/pricing';
 import { getTheme } from '@/lib/themes';
 import { canUseTheme, cleanColor, isSupporter, ownedThemeSlugs } from '@/lib/perks';
 import { withParam } from '@/lib/util';
@@ -77,7 +77,7 @@ export async function startCheckout(formData) {
         price_data: {
           currency: 'usd',
           unit_amount: item.amount,
-          product_data: { name: item.name },
+          product_data: { name: item.name, tax_code: TAX_CODE },
           ...(item.recurring ? { recurring: { interval: 'month' } } : {}),
         },
       },
