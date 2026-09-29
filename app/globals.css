@@ -601,3 +601,4 @@ input[type=color] { width: 44px; height: 32px; padding: 2px; border: 1px solid v
 }
 .gift-form summary { cursor: pointer; list-style: none; color: var(--orange-hot); }
 .gift-form summary::-webkit-details-marker { display: none; }
+.theme-card img.about-thumb { object-position: center top; background: #111; }

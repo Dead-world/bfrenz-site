@@ -61,7 +61,7 @@ Reset links work once and expire after an hour. Resetting a password logs that a
 
 ## Making money (all optional; the site stays free)
 
-Everything is in the **Shop** (`/shop`). Prices live in `lib/pricing.js`; themes in `lib/themes/`.
+Everything is in the **Shop** (`/shop`). Prices live in `lib/pricing.js`; themes in `lib/themes/`; About Me templates in `lib/aboutTemplates/`.
 
 | Extra | Price | What the buyer gets |
 |---|---|---|
@@ -71,6 +71,7 @@ Everything is in the **Shop** (`/shop`). Prices live in `lib/pricing.js`; themes
 | Featured Profile | $2.99 / 7 days | Top of Cool New People, labeled Featured |
 | Promote My Song | $4.99 / 7 days | Song in Featured Music on the homepage |
 | Sponsored Bulletin | $4.99 / 24 h | A bulletin shown to every member, labeled Sponsored |
+| About Me templates | $0.99–$2.99 | One-time; The Classic is free. Pick one, fill in the [brackets] |
 | Tip jar | $3–$20 | A thank-you |
 | Merch | your store | Footer + shop link, set `MERCH_URL` |
 | Ads | AdSense | Home and Browse only, never profiles, never for Supporters |

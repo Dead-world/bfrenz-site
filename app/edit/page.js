@@ -4,6 +4,8 @@ import Notice from '@/components/Notice';
 import UploadField from '@/components/UploadField';
 import { Pic } from '@/components/Avatar';
 import { updateInfo, updateInterests, updatePic, updateSong, updateCss } from '@/app/actions/profile';
+import { removeAboutTemplate, restoreAboutBackup } from '@/app/actions/shop';
+import { getAboutTemplate } from '@/lib/aboutTemplates';
 
 export const metadata = { title: 'Edit Profile | BFRENZ.com' };
 
@@ -78,6 +80,17 @@ export default async function EditPage({ searchParams }) {
                   <td>
                     <textarea name="aboutMe" rows={10} defaultValue={me.aboutMe} />
                     <div className="small muted">HTML is allowed: &lt;b&gt;, &lt;font color&gt;, &lt;img&gt;, &lt;marquee&gt; and friends.</div>
+                    {sp?.template && (
+                      <div className="notice ok" style={{ marginTop: 8 }}>
+                        Template added! Replace everything in [brackets] with your own stuff, then hit Save.
+                      </div>
+                    )}
+                    <div className="small" style={{ marginTop: 6 }}>
+                      {getAboutTemplate(me.aboutTemplate) ? (
+                        <>Template: <b>{getAboutTemplate(me.aboutTemplate).name}</b> &middot; </>
+                      ) : null}
+                      <Link href="/shop#about">Get an About Me template</Link>
+                    </div>
                   </td>
                 </tr>
                 <tr><td className="lbl">Who I&apos;d like to meet</td><td><textarea name="meet" rows={5} defaultValue={me.meet} /></td></tr>
@@ -86,6 +99,20 @@ export default async function EditPage({ searchParams }) {
             </table>
           </div>
         </form>
+      )}
+      {tab === 'info' && (me.aboutTemplate || me.aboutMeBackup) && (
+        <div className="actions" style={{ marginTop: -6, marginBottom: 18 }}>
+          {me.aboutTemplate && (
+            <form action={removeAboutTemplate}>
+              <button className="btn ghost small-btn" type="submit">Remove template look</button>
+            </form>
+          )}
+          {me.aboutMeBackup && (
+            <form action={restoreAboutBackup}>
+              <button className="btn ghost small-btn" type="submit">Restore my old About Me</button>
+            </form>
+          )}
+        </div>
       )}
 
       {tab === 'interests' && (

@@ -2,9 +2,10 @@ import Link from 'next/link';
 import { getCurrentUser } from '@/lib/auth';
 import { stripeConfigured } from '@/lib/stripe';
 import { THEMES } from '@/lib/themes';
+import { ABOUT_TEMPLATES } from '@/lib/aboutTemplates';
 import { PRICES, FEATURE_DAYS, SONG_BOOST_DAYS, SPONSOR_HOURS, money } from '@/lib/pricing';
-import { isSupporter, isFeatured, ownedThemeSlugs } from '@/lib/perks';
-import { applyTheme, cancelSupporter, resumeSupporter, saveSupporterPrefs } from '@/app/actions/shop';
+import { isSupporter, isFeatured, ownedThemeSlugs, ownedAboutSlugs } from '@/lib/perks';
+import { applyTheme, applyAboutTemplate, cancelSupporter, resumeSupporter, saveSupporterPrefs } from '@/app/actions/shop';
 import { refreshSupporter, diagnoseSupporter } from '@/lib/fulfill';
 import { prisma } from '@/lib/db';
 import BuyButton from '@/components/BuyButton';
@@ -32,6 +33,7 @@ export default async function ShopPage({ searchParams }) {
   const ending = subActive && (sub.cancel_at_period_end || !!sub.cancel_at);
 
   const owned = me ? await ownedThemeSlugs(me.id) : new Set();
+  const ownedAbout = me ? await ownedAboutSlugs(me.id) : new Set();
   const supporter = isSupporter(me);
   const isOwner = !!me && (process.env.FOUNDER_USERNAME || '').toLowerCase() === me.username;
   const debug = isOwner && payments && sp?.debug ? await diagnoseSupporter(me) : null;
@@ -70,7 +72,7 @@ export default async function ShopPage({ searchParams }) {
         </div>
         <div className="box-b">
           <ul className="perk-list">
-            <li><b>Every premium theme</b> included</li>
+            <li><b>Every premium theme</b> and <b>About Me template</b> included</li>
             <li>Gold <span className="badge badge-supporter">★</span> Supporter badge next to your name</li>
             <li><b>Top 16</b> instead of Top 8</li>
             <li>Pick your own <b>name color</b> in comments</li>
@@ -166,6 +168,64 @@ export default async function ShopPage({ searchParams }) {
         </div>
         <div className="small muted" style={{ padding: '0 16px 16px' }}>
           Themes go under your own Customize (CSS), so you can still tweak colors and pictures on top.
+        </div>
+      </div>
+
+      {/* ---------------- About Me templates ---------------- */}
+      <div className="box" id="about">
+        <div className="box-h">About Me Templates</div>
+        <div className="small muted" style={{ padding: '12px 16px 0' }}>
+          Ready-made About Me layouts. Pick one, fill in the [brackets] with your own stuff, done.
+          Works with any theme.
+        </div>
+        <div className="theme-grid">
+          {ABOUT_TEMPLATES.map((t) => {
+            const usable = t.price === 0 || supporter || ownedAbout.has(t.slug);
+            const applied = me?.aboutTemplate === t.slug;
+            return (
+              <div key={t.slug} className={`theme-card${applied ? ' applied' : ''}`}>
+                <img src={`/about/${t.slug}.png`} alt={`${t.name} preview`} loading="lazy" className="about-thumb" />
+                <div className="theme-info">
+                  <div className="theme-top">
+                    <b>{t.name}</b>
+                    <span className="theme-price">
+                      {t.price === 0 ? 'FREE' : usable ? (supporter && !ownedAbout.has(t.slug) ? 'Included' : 'Owned') : money(t.price)}
+                    </span>
+                  </div>
+                  <p className="small muted">{t.description}</p>
+                  <div className="actions">
+                    {me && (
+                      <Link href={`/${me.username}?about=${t.slug}`} className="btn ghost small-btn">Preview</Link>
+                    )}
+                    {!me ? (
+                      signIn('Log in')
+                    ) : usable ? (
+                      <>
+                        <form action={applyAboutTemplate} className="inline">
+                          <input type="hidden" name="slug" value={t.slug} />
+                          <input type="hidden" name="mode" value="fill" />
+                          <button className="btn small-btn" type="submit">{applied ? 'Start over' : 'Use template'}</button>
+                        </form>
+                        {!applied && me.aboutMe && (
+                          <form action={applyAboutTemplate} className="inline">
+                            <input type="hidden" name="slug" value={t.slug} />
+                            <input type="hidden" name="mode" value="style" />
+                            <button className="linkbtn small" type="submit" title="Keep your words, just use this look">Look only</button>
+                          </form>
+                        )}
+                      </>
+                    ) : (
+                      <BuyButton kind="about" itemId={t.slug} back="/shop#about" label={`Buy · ${money(t.price)}`} />
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <div className="small muted" style={{ padding: '0 16px 16px' }}>
+          &ldquo;Use template&rdquo; swaps in the template text (your old About Me is saved, and you can restore it from Edit Profile).
+          &ldquo;Look only&rdquo; keeps your words and just adds the style.
         </div>
       </div>
 

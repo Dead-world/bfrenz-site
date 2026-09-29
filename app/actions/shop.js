@@ -7,7 +7,8 @@ import { stripe, stripeConfigured } from '@/lib/stripe';
 import { siteUrl } from '@/lib/email';
 import { PRICES, FEATURE_DAYS, SONG_BOOST_DAYS, SPONSOR_HOURS, TAX_CODE, money } from '@/lib/pricing';
 import { getTheme } from '@/lib/themes';
-import { canUseTheme, cleanColor, isSupporter, ownedThemeSlugs } from '@/lib/perks';
+import { ABOUT_TEMPLATES, getAboutTemplate } from '@/lib/aboutTemplates';
+import { canUseTheme, canUseAboutTemplate, cleanColor, isSupporter, ownedThemeSlugs, ownedAboutSlugs } from '@/lib/perks';
 import { withParam } from '@/lib/util';
 import { findSubscription, syncSubscription } from '@/lib/fulfill';
 
@@ -22,6 +23,11 @@ async function describe(me, kind, itemId, amountRaw) {
       const t = getTheme(itemId);
       if (!t || t.price === 0) return null;
       return { amount: t.price, name: `BFRENZ theme: ${t.name}` };
+    }
+    case 'about': {
+      const t = getAboutTemplate(itemId);
+      if (!t || t.price === 0) return null;
+      return { amount: t.price, name: `BFRENZ About Me template: ${t.name}` };
     }
     case 'supporter':
       return { amount: PRICES.supporterMonthly, name: 'BFRENZ Supporter (monthly)', recurring: true };
@@ -60,6 +66,7 @@ export async function startCheckout(formData) {
   }
   if (kind === 'pro_artist' && me.artistPro) fail('/shop', 'You already have the Pro Artist badge.');
   if (kind === 'theme' && (await ownedThemeSlugs(me.id)).has(itemId)) fail('/shop', 'You already own that theme.');
+  if (kind === 'about' && (await ownedAboutSlugs(me.id)).has(itemId)) fail('/shop#about', 'You already own that template.');
 
   const item = await describe(me, kind, itemId, formData.get('amount'));
   if (!item) fail(safeBack, 'That item is not available.');
@@ -142,4 +149,47 @@ export async function saveSupporterPrefs(formData) {
   if (!isSupporter(me)) fail('/shop', 'Name colors are a Supporter perk.');
   await prisma.user.update({ where: { id: me.id }, data: { nameColor: cleanColor(formData.get('nameColor')) } });
   redirect('/shop?saved=1#supporter');
+}
+
+/**
+ * Puts an About Me template on the member's profile.
+ * mode=fill replaces their About Me with the template's starter text (the old one is saved as a backup);
+ * mode=style keeps their words and only applies the template's look.
+ */
+export async function applyAboutTemplate(formData) {
+  const me = await requireUser();
+  const slug = String(formData.get('slug') || '');
+  const mode = formData.get('mode') === 'style' ? 'style' : 'fill';
+  const t = getAboutTemplate(slug);
+  if (!t) fail('/shop#about', 'That template is not available.');
+  if (!(await canUseAboutTemplate(me, slug))) fail('/shop#about', 'Buy that template (or become a Supporter) to use it.');
+  const data = { aboutTemplate: slug };
+  if (mode === 'fill') {
+    data.aboutMe = t.html;
+    if (me.aboutMe && me.aboutMe.trim() && !getAboutTemplateByHtml(me.aboutMe)) data.aboutMeBackup = me.aboutMe;
+  }
+  await prisma.user.update({ where: { id: me.id }, data });
+  redirect(mode === 'fill' ? '/edit?tab=info&template=1' : `/${me.username}`);
+}
+
+function getAboutTemplateByHtml(html) {
+  return ABOUT_TEMPLATES.find((t) => t.html === html);
+}
+
+/** Removes the template's look (keeps the text). */
+export async function removeAboutTemplate() {
+  const me = await requireUser();
+  await prisma.user.update({ where: { id: me.id }, data: { aboutTemplate: '' } });
+  redirect('/edit?tab=info&saved=1');
+}
+
+/** Swaps the About Me back to what they had before using a template. */
+export async function restoreAboutBackup() {
+  const me = await requireUser();
+  if (!me.aboutMeBackup) redirect('/edit?tab=info');
+  await prisma.user.update({
+    where: { id: me.id },
+    data: { aboutMe: me.aboutMeBackup, aboutMeBackup: me.aboutMe, aboutTemplate: '' },
+  });
+  redirect('/edit?tab=info&saved=1');
 }

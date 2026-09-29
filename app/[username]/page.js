@@ -12,7 +12,8 @@ import { sendFriendRequest } from '@/app/actions/friends';
 import { addComment, deleteComment } from '@/app/actions/comments';
 import Badges, { Name } from '@/components/Badges';
 import { getTheme } from '@/lib/themes';
-import { canUseTheme, isSupporter, topFriendLimit } from '@/lib/perks';
+import { canUseTheme, canUseAboutTemplate, isSupporter, topFriendLimit } from '@/lib/perks';
+import { getAboutTemplate } from '@/lib/aboutTemplates';
 import { didBlock, isAdmin, isBlockedEither } from '@/lib/moderation';
 import { blockUser, unblockUser } from '@/app/actions/moderation';
 import ShareButtons from '@/components/ShareButtons';
@@ -94,14 +95,29 @@ export default async function ProfilePage({ params, searchParams }) {
     themeCss = getTheme(user.theme)?.css || '';
   }
 
+  // About Me template: the owner can preview one with ?about=slug (shown with its sample text).
+  const previewAbout = isMe && sp?.about ? getAboutTemplate(String(sp.about)) : null;
+  let aboutTpl = previewAbout;
+  if (!aboutTpl && user.aboutTemplate && (await canUseAboutTemplate(user, user.aboutTemplate))) {
+    aboutTpl = getAboutTemplate(user.aboutTemplate);
+  }
+  const aboutHtml = previewAbout ? previewAbout.html : user.aboutMe;
+
   return (
     <div className={`profile-page${isSupporter(user) ? ' is-supporter' : ''}`}>
       {themeCss && <style dangerouslySetInnerHTML={{ __html: themeCss }} />}
+      {aboutTpl && <style dangerouslySetInnerHTML={{ __html: aboutTpl.css }} />}
       {user.customCss && <style dangerouslySetInnerHTML={{ __html: cleanCss(user.customCss) }} />}
       {previewing && (
         <div className="notice ok">
           Previewing the <b>{previewing.name}</b> theme (only you can see this).{' '}
           <Link href="/shop">Back to the shop</Link>
+        </div>
+      )}
+      {previewAbout && (
+        <div className="notice ok">
+          Previewing the <b>{previewAbout.name}</b> About Me template with sample text (only you can see this).{' '}
+          <Link href="/shop#about">Back to the shop</Link>
         </div>
       )}
       <Notice sp={sp} />
@@ -257,9 +273,9 @@ export default async function ProfilePage({ params, searchParams }) {
             <div className="box-b">
               <div className="blurb-title">About me</div>
               <div
-                className="blurb"
+                className={`blurb${aboutTpl ? ` about-tpl about-tpl-${aboutTpl.slug}` : ''}`}
                 dangerouslySetInnerHTML={{
-                  __html: user.aboutMe ? cleanHtml(user.aboutMe) : '<i>Nothing here yet.</i>',
+                  __html: aboutHtml ? cleanHtml(aboutHtml) : '<i>Nothing here yet.</i>',
                 }}
               />
               {user.meet && (

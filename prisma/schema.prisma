@@ -42,6 +42,8 @@ model User {
 
   // ---- money features ----
   theme              String    @default("") // slug of the shop theme applied to the profile
+  aboutTemplate      String    @default("") // slug of the About Me template whose styles are applied
+  aboutMeBackup      String    @default("") // their About Me from before they applied a template
   nameColor          String    @default("") // Supporter perk
   isArtist           Boolean   @default(false)
   genre              String    @default("")
