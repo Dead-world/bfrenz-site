@@ -469,3 +469,79 @@ pre.code { background: var(--surface-2); border: 1px solid var(--line); border-r
   .form-table td.lbl { text-align: left; }
   .form-table tr { display: grid; }
 }
+
+/* ================= badges ================= */
+.badges { display: inline-flex; gap: 4px; margin-left: 8px; vertical-align: middle; }
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 3px 6px;
+  border-radius: 999px;
+  letter-spacing: 0.3px;
+  font-family: var(--font);
+  text-shadow: none;
+  -webkit-text-fill-color: currentColor;
+}
+.badge-supporter { background: linear-gradient(135deg, #ffe066, #ffb800); color: #3a2400; box-shadow: 0 0 10px rgba(255, 200, 0, 0.5); }
+.badge-pro { background: linear-gradient(135deg, #b36bff, #6b2bff); color: #fff; }
+.badge-artist { background: var(--surface-3); color: #c9a8ff; }
+.bigname .badges { font-size: 14px; }
+.artist-line { color: #c9a8ff; font-size: 13px; font-weight: 600; margin: -4px 0 10px; }
+.sponsored-tag {
+  display: inline-block; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px;
+  padding: 2px 7px; border-radius: 999px; background: var(--orange-soft); color: var(--orange-hot); margin-right: 6px;
+}
+.featured-tag { position: absolute; top: -8px; left: 50%; transform: translateX(-50%); }
+.friend-wrap { position: relative; padding-top: 6px; }
+
+/* Supporters get a glowing border on their profile header */
+.profile-page.is-supporter .profile-card { animation: bf-supporter-glow 3s ease-in-out infinite; }
+@keyframes bf-supporter-glow {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(255, 200, 0, 0.5), 0 0 18px rgba(255, 180, 0, 0.25); }
+  50% { box-shadow: 0 0 0 2px rgba(255, 220, 80, 0.9), 0 0 34px rgba(255, 180, 0, 0.55); }
+}
+
+/* ================= shop ================= */
+.shop-hero { margin-bottom: 18px; }
+.shop-hero h1 { font-family: var(--display); font-size: 34px; margin: 0 0 6px; letter-spacing: -1px; }
+.perk-list { margin: 0 0 16px; padding-left: 20px; line-height: 1.9; }
+.theme-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; padding: 16px; }
+.theme-card { border: 1px solid var(--line); border-radius: var(--radius-sm); overflow: hidden; background: var(--surface-2); display: flex; flex-direction: column; }
+.theme-card.applied { border-color: var(--orange); box-shadow: 0 0 0 1px var(--orange); }
+.theme-card img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; object-position: top; display: block; background: #000; }
+.theme-info { padding: 12px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+.theme-info p { margin: 0; flex: 1; }
+.theme-top { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+.theme-price { font-weight: 700; color: var(--orange-hot); font-size: 13px; white-space: nowrap; }
+.boost-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; padding: 16px; }
+.boost { background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 14px; display: flex; flex-direction: column; gap: 6px; }
+.boost p { margin: 0; flex: 1; }
+.boost .btn, .boost form { align-self: flex-start; }
+.boost-ico { font-size: 26px; }
+input[type=color] { width: 44px; height: 32px; padding: 2px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2); }
+
+/* ================= featured music ================= */
+.fm-list { display: grid; gap: 10px; padding: 14px 16px; }
+.fm-item { display: flex; gap: 12px; align-items: center; }
+.fm-item .pic { width: 48px; height: 48px; flex-shrink: 0; }
+.fm-meta { min-width: 0; flex: 1; }
+.fm-meta b { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fm-item audio { width: 100%; height: 32px; margin-top: 4px; }
+
+.ad-slot { margin-bottom: 18px; min-height: 90px; text-align: center; }
+.ad-slot .ad-label { font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+
+.legal h2 { font-family: var(--display); font-size: 18px; margin: 22px 0 6px; color: var(--orange-hot); }
+.legal p, .legal li { color: #d8d8dc; line-height: 1.7; }
+
+@media (max-width: 860px) {
+  .theme-grid { grid-template-columns: 1fr 1fr; }
+  .boost-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 520px) {
+  .theme-grid, .boost-grid { grid-template-columns: 1fr; }
+}

@@ -5,6 +5,7 @@ import { getFriendIds, getTop8 } from '@/lib/friends';
 import { saveTop8 } from '@/app/actions/friends';
 import { FriendTile } from '@/components/Avatar';
 import Notice from '@/components/Notice';
+import { topFriendLimit, isSupporter } from '@/lib/perks';
 
 export const metadata = { title: 'Change Top 8 | BFRENZ.com' };
 
@@ -14,8 +15,9 @@ export default async function Top8Page({ searchParams }) {
   const ids = await getFriendIds(me.id);
   const [friends, current] = await Promise.all([
     prisma.user.findMany({ where: { id: { in: ids } }, orderBy: { displayName: 'asc' } }),
-    getTop8(me.id),
+    getTop8(me.id, topFriendLimit(me)),
   ]);
+  const slots = topFriendLimit(me);
 
   return (
     <div className="cols">
@@ -23,7 +25,7 @@ export default async function Top8Page({ searchParams }) {
         <Notice sp={sp} />
         <div className="box">
           <div className="box-h">
-            Pick your Top 8
+            Pick your Top {slots}
             <Link href={`/${me.username}`} className="right">View profile &raquo;</Link>
           </div>
           {friends.length === 0 ? (
@@ -34,7 +36,7 @@ export default async function Top8Page({ searchParams }) {
             <form action={saveTop8} className="box-b">
               <table className="form-table">
                 <tbody>
-                  {Array.from({ length: 8 }, (_, i) => (
+                  {Array.from({ length: slots }, (_, i) => (
                     <tr key={i}>
                       <td className="lbl">#{i + 1}</td>
                       <td>
@@ -52,10 +54,15 @@ export default async function Top8Page({ searchParams }) {
                   <tr>
                     <td />
                     <td>
-                      <button className="btn" type="submit">Save Top 8</button>
+                      <button className="btn" type="submit">Save Top {slots}</button>
                       <div className="small muted" style={{ marginTop: 6 }}>
                         Empty slots are filled in with your other friends automatically.
                       </div>
+                      {!isSupporter(me) && (
+                        <div className="small" style={{ marginTop: 6 }}>
+                          Want a Top 16? <Link href="/shop#supporter">Become a Supporter</Link>.
+                        </div>
+                      )}
                     </td>
                   </tr>
                 </tbody>
@@ -66,7 +73,7 @@ export default async function Top8Page({ searchParams }) {
       </div>
       <div className="col-left">
         <div className="box">
-          <div className="box-h">Current Top 8</div>
+          <div className="box-h">Current Top {slots}</div>
           {current.length ? (
             <div className="top8" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
               {current.map((f) => <FriendTile key={f.id} user={f} size={60} />)}

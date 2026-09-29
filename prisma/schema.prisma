@@ -40,7 +40,20 @@ model User {
   createdAt      DateTime  @default(now())
   sessionVersion Int       @default(0) // bumped on password reset to log out old sessions
 
+  // ---- money features ----
+  theme              String    @default("") // slug of the shop theme applied to the profile
+  nameColor          String    @default("") // Supporter perk
+  isArtist           Boolean   @default(false)
+  genre              String    @default("")
+  artistPro          Boolean   @default(false) // paid Pro Artist badge
+  stripeCustomerId   String?   @unique
+  stripeSubscription String?   @unique
+  supporterUntil     DateTime? // Supporter perks active while this is in the future
+  featuredUntil      DateTime? // paid "Featured" spot in Cool New People
+  songBoostUntil     DateTime? // paid spot in Featured Music
+
   passwordResets PasswordReset[]
+  purchases      Purchase[]
 
   sentRequests     Friendship[] @relation("requester")
   receivedRequests Friendship[] @relation("addressee")
@@ -95,16 +108,18 @@ model Comment {
 }
 
 model Bulletin {
-  id        String   @id @default(cuid())
-  authorId  String
-  subject   String
-  body      String
-  createdAt DateTime @default(now())
+  id             String    @id @default(cuid())
+  authorId       String
+  subject        String
+  body           String
+  createdAt      DateTime  @default(now())
+  sponsoredUntil DateTime? // paid: shown to every member, labeled "Sponsored"
 
   author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
 
   @@index([createdAt])
   @@index([authorId, createdAt])
+  @@index([sponsoredUntil])
 }
 
 model Message {
@@ -148,4 +163,18 @@ model PasswordReset {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
+}
+
+model Purchase {
+  id              String   @id @default(cuid())
+  userId          String
+  kind            String // theme | supporter | pro_artist | feature | song_boost | sponsor_bulletin | tip
+  itemId          String   @default("") // theme slug or bulletin id
+  amountCents     Int
+  stripeSessionId String   @unique
+  createdAt       DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, kind])
 }

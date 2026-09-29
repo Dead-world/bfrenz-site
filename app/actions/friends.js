@@ -5,6 +5,7 @@ import { prisma } from '@/lib/db';
 import { requireUser } from '@/lib/auth';
 import { getFriendship } from '@/lib/friends';
 import { safeBack, withParam } from '@/lib/util';
+import { topFriendLimit } from '@/lib/perks';
 
 export async function sendFriendRequest(formData) {
   const me = await requireUser();
@@ -74,7 +75,8 @@ export async function removeFriend(formData) {
 export async function saveTop8(formData) {
   const me = await requireUser();
   const picks = [];
-  for (let i = 1; i <= 8; i++) {
+  const limit = topFriendLimit(me);
+  for (let i = 1; i <= limit; i++) {
     const id = String(formData.get(`slot${i}`) || '');
     if (id && !picks.includes(id)) picks.push(id);
   }

@@ -59,6 +59,42 @@ link, sign up with your `FOUNDER_USERNAME`, and you're live.
 
 Reset links work once and expire after an hour. Resetting a password logs that account out everywhere else.
 
+## Making money (all optional; the site stays free)
+
+Everything is in the **Shop** (`/shop`). Prices live in `lib/pricing.js`; themes in `lib/themes/`.
+
+| Extra | Price | What the buyer gets |
+|---|---|---|
+| Supporter | $2.99/mo | All themes, gold badge, Top 16, name color, glowing profile border, no ads |
+| Themes | $1.99–$2.99 | One-time; Midnight Red is free for everyone |
+| Pro Artist badge | $9.99 once | ♫ PRO badge on profile and comments |
+| Featured Profile | $2.99 / 7 days | Top of Cool New People, labeled Featured |
+| Promote My Song | $4.99 / 7 days | Song in Featured Music on the homepage |
+| Sponsored Bulletin | $4.99 / 24 h | A bulletin shown to every member, labeled Sponsored |
+| Tip jar | $3–$20 | A thank-you |
+| Merch | your store | Footer + shop link, set `MERCH_URL` |
+| Ads | AdSense | Home and Browse only, never profiles, never for Supporters |
+
+### Turn on payments (Stripe)
+1. Make an account at stripe.com. Stay in **Test mode** at first.
+2. **Developers -> API keys**: copy the **Secret key** (`sk_test_...`) into Vercel as `STRIPE_SECRET_KEY`.
+3. **Developers -> Webhooks -> Add endpoint**
+   - URL: `https://www.bfrenz.com/api/stripe/webhook`
+   - Events: `checkout.session.completed`, `checkout.session.async_payment_succeeded`,
+     `customer.subscription.updated`, `customer.subscription.deleted`
+   - Copy the **Signing secret** (`whsec_...`) into Vercel as `STRIPE_WEBHOOK_SECRET`.
+4. **Settings -> Billing -> Customer portal**: click **Save** once (lets Supporters cancel themselves).
+5. Redeploy. Test with card `4242 4242 4242 4242`, any future date, any CVC.
+6. When it all works, repeat steps 2–4 in **Live mode** with the live keys and redeploy.
+
+### Other switches
+- `MERCH_URL`: link to your Printful / Spring / Fourthwall store.
+- `NEXT_PUBLIC_ADSENSE_CLIENT` + `NEXT_PUBLIC_ADSENSE_SLOT`: from Google AdSense once your site is approved.
+- `CONTACT_EMAIL`: shown on the Terms and Privacy pages.
+
+**Before charging real money:** Vercel's free Hobby plan is for non-commercial use, so move to Pro.
+The Terms and Privacy pages (`app/terms`, `app/privacy`) are templates; have them reviewed.
+
 ## What's in it
 
 | Page | What it does |
@@ -66,6 +102,8 @@ Reset links work once and expire after an hour. Resetting a password logs that a
 | `/` | Landing page with login and "Cool New People" |
 | `/signup`, `/login` | Accounts (passwords are hashed with bcrypt) |
 | `/forgot`, `/reset` | Forgot password: emails a one-time reset link |
+| `/shop` | Supporter, themes, boosts, tip jar, merch |
+| `/terms`, `/privacy` | Terms of Service and Privacy Policy (templates) |
 | `/home` | Your dashboard: new mail/request alerts, bulletin space, your Top 8 |
 | `/username` | Profile: pic, mood, song, contact box, interests, blurbs, Top 8, comment wall |
 | `/username/friends` | Full friends list |

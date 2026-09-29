@@ -1,6 +1,9 @@
 import Link from 'next/link';
 import { prisma } from '@/lib/db';
 import { FriendTile } from '@/components/Avatar';
+import AdSlot from '@/components/AdSlot';
+import { getCurrentUser } from '@/lib/auth';
+import { isSupporter } from '@/lib/perks';
 
 export const metadata = { title: 'Browse | BFRENZ.com' };
 
@@ -8,6 +11,7 @@ const PER_PAGE = 40;
 
 export default async function BrowsePage({ searchParams }) {
   const sp = await searchParams;
+  const me = await getCurrentUser();
   const q = String(sp?.q || '').trim().slice(0, 60);
   const view = sp?.view === 'online' ? 'online' : 'new';
   const page = Math.max(1, parseInt(sp?.page || '1', 10) || 1);
@@ -68,6 +72,7 @@ export default async function BrowsePage({ searchParams }) {
           </div>
         )}
       </div>
+      {!isSupporter(me) && <AdSlot />}
     </div>
   );
 }

@@ -1,10 +1,10 @@
 import Link from 'next/link';
 import { requireUser } from '@/lib/auth';
-import { prisma } from '@/lib/db';
 import { getFriendIds } from '@/lib/friends';
 import { postBulletin } from '@/app/actions/social';
 import Notice from '@/components/Notice';
 import { fmtDate } from '@/lib/util';
+import { bulletinsFor } from '@/lib/featured';
 
 export const metadata = { title: 'Bulletins | BFRENZ.com' };
 
@@ -12,12 +12,7 @@ export default async function BulletinsPage({ searchParams }) {
   const me = await requireUser();
   const sp = await searchParams;
   const friendIds = await getFriendIds(me.id);
-  const bulletins = await prisma.bulletin.findMany({
-    where: { authorId: { in: [me.id, ...friendIds] } },
-    orderBy: { createdAt: 'desc' },
-    take: 50,
-    include: { author: true },
-  });
+  const bulletins = await bulletinsFor(me.id, friendIds, 50);
 
   return (
     <div className="cols">
@@ -40,7 +35,10 @@ export default async function BulletinsPage({ searchParams }) {
                   <tr key={b.id}>
                     <td><Link href={`/${b.author.username}`}>{b.author.displayName}</Link></td>
                     <td className="muted" style={{ whiteSpace: 'nowrap' }}>{fmtDate(b.createdAt)}</td>
-                    <td><Link href={`/bulletins/${b.id}`}>{b.subject}</Link></td>
+                    <td>
+                      {b._sponsored && <span className="sponsored-tag">Sponsored</span>}
+                      <Link href={`/bulletins/${b.id}`}>{b.subject}</Link>
+                    </td>
                   </tr>
                 ))}
               </tbody>

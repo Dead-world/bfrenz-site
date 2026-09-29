@@ -49,6 +49,10 @@ export default async function SignupPage({ searchParams }) {
                 </tbody>
               </table>
             </form>
+            <p className="small muted">
+              By signing up you agree to the <Link href="/terms">Terms</Link> and{' '}
+              <Link href="/privacy">Privacy Policy</Link>. You must be 13 or older.
+            </p>
             <p className="small">Already a member? <Link href="/login">Log in here</Link>.</p>
           </div>
         </div>

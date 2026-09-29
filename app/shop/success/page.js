@@ -1,0 +1,56 @@
+import Link from 'next/link';
+import { requireUser } from '@/lib/auth';
+import { stripe, stripeConfigured } from '@/lib/stripe';
+import { fulfillCheckout } from '@/lib/fulfill';
+
+export const metadata = { title: 'Thank you! | BFRENZ.com' };
+
+const MESSAGES = {
+  supporter: ["You're a Supporter! ★", 'Every theme is unlocked, your Top 16 is ready, and you can pick a name color in the shop.'],
+  theme: ['Theme unlocked!', 'Head back to the shop and hit "Use theme" to put it on your profile.'],
+  pro_artist: ['You went Pro! ♫', 'Your Pro Artist badge now shows on your profile and comments.'],
+  feature: ["You're featured! ⭐", 'Look for yourself at the top of Cool New People.'],
+  song_boost: ['Your song is promoted! 🎵', "It's now in Featured Music on the homepage."],
+  sponsor_bulletin: ['Bulletin sponsored! 📢', 'Every member will see it in their bulletins.'],
+  tip: ['Thank you! 🧡', 'Your tip helps keep BFRENZ free for everyone.'],
+};
+
+export default async function SuccessPage({ searchParams }) {
+  const me = await requireUser();
+  const sp = await searchParams;
+  const id = String(sp?.session_id || '');
+
+  let kind = null;
+  let pending = false;
+  if (id && stripeConfigured()) {
+    try {
+      const session = await stripe.getCheckoutSession(id);
+      if (session?.metadata?.userId === me.id) {
+        kind = await fulfillCheckout(session);
+        pending = !kind;
+      }
+    } catch (err) {
+      console.error('[success] lookup failed:', err);
+      pending = true;
+    }
+  }
+  const [title, text] = MESSAGES[kind] || [
+    pending ? 'Payment processing…' : 'Thanks!',
+    pending
+      ? "Your payment is still being confirmed. It usually takes a few seconds. Refresh this page, or check back shortly."
+      : 'Your purchase is complete.',
+  ];
+
+  return (
+    <div className="box" style={{ maxWidth: 520, margin: '30px auto', textAlign: 'center' }}>
+      <div className="box-b" style={{ padding: 32 }}>
+        <h1 className="bigname" style={{ marginBottom: 8 }}>{title}</h1>
+        <p className="muted">{text}</p>
+        <div className="actions" style={{ justifyContent: 'center', marginTop: 18 }}>
+          <Link href={`/${me.username}`} className="btn small-btn">View my profile</Link>
+          <Link href="/shop" className="btn ghost small-btn">Back to the shop</Link>
+        </div>
+      </div>
+    </div>
+  );
+}

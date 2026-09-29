@@ -4,12 +4,14 @@ import { getCurrentUser } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { FriendTile } from '@/components/Avatar';
 import LoginBox from '@/components/LoginBox';
+import FeaturedMusic from '@/components/FeaturedMusic';
+import { coolNewPeople } from '@/lib/featured';
 
 export default async function Splash() {
   if (await getCurrentUser()) redirect('/home');
 
   const [coolNew, memberCount] = await Promise.all([
-    prisma.user.findMany({ orderBy: { createdAt: 'desc' }, take: 10 }),
+    coolNewPeople(10),
     prisma.user.count(),
   ]);
 
@@ -44,7 +46,10 @@ export default async function Splash() {
           ) : (
             <div className="people-grid">
               {coolNew.map((u) => (
-                <FriendTile key={u.id} user={u} size={80} />
+                <div key={u.id} className="friend-wrap">
+                  {u._featured && <span className="sponsored-tag featured-tag">Featured</span>}
+                  <FriendTile user={u} size={80} />
+                </div>
               ))}
             </div>
           )}
@@ -53,6 +58,7 @@ export default async function Splash() {
 
       <div className="col-left" style={{ width: 300 }}>
         <LoginBox />
+        <FeaturedMusic />
         <div className="box">
           <div className="box-h">BFRENZ Stats</div>
           <div className="box-b">

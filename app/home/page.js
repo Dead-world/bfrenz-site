@@ -4,6 +4,11 @@ import { prisma } from '@/lib/db';
 import { getFriendIds, getTop8 } from '@/lib/friends';
 import { Pic, FriendTile } from '@/components/Avatar';
 import { fmtDate, SITE_DOMAIN } from '@/lib/util';
+import { topFriendLimit, isSupporter } from '@/lib/perks';
+import { coolNewPeople, bulletinsFor } from '@/lib/featured';
+import FeaturedMusic from '@/components/FeaturedMusic';
+import AdSlot from '@/components/AdSlot';
+import Badges from '@/components/Badges';
 
 export const metadata = { title: 'Home | BFRENZ.com' };
 
@@ -15,14 +20,9 @@ export default async function HomePage({ searchParams }) {
   const [unread, pending, bulletins, top8, coolNew, commentCount] = await Promise.all([
     prisma.message.count({ where: { recipientId: me.id, read: false, recipientDeleted: false } }),
     prisma.friendship.count({ where: { addresseeId: me.id, status: 'PENDING' } }),
-    prisma.bulletin.findMany({
-      where: { authorId: { in: [me.id, ...friendIds] } },
-      orderBy: { createdAt: 'desc' },
-      take: 10,
-      include: { author: true },
-    }),
-    getTop8(me.id),
-    prisma.user.findMany({ where: { id: { not: me.id } }, orderBy: { createdAt: 'desc' }, take: 5 }),
+    bulletinsFor(me.id, friendIds, 10),
+    getTop8(me.id, topFriendLimit(me)),
+    coolNewPeople(5, me.id),
     prisma.comment.count({ where: { profileId: me.id } }),
   ]);
 
@@ -90,7 +90,9 @@ export default async function HomePage({ searchParams }) {
               ? 'No one else yet — invite your frenz!'
               : coolNew.map((u) => (
                   <div key={u.id} style={{ marginBottom: 3 }}>
-                    <Link href={`/${u.username}`}>{u.displayName}</Link>{' '}
+                    {u._featured && <span className="sponsored-tag">Featured</span>}
+                    <Link href={`/${u.username}`}>{u.displayName}</Link>
+                    <Badges user={u} />{' '}
                     <span className="muted">{u.location}</span>
                   </div>
                 ))}
@@ -99,6 +101,7 @@ export default async function HomePage({ searchParams }) {
             </div>
           </div>
         </div>
+        <FeaturedMusic />
       </div>
 
       <div className="col-right">
@@ -128,6 +131,7 @@ export default async function HomePage({ searchParams }) {
                     </td>
                     <td className="muted" style={{ whiteSpace: 'nowrap' }}>{fmtDate(b.createdAt)}</td>
                     <td>
+                      {b._sponsored && <span className="sponsored-tag">Sponsored</span>}
                       <Link href={`/bulletins/${b.id}`}>{b.subject}</Link>
                     </td>
                   </tr>
@@ -157,6 +161,7 @@ export default async function HomePage({ searchParams }) {
             </div>
           )}
         </div>
+        {!isSupporter(me) && <AdSlot />}
       </div>
     </div>
     </>

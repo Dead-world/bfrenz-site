@@ -1,0 +1,211 @@
+import Link from 'next/link';
+import { getCurrentUser } from '@/lib/auth';
+import { stripeConfigured } from '@/lib/stripe';
+import { THEMES } from '@/lib/themes';
+import { PRICES, FEATURE_DAYS, SONG_BOOST_DAYS, SPONSOR_HOURS, money } from '@/lib/pricing';
+import { isSupporter, isFeatured, ownedThemeSlugs } from '@/lib/perks';
+import { applyTheme, openBillingPortal, saveSupporterPrefs } from '@/app/actions/shop';
+import BuyButton from '@/components/BuyButton';
+import Notice from '@/components/Notice';
+import { fmtDay } from '@/lib/util';
+
+export const metadata = { title: 'Shop | BFRENZ.com' };
+
+function until(d) {
+  return d && new Date(d) > new Date() ? fmtDay(d) : null;
+}
+
+export default async function ShopPage({ searchParams }) {
+  const sp = await searchParams;
+  const me = await getCurrentUser();
+  const owned = me ? await ownedThemeSlugs(me.id) : new Set();
+  const supporter = isSupporter(me);
+  const payments = stripeConfigured();
+  const merch = process.env.MERCH_URL || '';
+
+  const signIn = (label) => (
+    <Link href="/login" className="btn small-btn">{label}</Link>
+  );
+
+  return (
+    <div className="shop">
+      <div className="shop-hero">
+        <h1>BFRENZ Shop</h1>
+        <p className="muted">
+          BFRENZ is free, and it always will be. Everything here is an optional extra that helps keep the lights on.
+        </p>
+        {!payments && (
+          <div className="notice error">Payments aren&apos;t switched on yet, so buttons won&apos;t work until they are.</div>
+        )}
+      </div>
+      <Notice sp={sp} />
+
+      {/* ---------------- Supporter ---------------- */}
+      <div className="box orange supporter-card" id="supporter">
+        <div className="box-h orange">
+          ★ BFRENZ Supporter
+          <span className="right">{money(PRICES.supporterMonthly)}/month</span>
+        </div>
+        <div className="box-b">
+          <ul className="perk-list">
+            <li><b>Every premium theme</b> included</li>
+            <li>Gold <span className="badge badge-supporter">★</span> Supporter badge next to your name</li>
+            <li><b>Top 16</b> instead of Top 8</li>
+            <li>Pick your own <b>name color</b> in comments</li>
+            <li>Glowing animated border on your profile</li>
+            <li>No ads, ever</li>
+          </ul>
+          {!me ? (
+            signIn('Log in to become a Supporter')
+          ) : supporter ? (
+            <>
+              <div className="notice ok">
+                You&apos;re a Supporter{until(me.supporterUntil) ? ` (renews or ends ${until(me.supporterUntil)})` : ''}. Thank you! 🧡
+              </div>
+              <form action={saveSupporterPrefs} className="actions">
+                <label className="small" htmlFor="nc">Your name color:</label>
+                <input id="nc" type="color" name="nameColor" defaultValue={me.nameColor || '#ff9a45'} />
+                <button className="btn small-btn" type="submit">Save color</button>
+              </form>
+              {me.stripeCustomerId && (
+                <form action={openBillingPortal} style={{ marginTop: 10 }}>
+                  <button className="btn ghost small-btn" type="submit">Manage or cancel subscription</button>
+                </form>
+              )}
+            </>
+          ) : (
+            <BuyButton kind="supporter" label={`Become a Supporter · ${money(PRICES.supporterMonthly)}/mo`} />
+          )}
+        </div>
+      </div>
+
+      {/* ---------------- Themes ---------------- */}
+      <div className="box" id="themes">
+        <div className="box-h">
+          Profile Themes
+          {me?.theme && (
+            <form action={applyTheme} className="right">
+              <input type="hidden" name="slug" value="" />
+              <button className="linkbtn small" type="submit">Remove my theme</button>
+            </form>
+          )}
+        </div>
+        <div className="theme-grid">
+          {THEMES.map((t) => {
+            const usable = t.price === 0 || supporter || owned.has(t.slug);
+            const applied = me?.theme === t.slug;
+            return (
+              <div key={t.slug} className={`theme-card${applied ? ' applied' : ''}`}>
+                <img src={`/themes/${t.slug}.png`} alt={`${t.name} preview`} loading="lazy" />
+                <div className="theme-info">
+                  <div className="theme-top">
+                    <b>{t.name}</b>
+                    <span className="theme-price">
+                      {t.price === 0 ? 'FREE' : usable ? (supporter && !owned.has(t.slug) ? 'Included' : 'Owned') : money(t.price)}
+                    </span>
+                  </div>
+                  <p className="small muted">{t.description}</p>
+                  <div className="actions">
+                    {me && (
+                      <Link href={`/${me.username}?preview=${t.slug}`} className="btn ghost small-btn">Preview</Link>
+                    )}
+                    {!me ? (
+                      signIn('Log in')
+                    ) : applied ? (
+                      <span className="small"><b>✓ On your profile</b></span>
+                    ) : usable ? (
+                      <form action={applyTheme} className="inline">
+                        <input type="hidden" name="slug" value={t.slug} />
+                        <button className="btn small-btn" type="submit">Use theme</button>
+                      </form>
+                    ) : (
+                      <BuyButton kind="theme" itemId={t.slug} back="/shop#themes" label={`Buy · ${money(t.price)}`} />
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <div className="small muted" style={{ padding: '0 16px 16px' }}>
+          Themes go under your own Customize (CSS), so you can still tweak colors and pictures on top.
+        </div>
+      </div>
+
+      {/* ---------------- Boosts ---------------- */}
+      <div className="box" id="boosts">
+        <div className="box-h">Get Noticed</div>
+        <div className="boost-grid">
+          <div className="boost">
+            <div className="boost-ico">⭐</div>
+            <b>Featured Profile</b>
+            <p className="small muted">Top spot in &ldquo;Cool New People&rdquo; on the homepage for {FEATURE_DAYS} days.</p>
+            {until(me?.featuredUntil) && <p className="small">Featured until {until(me.featuredUntil)}</p>}
+            {me ? <BuyButton kind="feature" back="/shop#boosts" label={`${isFeatured(me) ? 'Add' : 'Feature me'} · ${money(PRICES.feature)}`} /> : signIn('Log in')}
+          </div>
+          <div className="boost">
+            <div className="boost-ico">🎵</div>
+            <b>Promote My Song</b>
+            <p className="small muted">Your profile song in &ldquo;Featured Music&rdquo; for {SONG_BOOST_DAYS} days, playable right from the homepage.</p>
+            {until(me?.songBoostUntil) && <p className="small">Promoted until {until(me.songBoostUntil)}</p>}
+            {!me ? signIn('Log in') : me.songUrl ? (
+              <BuyButton kind="song_boost" back="/shop#boosts" label={`Promote · ${money(PRICES.songBoost)}`} />
+            ) : (
+              <Link href="/edit?tab=song" className="btn ghost small-btn">Add a song first</Link>
+            )}
+          </div>
+          <div className="boost">
+            <div className="boost-ico">🎤</div>
+            <b>Pro Artist Badge</b>
+            <p className="small muted">A <span className="badge badge-pro">♫ PRO</span> badge on your profile and comments, forever. For musicians, DJs and producers.</p>
+            {!me ? signIn('Log in') : me.artistPro ? (
+              <p className="small"><b>✓ You&apos;re a Pro Artist</b></p>
+            ) : (
+              <BuyButton kind="pro_artist" back="/shop#boosts" label={`Go Pro · ${money(PRICES.proArtist)}`} />
+            )}
+          </div>
+          <div className="boost">
+            <div className="boost-ico">📢</div>
+            <b>Sponsored Bulletin</b>
+            <p className="small muted">Send one of your bulletins to <b>every</b> member (not just friends) for {SPONSOR_HOURS} hours, labeled &ldquo;Sponsored&rdquo;.</p>
+            <Link href="/bulletins" className="btn ghost small-btn">Pick a bulletin · {money(PRICES.sponsorBulletin)}</Link>
+          </div>
+        </div>
+      </div>
+
+      {/* ---------------- Tips + merch ---------------- */}
+      <div className="cols">
+        <div className="col-right">
+          <div className="box" id="tip">
+            <div className="box-h">🧡 Tip Jar</div>
+            <div className="box-b">
+              <p className="small muted" style={{ marginTop: 0 }}>Love BFRENZ? Chip in to help pay for servers. Every bit helps.</p>
+              <div className="actions">
+                {me
+                  ? PRICES.tips.map((a) => <BuyButton key={a} kind="tip" amount={a} back="/shop#tip" label={money(a)} ghost />)
+                  : signIn('Log in to tip')}
+              </div>
+            </div>
+          </div>
+        </div>
+        {merch && (
+          <div className="col-left">
+            <div className="box" id="merch">
+              <div className="box-h">👕 Merch</div>
+              <div className="box-b">
+                <p className="small muted" style={{ marginTop: 0 }}>Shirts, hoodies and stickers with the BFRENZ logo.</p>
+                <a href={merch} target="_blank" rel="noopener noreferrer" className="btn small-btn">Shop merch</a>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <p className="small muted" style={{ textAlign: 'center' }}>
+        Payments are handled securely by Stripe; BFRENZ never sees your card. By buying you agree to our{' '}
+        <Link href="/terms">Terms</Link> (including refunds) and <Link href="/privacy">Privacy Policy</Link>. If
+        you&apos;re under 18, ask a parent before buying anything.
+      </p>
+    </div>
+  );
+}

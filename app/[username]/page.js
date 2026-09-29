@@ -10,6 +10,9 @@ import SongPlayer from '@/components/SongPlayer';
 import Notice from '@/components/Notice';
 import { sendFriendRequest } from '@/app/actions/friends';
 import { addComment, deleteComment } from '@/app/actions/comments';
+import Badges, { Name } from '@/components/Badges';
+import { getTheme } from '@/lib/themes';
+import { canUseTheme, isSupporter, topFriendLimit } from '@/lib/perks';
 
 async function loadUser(username) {
   return prisma.user.findUnique({ where: { username: String(username).toLowerCase() } });
@@ -48,7 +51,7 @@ export default async function ProfilePage({ params, searchParams }) {
 
   const showAll = sp?.comments === 'all';
   const [top8, friendCount, comments, commentCount, friendship] = await Promise.all([
-    getTop8(user.id),
+    getTop8(user.id, topFriendLimit(user)),
     countFriends(user.id),
     prisma.comment.findMany({
       where: { profileId: user.id },
@@ -67,9 +70,23 @@ export default async function ProfilePage({ params, searchParams }) {
   const back = `/${user.username}`;
   const interests = INTERESTS.filter(([, key]) => user[key]);
 
+  // Shop theme: the owner can preview any theme with ?preview=slug; visitors see the applied one.
+  const previewing = isMe && sp?.preview ? getTheme(String(sp.preview)) : null;
+  let themeCss = previewing?.css || '';
+  if (!previewing && user.theme && (await canUseTheme(user, user.theme))) {
+    themeCss = getTheme(user.theme)?.css || '';
+  }
+
   return (
-    <div className="profile-page">
+    <div className={`profile-page${isSupporter(user) ? ' is-supporter' : ''}`}>
+      {themeCss && <style dangerouslySetInnerHTML={{ __html: themeCss }} />}
       {user.customCss && <style dangerouslySetInnerHTML={{ __html: cleanCss(user.customCss) }} />}
+      {previewing && (
+        <div className="notice ok">
+          Previewing the <b>{previewing.name}</b> theme (only you can see this).{' '}
+          <Link href="/shop">Back to the shop</Link>
+        </div>
+      )}
       <Notice sp={sp} />
       {sp?.requested && <div className="notice ok">Friend request sent!</div>}
 
@@ -78,7 +95,10 @@ export default async function ProfilePage({ params, searchParams }) {
         <div className="col-left profile-left">
           <div className="box profile-card">
             <div className="box-b">
-              <h1 className="bigname profile-name">{user.displayName}</h1>
+              <h1 className="bigname profile-name">{user.displayName}<Badges user={user} /></h1>
+              {user.isArtist && (
+                <div className="artist-line">♫ Artist{user.genre ? ` · ${user.genre}` : ''}</div>
+              )}
               <div className="profile-head">
                 <Pic user={user} size={150} />
                 <div className="profile-facts">
@@ -256,7 +276,8 @@ export default async function ProfilePage({ params, searchParams }) {
                   {comments.map((c) => (
                     <tr key={c.id}>
                       <td className="who">
-                        <Link href={`/${c.author.username}`}>{c.author.displayName}</Link>
+                        <Link href={`/${c.author.username}`}><Name user={c.author} /></Link>
+                        <Badges user={c.author} />
                         <Link href={`/${c.author.username}`}>
                           <Pic user={c.author} size={72} />
                         </Link>

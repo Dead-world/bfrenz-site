@@ -7,20 +7,28 @@ import { cleanHtml } from '@/lib/sanitize';
 import { deleteBulletin } from '@/app/actions/social';
 import { Pic } from '@/components/Avatar';
 import { fmtDate } from '@/lib/util';
+import BuyButton from '@/components/BuyButton';
+import Notice from '@/components/Notice';
+import { PRICES, SPONSOR_HOURS, money } from '@/lib/pricing';
 
 export const metadata = { title: 'Bulletin | BFRENZ.com' };
 
-export default async function BulletinPage({ params }) {
+export default async function BulletinPage({ params, searchParams }) {
   const me = await requireUser();
   const { id } = await params;
+  const sp = await searchParams;
   const b = await prisma.bulletin.findUnique({ where: { id }, include: { author: true } });
   if (!b) notFound();
   const mine = b.authorId === me.id;
-  if (!mine && !(await areFriends(me.id, b.authorId))) notFound();
+  const sponsored = !!b.sponsoredUntil && b.sponsoredUntil > new Date();
+  if (!mine && !sponsored && !(await areFriends(me.id, b.authorId))) notFound();
 
   return (
+    <>
+    <Notice sp={sp} />
     <div className="box">
       <div className="box-h">
+        {sponsored && <span className="sponsored-tag">Sponsored</span>}
         {b.subject}
         <Link href="/bulletins" className="right">&laquo; All bulletins</Link>
       </div>
@@ -44,6 +52,14 @@ export default async function BulletinPage({ params }) {
                   </Link>
                 )}
                 {mine && (
+                  <BuyButton
+                    kind="sponsor_bulletin"
+                    itemId={b.id}
+                    back={`/bulletins/${b.id}`}
+                    label={`${sponsored ? 'Extend sponsor' : 'Sponsor to everyone'} · ${money(PRICES.sponsorBulletin)} / ${SPONSOR_HOURS}h`}
+                  />
+                )}
+                {mine && (
                   <form action={deleteBulletin}>
                     <input type="hidden" name="id" value={b.id} />
                     <button type="submit" className="btn ghost small-btn">Delete bulletin</button>
@@ -55,5 +71,6 @@ export default async function BulletinPage({ params }) {
         </tbody>
       </table>
     </div>
+    </>
   );
 }

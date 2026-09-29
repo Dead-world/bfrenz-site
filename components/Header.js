@@ -47,6 +47,7 @@ export default async function Header() {
             <Link href="/mail">Mail{unread > 0 ? ` (${unread})` : ''}</Link>
             <Link href="/browse">Browse</Link>
             <Link href="/edit">Edit Profile</Link>
+            <Link href="/shop">Shop</Link>
             {pending > 0 && (
               <Link href="/requests" className="alert-link">Friend Requests ({pending})</Link>
             )}
@@ -55,6 +56,7 @@ export default async function Header() {
           <>
             <Link href="/">Home</Link>
             <Link href="/browse">Browse</Link>
+            <Link href="/shop">Shop</Link>
             <Link href="/help">Help</Link>
           </>
         )}

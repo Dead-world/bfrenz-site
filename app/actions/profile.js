@@ -33,6 +33,8 @@ export async function updateInfo(formData) {
       location: str(formData, 'location', 80),
       aboutMe: str(formData, 'aboutMe', 20000),
       meet: str(formData, 'meet', 10000),
+      isArtist: formData.get('isArtist') === 'on' || me.artistPro,
+      genre: str(formData, 'genre', 40),
     },
   });
   done('info');

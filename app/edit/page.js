@@ -64,6 +64,15 @@ export default async function EditPage({ searchParams }) {
                 <tr><td className="lbl">Age</td><td><input type="number" name="age" defaultValue={me.age ?? ''} min={13} max={120} style={{ width: 90 }} /></td></tr>
                 <tr><td className="lbl">Location</td><td><input type="text" name="location" defaultValue={me.location} maxLength={80} placeholder="City, State" /></td></tr>
                 <tr>
+                  <td className="lbl">Artist</td>
+                  <td>
+                    <label className="small" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                      <input type="checkbox" name="isArtist" defaultChecked={me.isArtist} /> I make music (shows an Artist label on my profile)
+                    </label>
+                    <input type="text" name="genre" defaultValue={me.genre} maxLength={40} placeholder="Genre, e.g. hip hop, pop punk" style={{ marginTop: 6 }} />
+                  </td>
+                </tr>
+                <tr>
                   <td className="lbl">About me</td>
                   <td>
                     <textarea name="aboutMe" rows={10} defaultValue={me.aboutMe} />
@@ -148,7 +157,8 @@ export default async function EditPage({ searchParams }) {
           <div className="box-h">Customize your page</div>
           <div className="box-b">
             <p className="small muted" style={{ marginTop: 0 }}>
-              Paste any CSS here and it&apos;s applied to your profile page. Change the background, colors, fonts, hide
+              Want a ready-made look? Grab one from the <Link href="/shop#themes">theme shop</Link>. Anything you
+              paste here goes on top of it. Paste any CSS here and it&apos;s applied to your profile page. Change the background, colors, fonts, hide
               sections — go wild. See the <Link href="/help#css">list of class names</Link>.
             </p>
             <textarea name="customCss" rows={16} className="code" defaultValue={me.customCss} placeholder={CSS_EXAMPLE} />
