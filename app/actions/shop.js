@@ -95,7 +95,9 @@ export async function startCheckout(formData) {
     session = await stripe.createCheckoutSession(params);
   } catch (err) {
     console.error('[checkout] failed:', err);
-    fail(safeBack, "Couldn't start checkout. Please try again in a minute.");
+    // The site owner sees Stripe's exact reason; everyone else gets a friendly message.
+    const owner = (process.env.FOUNDER_USERNAME || '').toLowerCase() === me.username;
+    fail(safeBack, owner ? `Checkout error (only you see this): ${String(err?.message || err).slice(0, 400)}` : "Couldn't start checkout. Please try again in a minute.");
   }
   redirect(session.url);
 }
