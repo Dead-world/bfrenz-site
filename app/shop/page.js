@@ -5,7 +5,7 @@ import { THEMES } from '@/lib/themes';
 import { PRICES, FEATURE_DAYS, SONG_BOOST_DAYS, SPONSOR_HOURS, money } from '@/lib/pricing';
 import { isSupporter, isFeatured, ownedThemeSlugs } from '@/lib/perks';
 import { applyTheme, cancelSupporter, resumeSupporter, saveSupporterPrefs } from '@/app/actions/shop';
-import { refreshSupporter } from '@/lib/fulfill';
+import { refreshSupporter, diagnoseSupporter } from '@/lib/fulfill';
 import { prisma } from '@/lib/db';
 import BuyButton from '@/components/BuyButton';
 import Notice from '@/components/Notice';
@@ -33,6 +33,8 @@ export default async function ShopPage({ searchParams }) {
 
   const owned = me ? await ownedThemeSlugs(me.id) : new Set();
   const supporter = isSupporter(me);
+  const isOwner = !!me && (process.env.FOUNDER_USERNAME || '').toLowerCase() === me.username;
+  const debug = isOwner && payments && sp?.debug ? await diagnoseSupporter(me) : null;
   const merch = process.env.MERCH_URL || '';
 
   const signIn = (label) => (
@@ -51,6 +53,14 @@ export default async function ShopPage({ searchParams }) {
         )}
       </div>
       <Notice sp={sp} />
+      {isOwner && payments && (
+        <div className="small muted" style={{ margin: '-6px 0 12px' }}>
+          Owner tools: <a href="/shop?debug=1#debug">check Supporter lookup</a>
+        </div>
+      )}
+      {debug && (
+        <pre id="debug" className="code" style={{ whiteSpace: 'pre-wrap', marginBottom: 18 }}>{debug}</pre>
+      )}
 
       {/* ---------------- Supporter ---------------- */}
       <div className="box orange supporter-card" id="supporter">
