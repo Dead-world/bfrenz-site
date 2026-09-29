@@ -71,6 +71,6 @@ export async function login(formData) {
   const ok = user ? await bcrypt.compare(password, user.passwordHash) : false;
   if (!user || !ok) fail('/login', 'Wrong email/username or password.');
 
-  await createSession(user.id);
+  await createSession(user.id, user.sessionVersion ?? 0);
   redirect('/home');
 }

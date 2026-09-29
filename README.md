@@ -45,12 +45,27 @@ link, sign up with your `FOUNDER_USERNAME`, and you're live.
 
 ---
 
+## Turn on "Forgot password?" emails
+
+1. Sign up free at resend.com.
+2. **Domains -> Add Domain** -> `bfrenz.com`. Resend shows a few DNS records; add them where your
+   domain's DNS is managed (Vercel -> Domains, or your registrar). Wait until Resend says **Verified**.
+3. **API Keys -> Create API Key** (Sending access). Copy it (starts with `re_`).
+4. In Vercel -> Environment Variables add:
+   - `RESEND_API_KEY` = the `re_...` key
+   - `EMAIL_FROM` = `BFRENZ <no-reply@bfrenz.com>`
+   - `SITE_URL` = `https://www.bfrenz.com`
+5. Redeploy.
+
+Reset links work once and expire after an hour. Resetting a password logs that account out everywhere else.
+
 ## What's in it
 
 | Page | What it does |
 |---|---|
 | `/` | Landing page with login and "Cool New People" |
 | `/signup`, `/login` | Accounts (passwords are hashed with bcrypt) |
+| `/forgot`, `/reset` | Forgot password: emails a one-time reset link |
 | `/home` | Your dashboard: new mail/request alerts, bulletin space, your Top 8 |
 | `/username` | Profile: pic, mood, song, contact box, interests, blurbs, Top 8, comment wall |
 | `/username/friends` | Full friends list |

@@ -7,8 +7,9 @@ import { fmtDate, SITE_DOMAIN } from '@/lib/util';
 
 export const metadata = { title: 'Home | BFRENZ.com' };
 
-export default async function HomePage() {
+export default async function HomePage({ searchParams }) {
   const me = await requireUser();
+  const sp = await searchParams;
   const friendIds = await getFriendIds(me.id);
 
   const [unread, pending, bulletins, top8, coolNew, commentCount] = await Promise.all([
@@ -26,6 +27,8 @@ export default async function HomePage() {
   ]);
 
   return (
+    <>
+    {sp?.reset && <div className="notice ok">Your password was changed. You&apos;re logged in.</div>}
     <div className="cols">
       <div className="col-left">
         <div className="box">
@@ -156,5 +159,6 @@ export default async function HomePage() {
         </div>
       </div>
     </div>
+    </>
   );
 }

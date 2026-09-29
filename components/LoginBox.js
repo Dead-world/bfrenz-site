@@ -11,7 +11,10 @@ export default function LoginBox() {
           <input id="who" type="text" name="who" required autoComplete="username" />
           <label htmlFor="pw">Password</label>
           <input id="pw" type="password" name="password" required autoComplete="current-password" />
-          <div className="actions" style={{ marginTop: 16, justifyContent: 'space-between' }}>
+          <div className="small" style={{ marginTop: 6, textAlign: 'right' }}>
+            <Link href="/forgot">Forgot password?</Link>
+          </div>
+          <div className="actions" style={{ marginTop: 12, justifyContent: 'space-between' }}>
             <button className="btn" type="submit">Log in</button>
             <Link href="/signup" className="small">New here? <b>Sign up</b></Link>
           </div>

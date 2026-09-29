@@ -35,9 +35,12 @@ model User {
   songTitle  String @default("")
   songArtist String @default("")
 
-  profileViews Int       @default(0)
-  lastSeen     DateTime?
-  createdAt    DateTime  @default(now())
+  profileViews   Int       @default(0)
+  lastSeen       DateTime?
+  createdAt      DateTime  @default(now())
+  sessionVersion Int       @default(0) // bumped on password reset to log out old sessions
+
+  passwordResets PasswordReset[]
 
   sentRequests     Friendship[] @relation("requester")
   receivedRequests Friendship[] @relation("addressee")
@@ -128,6 +131,19 @@ model Photo {
   url       String
   caption   String   @default("")
   createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+model PasswordReset {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
