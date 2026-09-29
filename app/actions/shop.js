@@ -9,6 +9,7 @@ import { PRICES, FEATURE_DAYS, SONG_BOOST_DAYS, SPONSOR_HOURS, TAX_CODE, money }
 import { getTheme } from '@/lib/themes';
 import { canUseTheme, cleanColor, isSupporter, ownedThemeSlugs } from '@/lib/perks';
 import { withParam } from '@/lib/util';
+import { findSubscription, syncSubscription } from '@/lib/fulfill';
 
 function fail(path, msg) {
   redirect(withParam(path, 'error', msg));
@@ -85,23 +86,13 @@ export async function startCheckout(formData) {
     metadata,
     allow_promotion_codes: 'true',
   };
-  if (me.stripeCustomerId) params.customer = me.stripeCustomerId;
-  else params.customer_email = me.email;
+  params.customer_email = me.email;
   if (item.recurring) params.subscription_data = { metadata };
   else params.payment_intent_data = { metadata };
 
   let session;
   try {
-    try {
-      session = await stripe.createCheckoutSession(params);
-    } catch (err) {
-      // A saved customer from another Stripe account/sandbox: forget it and retry with the email.
-      if (!params.customer || !/No such customer/i.test(String(err?.message))) throw err;
-      await prisma.user.update({ where: { id: me.id }, data: { stripeCustomerId: null } });
-      delete params.customer;
-      params.customer_email = me.email;
-      session = await stripe.createCheckoutSession(params);
-    }
+    session = await stripe.createCheckoutSession(params);
   } catch (err) {
     console.error('[checkout] failed:', err);
     // The site owner sees Stripe's exact reason; everyone else gets a friendly message.
@@ -111,26 +102,31 @@ export async function startCheckout(formData) {
   redirect(session.url);
 }
 
-export async function openBillingPortal() {
+async function setCancel(cancel) {
   const me = await requireUser();
-  if (!me.stripeCustomerId) fail('/shop', 'No billing account found for you yet.');
-  let portal;
-  try {
-    portal = await stripe.createPortalSession({ customer: me.stripeCustomerId, return_url: `${siteUrl()}/shop` });
-  } catch (err) {
-    console.error('[portal] failed:', err);
-    if (/No such customer/i.test(String(err?.message))) {
-      // Saved customer belongs to a different Stripe account/sandbox, so it can't be managed here.
-      await prisma.user.update({
-        where: { id: me.id },
-        data: { stripeCustomerId: null, stripeSubscription: null },
-      });
-      fail('/shop', "We couldn't find your billing account (it may be from an old test setup). It's been reset; you can subscribe again anytime.");
-    }
-    const owner = (process.env.FOUNDER_USERNAME || '').toLowerCase() === me.username;
-    fail('/shop', owner ? `Billing error (only you see this): ${String(err?.message || err).slice(0, 400)}` : "Couldn't open billing right now. Please try again later.");
+  const sub = await findSubscription(me);
+  if (!sub || sub.metadata?.userId !== me.id || !['active', 'trialing', 'past_due'].includes(sub.status)) {
+    fail('/shop', "We couldn't find an active Supporter subscription for you.");
   }
-  redirect(portal.url);
+  try {
+    const updated = await stripe.updateSubscription(sub.id, { cancel_at_period_end: cancel ? 'true' : 'false' });
+    await syncSubscription(updated);
+  } catch (err) {
+    console.error('[subscription] update failed:', err);
+    const owner = (process.env.FOUNDER_USERNAME || '').toLowerCase() === me.username;
+    fail('/shop', owner ? `Subscription error (only you see this): ${String(err?.message || err).slice(0, 400)}` : 'Something went wrong. Please try again in a minute.');
+  }
+  redirect(`/shop?${cancel ? 'cancelled' : 'resumed'}=1#supporter`);
+}
+
+/** Cancels at the end of the paid month (perks stay until then). */
+export async function cancelSupporter() {
+  return setCancel(true);
+}
+
+/** Undoes a pending cancellation. */
+export async function resumeSupporter() {
+  return setCancel(false);
 }
 
 export async function applyTheme(formData) {

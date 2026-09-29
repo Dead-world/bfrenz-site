@@ -44,7 +44,7 @@ export default function TermsPage() {
           by Stripe; we never see or store your full card details.
         </p>
         <ul>
-          <li><b>Supporter</b> renews every month until you cancel. Cancel any time from the Shop (&ldquo;Manage or cancel subscription&rdquo;); you keep your perks until the end of the period you paid for.</li>
+          <li><b>Supporter</b> renews every month until you cancel. Cancel any time from the Shop (&ldquo;Cancel membership&rdquo;); you keep your perks until the end of the period you paid for.</li>
           <li><b>Themes</b> and the <b>Pro Artist</b> badge are one-time purchases for as long as BFRENZ runs them. Themes are included for Supporters while they&apos;re subscribed.</li>
           <li><b>Featured spots, promoted songs and sponsored bulletins</b> start right away and run for the time shown.</li>
           <li><b>Sponsored bulletins</b> must follow these Terms and are labeled &ldquo;Sponsored&rdquo;. We can remove one that breaks the rules without a refund.</li>

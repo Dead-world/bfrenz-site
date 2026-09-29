@@ -4,7 +4,9 @@ import { stripeConfigured } from '@/lib/stripe';
 import { THEMES } from '@/lib/themes';
 import { PRICES, FEATURE_DAYS, SONG_BOOST_DAYS, SPONSOR_HOURS, money } from '@/lib/pricing';
 import { isSupporter, isFeatured, ownedThemeSlugs } from '@/lib/perks';
-import { applyTheme, openBillingPortal, saveSupporterPrefs } from '@/app/actions/shop';
+import { applyTheme, cancelSupporter, resumeSupporter, saveSupporterPrefs } from '@/app/actions/shop';
+import { refreshSupporter } from '@/lib/fulfill';
+import { prisma } from '@/lib/db';
 import BuyButton from '@/components/BuyButton';
 import Notice from '@/components/Notice';
 import { fmtDay } from '@/lib/util';
@@ -17,10 +19,20 @@ function until(d) {
 
 export default async function ShopPage({ searchParams }) {
   const sp = await searchParams;
-  const me = await getCurrentUser();
+  let me = await getCurrentUser();
+  const payments = stripeConfigured();
+
+  // Re-check Supporter status with Stripe so it's right even if a webhook was missed.
+  let sub = null;
+  if (me && payments && (isSupporter(me) || me.stripeSubscription)) {
+    sub = await refreshSupporter(me).catch(() => null);
+    if (sub) me = await prisma.user.findUnique({ where: { id: me.id } });
+  }
+  const subActive = sub && ['active', 'trialing', 'past_due'].includes(sub.status);
+  const ending = subActive && (sub.cancel_at_period_end || !!sub.cancel_at);
+
   const owned = me ? await ownedThemeSlugs(me.id) : new Set();
   const supporter = isSupporter(me);
-  const payments = stripeConfigured();
   const merch = process.env.MERCH_URL || '';
 
   const signIn = (label) => (
@@ -59,17 +71,28 @@ export default async function ShopPage({ searchParams }) {
             signIn('Log in to become a Supporter')
           ) : supporter ? (
             <>
+              {sp?.cancelled && <div className="notice ok">Cancelled. You keep your perks until {until(me.supporterUntil)}.</div>}
+              {sp?.resumed && <div className="notice ok">Welcome back! Your Supporter membership will keep renewing.</div>}
               <div className="notice ok">
-                You&apos;re a Supporter{until(me.supporterUntil) ? ` (renews or ends ${until(me.supporterUntil)})` : ''}. Thank you! 🧡
+                You&apos;re a Supporter
+                {until(me.supporterUntil) ? (ending ? ` until ${until(me.supporterUntil)} (won't renew)` : ` · renews ${until(me.supporterUntil)}`) : ''}.
+                Thank you! 🧡
               </div>
               <form action={saveSupporterPrefs} className="actions">
                 <label className="small" htmlFor="nc">Your name color:</label>
                 <input id="nc" type="color" name="nameColor" defaultValue={me.nameColor || '#ff9a45'} />
                 <button className="btn small-btn" type="submit">Save color</button>
               </form>
-              {me.stripeCustomerId && (
-                <form action={openBillingPortal} style={{ marginTop: 10 }}>
-                  <button className="btn ghost small-btn" type="submit">Manage or cancel subscription</button>
+              {subActive && (
+                <form action={ending ? resumeSupporter : cancelSupporter} style={{ marginTop: 10 }}>
+                  <button className="btn ghost small-btn" type="submit">
+                    {ending ? 'Keep my Supporter membership' : 'Cancel membership'}
+                  </button>
+                  <div className="small muted" style={{ marginTop: 6 }}>
+                    {ending
+                      ? "You won't be charged again. Changed your mind? Click above."
+                      : "Cancelling stops future charges; you keep your perks until the end of the month you paid for. To update your card, use the link in your Stripe receipt email."}
+                  </div>
                 </form>
               )}
             </>

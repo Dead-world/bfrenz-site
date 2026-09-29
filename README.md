@@ -83,9 +83,8 @@ Everything is in the **Shop** (`/shop`). Prices live in `lib/pricing.js`; themes
    - Events: `checkout.session.completed`, `checkout.session.async_payment_succeeded`,
      `customer.subscription.updated`, `customer.subscription.deleted`
    - Copy the **Signing secret** (`whsec_...`) into Vercel as `STRIPE_WEBHOOK_SECRET`.
-4. **Settings -> Billing -> Customer portal**: click **Save** once (lets Supporters cancel themselves).
-5. Redeploy. Test with card `4242 4242 4242 4242`, any future date, any CVC.
-6. When it all works, repeat steps 2–4 in **Live mode** with the live keys and redeploy.
+4. Redeploy. Test with card `4242 4242 4242 4242`, any future date, any CVC.
+5. When it all works, repeat steps 2–3 in **Live mode** with the live keys and redeploy.
 
 ### Other switches
 - `MERCH_URL`: link to your Printful / Spring / Fourthwall store.
