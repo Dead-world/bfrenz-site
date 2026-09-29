@@ -46,14 +46,16 @@ model User {
   isArtist           Boolean   @default(false)
   genre              String    @default("")
   artistPro          Boolean   @default(false) // paid Pro Artist badge
-  stripeCustomerId   String?   @unique
-  stripeSubscription String?   @unique
+  stripeCustomerId   String?
+  stripeSubscription String?
   supporterUntil     DateTime? // Supporter perks active while this is in the future
   featuredUntil      DateTime? // paid "Featured" spot in Cool New People
   songBoostUntil     DateTime? // paid spot in Featured Music
 
   passwordResets PasswordReset[]
   purchases      Purchase[]
+
+  @@index([stripeSubscription])
 
   sentRequests     Friendship[] @relation("requester")
   receivedRequests Friendship[] @relation("addressee")
