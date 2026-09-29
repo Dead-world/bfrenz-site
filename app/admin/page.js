@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { requireUser } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { isAdmin, reasonLabel, reportTarget } from '@/lib/moderation';
-import { handleReport, banUser, unbanUser } from '@/app/actions/moderation';
+import { handleReport, banUser, unbanUser, giftPerk } from '@/app/actions/moderation';
 import { fmtDate, fmtDay } from '@/lib/util';
 import { Pic } from '@/components/Avatar';
 import Notice from '@/components/Notice';
@@ -29,6 +29,30 @@ function BanForm({ user, back }) {
           <input type="checkbox" name="wipe" /> Also delete all their comments, bulletins, messages and photos
         </label>
         <div><button className="btn small-btn danger" type="submit">Ban member</button></div>
+      </form>
+    </details>
+  );
+}
+
+function GiftForm({ user, back }) {
+  return (
+    <details className="gift-form">
+      <summary className="linkbtn small">🎁 Gift…</summary>
+      <form action={giftPerk} className="actions" style={{ marginTop: 8, justifyContent: 'flex-end' }}>
+        <input type="hidden" name="userId" value={user.id} />
+        <input type="hidden" name="back" value={back} />
+        <select name="gift" defaultValue={user.songUrl ? 'song_boost' : 'feature'}>
+          <option value="song_boost" disabled={!user.songUrl}>Featured Music{user.songUrl ? '' : ' (needs a song)'}</option>
+          <option value="feature">Featured Profile</option>
+          <option value="supporter">Supporter</option>
+          <option value="pro_artist">Pro Artist badge (forever)</option>
+        </select>
+        <select name="days" defaultValue="7" aria-label="How long">
+          <option value="7">7 days</option>
+          <option value="14">14 days</option>
+          <option value="30">30 days</option>
+        </select>
+        <button className="btn small-btn" type="submit">Give</button>
       </form>
     </details>
   );
@@ -96,6 +120,7 @@ export default async function AdminPage({ searchParams }) {
         <p className="muted">Only admins can see this page.</p>
       </div>
       <Notice sp={sp} />
+      {sp?.gifted && <div className="notice ok">Gift sent to @{String(sp.gifted)}. 🎁</div>}
 
       <div className="stat-row">
         <div className="stat"><b>{members.toLocaleString()}</b><span>members</span></div>
@@ -213,6 +238,12 @@ export default async function AdminPage({ searchParams }) {
                     <td>
                       <Link href={`/${u.username}`}>{u.displayName}</Link> <span className="muted">@{u.username}</span>
                       <div className="small muted">{u.email} &middot; joined {fmtDay(u.createdAt)}</div>
+                      <div className="small muted">
+                        {u.isArtist && <>♫ Artist{u.genre ? ` (${u.genre})` : ''} · </>}
+                        {u.songUrl ? 'has a song' : 'no song'}
+                        {u.songBoostUntil && new Date(u.songBoostUntil) > new Date() && <> · Featured Music until {fmtDay(u.songBoostUntil)}</>}
+                        {u.featuredUntil && new Date(u.featuredUntil) > new Date() && <> · Featured until {fmtDay(u.featuredUntil)}</>}
+                      </div>
                       {u.bannedAt && (
                         <div className="small" style={{ color: '#ffb3b3' }}>
                           Banned {fmtDay(u.bannedAt)}{u.banReason ? `: ${u.banReason}` : ''}
@@ -227,9 +258,15 @@ export default async function AdminPage({ searchParams }) {
                           <button className="btn ghost small-btn" type="submit">Unban</button>
                         </form>
                       ) : isAdmin(u) ? (
-                        <span className="small muted">admin</span>
+                        <div className="stack" style={{ justifyItems: 'end' }}>
+                          <span className="small muted">admin</span>
+                          <GiftForm user={u} back={back} />
+                        </div>
                       ) : (
-                        <BanForm user={u} back={back} />
+                        <div className="stack" style={{ justifyItems: 'end' }}>
+                          <GiftForm user={u} back={back} />
+                          <BanForm user={u} back={back} />
+                        </div>
                       )}
                     </td>
                   </tr>

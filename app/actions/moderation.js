@@ -236,3 +236,40 @@ export async function unbanUser(formData) {
   await prisma.user.update({ where: { id: userId }, data: { bannedAt: null, banReason: '' } });
   redirect(withParam(adminBack(formData), 'saved', '1'));
 }
+
+/**
+ * Free perks from the admin page (e.g. a free week of Featured Music for an artist).
+ * gift = song_boost | feature | pro_artist | supporter
+ */
+export async function giftPerk(formData) {
+  const me = await requireAdmin();
+  const userId = str(formData, 'userId', 40);
+  const gift = str(formData, 'gift', 20);
+  const days = Math.min(Math.max(parseInt(str(formData, 'days', 3), 10) || 7, 1), 365);
+  const u = await prisma.user.findUnique({ where: { id: userId } });
+  const back = adminBack(formData);
+  if (!u || u.bannedAt) redirect(withParam(back, 'error', 'Member not found.'));
+
+  const DAY = 24 * 60 * 60 * 1000;
+  const extend = (cur) => {
+    const base = cur && new Date(cur) > new Date() ? new Date(cur).getTime() : Date.now();
+    return new Date(base + days * DAY);
+  };
+
+  let data;
+  if (gift === 'song_boost') {
+    if (!u.songUrl) redirect(withParam(back, 'error', `@${u.username} needs a profile song first.`));
+    data = { songBoostUntil: extend(u.songBoostUntil) };
+  } else if (gift === 'feature') {
+    data = { featuredUntil: extend(u.featuredUntil) };
+  } else if (gift === 'supporter') {
+    data = { bonusSupporterUntil: extend(u.bonusSupporterUntil) };
+  } else if (gift === 'pro_artist') {
+    data = { artistPro: true, isArtist: true };
+  } else {
+    redirect(back);
+  }
+  await prisma.user.update({ where: { id: userId }, data });
+  console.log(`[admin] @${me.username} gifted ${gift}${gift === 'pro_artist' ? '' : ` (${days}d)`} to @${u.username}`);
+  redirect(withParam(back, 'gifted', u.username));
+}

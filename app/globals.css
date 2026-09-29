@@ -599,3 +599,5 @@ input[type=color] { width: 44px; height: 32px; padding: 2px; border: 1px solid v
   .stat-row { grid-template-columns: repeat(2, 1fr); }
   .reward { flex-wrap: wrap; }
 }
+.gift-form summary { cursor: pointer; list-style: none; color: var(--orange-hot); }
+.gift-form summary::-webkit-details-marker { display: none; }
