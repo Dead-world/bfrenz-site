@@ -92,7 +92,16 @@ export async function startCheckout(formData) {
 
   let session;
   try {
-    session = await stripe.createCheckoutSession(params);
+    try {
+      session = await stripe.createCheckoutSession(params);
+    } catch (err) {
+      // A saved customer from another Stripe account/sandbox: forget it and retry with the email.
+      if (!params.customer || !/No such customer/i.test(String(err?.message))) throw err;
+      await prisma.user.update({ where: { id: me.id }, data: { stripeCustomerId: null } });
+      delete params.customer;
+      params.customer_email = me.email;
+      session = await stripe.createCheckoutSession(params);
+    }
   } catch (err) {
     console.error('[checkout] failed:', err);
     // The site owner sees Stripe's exact reason; everyone else gets a friendly message.
@@ -110,7 +119,16 @@ export async function openBillingPortal() {
     portal = await stripe.createPortalSession({ customer: me.stripeCustomerId, return_url: `${siteUrl()}/shop` });
   } catch (err) {
     console.error('[portal] failed:', err);
-    fail('/shop', "Couldn't open billing right now. Please try again later.");
+    if (/No such customer/i.test(String(err?.message))) {
+      // Saved customer belongs to a different Stripe account/sandbox, so it can't be managed here.
+      await prisma.user.update({
+        where: { id: me.id },
+        data: { stripeCustomerId: null, stripeSubscription: null },
+      });
+      fail('/shop', "We couldn't find your billing account (it may be from an old test setup). It's been reset; you can subscribe again anytime.");
+    }
+    const owner = (process.env.FOUNDER_USERNAME || '').toLowerCase() === me.username;
+    fail('/shop', owner ? `Billing error (only you see this): ${String(err?.message || err).slice(0, 400)}` : "Couldn't open billing right now. Please try again later.");
   }
   redirect(portal.url);
 }
