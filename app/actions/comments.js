@@ -5,6 +5,7 @@ import { prisma } from '@/lib/db';
 import { requireUser } from '@/lib/auth';
 import { areFriends } from '@/lib/friends';
 import { safeBack, withParam } from '@/lib/util';
+import { isBlockedEither } from '@/lib/moderation';
 
 export async function addComment(formData) {
   const me = await requireUser();
@@ -15,6 +16,7 @@ export async function addComment(formData) {
 
   const allowed = profileId === me.id || (await areFriends(me.id, profileId));
   if (!allowed) redirect(withParam(back, 'error', 'You have to be frenz to leave a comment.'));
+  if (await isBlockedEither(me.id, profileId)) redirect(withParam(back, 'error', "You can't comment here."));
 
   await prisma.comment.create({ data: { profileId, authorId: me.id, body } });
   redirect(back + '#comments');

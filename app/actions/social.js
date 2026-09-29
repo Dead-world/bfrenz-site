@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/db';
 import { requireUser } from '@/lib/auth';
 import { cleanUrl, str, withParam } from '@/lib/util';
+import { isBlockedEither } from '@/lib/moderation';
 
 // ---------- bulletins ----------
 
@@ -40,7 +41,8 @@ export async function sendMessage(formData) {
 
   if (!body) redirect(withParam(back, 'error', 'Your message is empty.'));
   const recipient = await prisma.user.findUnique({ where: { username: to } });
-  if (!recipient) redirect(withParam(back, 'error', `No member named "${to}".`));
+  if (!recipient || recipient.bannedAt) redirect(withParam(back, 'error', `No member named "${to}".`));
+  if (await isBlockedEither(me.id, recipient.id)) redirect(withParam(back, 'error', "You can't message this member."));
   if (recipient.id === me.id) redirect(withParam(back, 'error', "You can't message yourself."));
 
   const recentCount = await prisma.message.count({

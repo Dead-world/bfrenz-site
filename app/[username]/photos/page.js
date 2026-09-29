@@ -5,6 +5,7 @@ import { getCurrentUser } from '@/lib/auth';
 import UploadField from '@/components/UploadField';
 import Notice from '@/components/Notice';
 import { addPhoto, deletePhoto, makeProfilePic } from '@/app/actions/social';
+import { isAdmin } from '@/lib/moderation';
 
 export async function generateMetadata({ params }) {
   const { username } = await params;
@@ -17,6 +18,7 @@ export default async function PhotosPage({ params, searchParams }) {
   const user = await prisma.user.findUnique({ where: { username: username.toLowerCase() } });
   if (!user) notFound();
   const me = await getCurrentUser();
+  if (user.bannedAt && !isAdmin(me)) notFound();
   const isMe = me?.id === user.id;
   const photos = await prisma.photo.findMany({
     where: { userId: user.id },
@@ -52,6 +54,13 @@ export default async function PhotosPage({ params, searchParams }) {
                   <img src={p.url} alt={p.caption || `${user.displayName}'s photo`} loading="lazy" />
                 </a>
                 {p.caption && <figcaption>{p.caption}</figcaption>}
+                {me && !isMe && (
+                  <div style={{ textAlign: 'center', marginTop: 4 }}>
+                    <Link className="small muted" href={`/report?kind=photo&id=${p.id}&back=${encodeURIComponent(`/${user.username}/photos`)}`}>
+                      Report
+                    </Link>
+                  </div>
+                )}
                 {isMe && (
                   <div className="actions" style={{ justifyContent: 'center', marginTop: 4 }}>
                     <form action={makeProfilePic}>

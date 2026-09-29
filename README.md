@@ -86,6 +86,32 @@ Everything is in the **Shop** (`/shop`). Prices live in `lib/pricing.js`; themes
 4. Redeploy. Test with card `4242 4242 4242 4242`, any future date, any CVC.
 5. When it all works, repeat steps 2–3 in **Live mode** with the live keys and redeploy.
 
+## Safety: Report, Block and the admin page
+
+- Every profile, comment, bulletin, photo and message has a **Report** link. Reports go to **/admin**
+  (the Admin link in the menu shows how many are open). Child-safety reports are marked Urgent and sorted first.
+- **Remove** deletes the reported thing; **Dismiss** leaves it up. **Ban** logs the member out, hides their profile,
+  friends-list spots, comments and bulletins, and blocks them from logging in (tick the box to delete everything they posted).
+- Members can **Block** anyone from their profile page; manage the list at **/blocked** (link on Edit Profile).
+- Admins are `FOUNDER_USERNAME` plus anyone in `ADMIN_USERNAMES` (comma separated).
+- To get an email for each new report, set up Resend and set `REPORT_EMAIL` (or `CONTACT_EMAIL`).
+- In the US, apparent child sexual exploitation must be reported to NCMEC: report.cybertip.org.
+
+## Growth: sharing and invites
+
+- **/invite** gives every member a personal link (`bfrenz.com/signup?ref=username`). Whoever joins with it
+  becomes their fren automatically.
+- Rewards (once the new member also adds a profile pic): 3 invites = a free premium theme, 10 = a free month of
+  Supporter, 25 = the Pro Artist badge. Change them in `lib/invites.js`.
+- Members get a **Share my profile** box on their own profile (copy link, text, WhatsApp, X, Facebook).
+
+## Google (SEO)
+
+- `/sitemap.xml` lists the main pages and every member profile; `/robots.txt` points Google at it and keeps private pages out.
+- Google Search Console: add `https://www.bfrenz.com` as a URL-prefix property, choose the **HTML tag** check,
+  copy just the `content="..."` value into Vercel as `GOOGLE_SITE_VERIFICATION`, redeploy, click **Verify**,
+  then submit `sitemap.xml` under **Sitemaps**.
+
 ### Other switches
 - `MERCH_URL`: link to your Printful / Spring / Fourthwall store.
 - `NEXT_PUBLIC_ADSENSE_CLIENT` + `NEXT_PUBLIC_ADSENSE_SLOT`: from Google AdSense once your site is approved.

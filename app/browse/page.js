@@ -16,7 +16,7 @@ export default async function BrowsePage({ searchParams }) {
   const view = sp?.view === 'online' ? 'online' : 'new';
   const page = Math.max(1, parseInt(sp?.page || '1', 10) || 1);
 
-  const where = {};
+  const where = { bannedAt: null };
   if (q) {
     where.OR = [
       { username: { contains: q, mode: 'insensitive' } },

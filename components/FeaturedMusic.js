@@ -6,7 +6,7 @@ import Badges from '@/components/Badges';
 /** Songs members paid to promote. Plays only when clicked (no autoplay). */
 export default async function FeaturedMusic({ take = 5 }) {
   const artists = await prisma.user.findMany({
-    where: { songBoostUntil: { gt: new Date() }, songUrl: { not: '' } },
+    where: { songBoostUntil: { gt: new Date() }, songUrl: { not: '' }, bannedAt: null },
     orderBy: { songBoostUntil: 'desc' },
     take,
   });

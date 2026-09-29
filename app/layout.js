@@ -21,6 +21,11 @@ export const metadata = {
     title: 'BFRENZ.com | where your frenz are at',
     description: DESCRIPTION,
   },
+  keywords: ['BFRENZ', 'social network', 'Top 8', 'MySpace alternative', 'profile song', 'custom profile', 'friends'],
+  // Google Search Console: paste the "content" value of its HTML-tag check into GOOGLE_SITE_VERIFICATION.
+  ...(process.env.GOOGLE_SITE_VERIFICATION
+    ? { verification: { google: process.env.GOOGLE_SITE_VERIFICATION } }
+    : {}),
 };
 
 export const viewport = { themeColor: '#0b0b0c' };

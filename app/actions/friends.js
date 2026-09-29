@@ -6,6 +6,7 @@ import { requireUser } from '@/lib/auth';
 import { getFriendship } from '@/lib/friends';
 import { safeBack, withParam } from '@/lib/util';
 import { topFriendLimit } from '@/lib/perks';
+import { isBlockedEither } from '@/lib/moderation';
 
 export async function sendFriendRequest(formData) {
   const me = await requireUser();
@@ -13,8 +14,9 @@ export async function sendFriendRequest(formData) {
   const back = safeBack(formData.get('back'));
   if (!targetId || targetId === me.id) redirect(back);
 
-  const target = await prisma.user.findUnique({ where: { id: targetId }, select: { id: true } });
-  if (!target) redirect(back);
+  const target = await prisma.user.findUnique({ where: { id: targetId }, select: { id: true, bannedAt: true } });
+  if (!target || target.bannedAt) redirect(back);
+  if (await isBlockedEither(me.id, targetId)) redirect(withParam(back, 'error', "You can't add this member."));
 
   const existing = await getFriendship(me.id, targetId);
   if (!existing) {

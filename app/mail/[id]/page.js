@@ -9,9 +9,10 @@ import { fmtDate } from '@/lib/util';
 
 export const metadata = { title: 'Message | BFRENZ.com' };
 
-export default async function MessagePage({ params }) {
+export default async function MessagePage({ params, searchParams }) {
   const me = await requireUser();
   const { id } = await params;
+  const sp = await searchParams;
   const m = await prisma.message.findUnique({ where: { id }, include: { sender: true, recipient: true } });
   const isRecipient = m?.recipientId === me.id && !m.recipientDeleted;
   const isSender = m?.senderId === me.id && !m.senderDeleted;
@@ -26,6 +27,7 @@ export default async function MessagePage({ params }) {
   return (
     <div>
       <MailTabs on={isRecipient ? 'inbox' : 'sent'} />
+      {sp?.reported && <div className="notice ok">Thanks. Your report was sent to the BFRENZ team.</div>}
       <div className="box">
         <div className="box-h">{m.subject}</div>
         <table className="comments">
@@ -52,6 +54,11 @@ export default async function MessagePage({ params }) {
                     <input type="hidden" name="id" value={m.id} />
                     <button type="submit" className="btn ghost small-btn">Delete</button>
                   </form>
+                  {isRecipient && m.senderId !== me.id && (
+                    <Link className="small muted" href={`/report?kind=message&id=${m.id}&back=${encodeURIComponent(`/mail/${m.id}`)}`}>
+                      Report
+                    </Link>
+                  )}
                 </div>
               </td>
             </tr>

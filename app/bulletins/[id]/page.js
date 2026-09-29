@@ -18,7 +18,7 @@ export default async function BulletinPage({ params, searchParams }) {
   const { id } = await params;
   const sp = await searchParams;
   const b = await prisma.bulletin.findUnique({ where: { id }, include: { author: true } });
-  if (!b) notFound();
+  if (!b || b.author.bannedAt) notFound();
   const mine = b.authorId === me.id;
   const sponsored = !!b.sponsoredUntil && b.sponsoredUntil > new Date();
   if (!mine && !sponsored && !(await areFriends(me.id, b.authorId))) notFound();
@@ -58,6 +58,11 @@ export default async function BulletinPage({ params, searchParams }) {
                     back={`/bulletins/${b.id}`}
                     label={`${sponsored ? 'Extend sponsor' : 'Sponsor to everyone'} · ${money(PRICES.sponsorBulletin)} / ${SPONSOR_HOURS}h`}
                   />
+                )}
+                {!mine && (
+                  <Link className="small muted" href={`/report?kind=bulletin&id=${b.id}&back=${encodeURIComponent(`/bulletins/${b.id}`)}`}>
+                    Report
+                  </Link>
                 )}
                 {mine && (
                   <form action={deleteBulletin}>

@@ -16,20 +16,27 @@ export async function signup(formData) {
   const displayName = str(formData, 'displayName', 40) || username;
   const password = String(formData.get('password') || '');
   const confirm = String(formData.get('confirm') || '');
+  const ref = str(formData, 'ref', 40).toLowerCase().replace(/[^a-z0-9_]/g, '');
+  const back = ref ? `/signup?ref=${ref}` : '/signup';
 
   const nameError = validateUsername(username);
-  if (nameError) fail('/signup', nameError);
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) fail('/signup', 'Please enter a real email address.');
-  if (password.length < 8) fail('/signup', 'Passwords need at least 8 characters.');
-  if (password !== confirm) fail('/signup', "Those passwords don't match.");
+  if (nameError) fail(back, nameError);
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) fail(back, 'Please enter a real email address.');
+  if (password.length < 8) fail(back, 'Passwords need at least 8 characters.');
+  if (password !== confirm) fail(back, "Those passwords don't match.");
 
   const taken = await prisma.user.findFirst({
     where: { OR: [{ username }, { email }] },
     select: { username: true },
   });
   if (taken) {
-    fail('/signup', taken.username === username ? 'That username is taken.' : 'That email already has an account.');
+    fail(back, taken.username === username ? 'That username is taken.' : 'That email already has an account.');
   }
+
+  // Who invited them (bfrenz.com/signup?ref=username).
+  const referrer = ref
+    ? await prisma.user.findFirst({ where: { username: ref, bannedAt: null }, select: { id: true } })
+    : null;
 
   let user;
   try {
@@ -40,10 +47,11 @@ export async function signup(formData) {
         displayName,
         passwordHash: await bcrypt.hash(password, 10),
         headline: 'new to bfrenz!',
+        referredById: referrer?.id || null,
       },
     });
   } catch (e) {
-    if (e?.code === 'P2002') fail('/signup', 'That username or email was just taken. Try another.');
+    if (e?.code === 'P2002') fail(back, 'That username or email was just taken. Try another.');
     throw e;
   }
 
@@ -58,6 +66,13 @@ export async function signup(formData) {
     }
   }
 
+  // ...and the friend who invited them.
+  if (referrer) {
+    await prisma.friendship
+      .create({ data: { requesterId: referrer.id, addresseeId: user.id, status: 'ACCEPTED' } })
+      .catch(() => {}); // already friends (e.g. the inviter is the founder)
+  }
+
   await createSession(user.id);
   redirect('/edit?welcome=1');
 }
@@ -70,6 +85,7 @@ export async function login(formData) {
   const user = await prisma.user.findFirst({ where: { OR: [{ email: who }, { username: who }] } });
   const ok = user ? await bcrypt.compare(password, user.passwordHash) : false;
   if (!user || !ok) fail('/login', 'Wrong email/username or password.');
+  if (user.bannedAt) fail('/login', 'This account has been suspended for breaking the BFRENZ Terms.');
 
   await createSession(user.id, user.sessionVersion ?? 0);
   redirect('/home');

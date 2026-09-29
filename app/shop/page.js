@@ -85,7 +85,11 @@ export default async function ShopPage({ searchParams }) {
               {sp?.resumed && <div className="notice ok">Welcome back! Your Supporter membership will keep renewing.</div>}
               <div className="notice ok">
                 You&apos;re a Supporter
-                {until(me.supporterUntil) ? (ending ? ` until ${until(me.supporterUntil)} (won't renew)` : ` · renews ${until(me.supporterUntil)}`) : ''}.
+                {until(me.supporterUntil)
+                  ? (ending ? ` until ${until(me.supporterUntil)} (won't renew)` : ` · renews ${until(me.supporterUntil)}`)
+                  : until(me.bonusSupporterUntil)
+                    ? ` free until ${until(me.bonusSupporterUntil)} (invite reward)`
+                    : ''}.
                 Thank you! 🧡
               </div>
               <form action={saveSupporterPrefs} className="actions">

@@ -48,6 +48,8 @@ export default async function HomePage({ searchParams }) {
                 <Link href="/edit">Edit Profile</Link>
                 <br />
                 <Link href="/edit/top8">Change Top 8</Link>
+                <br />
+                <Link href="/invite"><b>Invite frenz</b></Link>
               </div>
             </div>
             <div className="small" style={{ marginTop: 8 }}>
@@ -87,7 +89,7 @@ export default async function HomePage({ searchParams }) {
           <div className="box-h">Cool New People</div>
           <div className="box-b small">
             {coolNew.length === 0
-              ? 'No one else yet — invite your frenz!'
+              ? <>No one else yet — <Link href="/invite">invite your frenz</Link>!</>
               : coolNew.map((u) => (
                   <div key={u.id} style={{ marginBottom: 3 }}>
                     {u._featured && <span className="sponsored-tag">Featured</span>}

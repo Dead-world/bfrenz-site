@@ -3,12 +3,18 @@ import { redirect } from 'next/navigation';
 import { signup } from '@/app/actions/auth';
 import { getCurrentUser } from '@/lib/auth';
 import Notice from '@/components/Notice';
+import { prisma } from '@/lib/db';
+import { Pic } from '@/components/Avatar';
 
 export const metadata = { title: 'Sign Up | BFRENZ.com' };
 
 export default async function SignupPage({ searchParams }) {
   if (await getCurrentUser()) redirect('/home');
   const sp = await searchParams;
+  const ref = String(sp?.ref || '').toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 40);
+  const inviter = ref
+    ? await prisma.user.findFirst({ where: { username: ref, bannedAt: null } })
+    : null;
   return (
     <div className="cols">
       <div className="col-right">
@@ -16,7 +22,17 @@ export default async function SignupPage({ searchParams }) {
           <div className="box-h">Join BFRENZ.com — it&apos;s free!</div>
           <div className="box-b">
             <Notice sp={sp} />
+            {inviter && (
+              <div className="invite-banner">
+                <Pic user={inviter} size={56} />
+                <div>
+                  <b>{inviter.displayName}</b> invited you to BFRENZ!
+                  <div className="small muted">Sign up and you&apos;ll be frenz right away.</div>
+                </div>
+              </div>
+            )}
             <form action={signup}>
+              {inviter && <input type="hidden" name="ref" value={inviter.username} />}
               <table className="form-table">
                 <tbody>
                   <tr>

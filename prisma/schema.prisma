@@ -51,11 +51,18 @@ model User {
   supporterUntil     DateTime? // Supporter perks active while this is in the future
   featuredUntil      DateTime? // paid "Featured" spot in Cool New People
   songBoostUntil     DateTime? // paid spot in Featured Music
+  bonusSupporterUntil DateTime? // free Supporter time earned from invites
+
+  // ---- invites + moderation ----
+  referredById String? // who invited this member (signup?ref=username)
+  bannedAt     DateTime? // suspended by an admin: can't log in, profile hidden
+  banReason    String    @default("")
 
   passwordResets PasswordReset[]
   purchases      Purchase[]
 
   @@index([stripeSubscription])
+  @@index([referredById])
 
   sentRequests     Friendship[] @relation("requester")
   receivedRequests Friendship[] @relation("addressee")
@@ -67,6 +74,9 @@ model User {
   sentMessages     Message[]    @relation("sender")
   receivedMessages Message[]    @relation("recipient")
   photos           Photo[]
+  blocksMade       Block[]      @relation("blocker")
+  blocksReceived   Block[]      @relation("blocked")
+  reportsMade      Report[]     @relation("reporter")
 }
 
 model Friendship {
@@ -179,4 +189,38 @@ model Purchase {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, kind])
+}
+
+model Block {
+  id        String   @id @default(cuid())
+  blockerId String
+  blockedId String
+  createdAt DateTime @default(now())
+
+  blocker User @relation("blocker", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked User @relation("blocked", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  @@unique([blockerId, blockedId])
+  @@index([blockedId])
+}
+
+model Report {
+  id           String    @id @default(cuid())
+  reporterId   String
+  kind         String // profile | comment | bulletin | message | photo
+  targetId     String // id of the reported thing (the user id for a profile)
+  targetUserId String // who posted it
+  reason       String
+  details      String    @default("")
+  status       String    @default("OPEN") // OPEN | RESOLVED | DISMISSED
+  createdAt    DateTime  @default(now())
+  resolvedAt   DateTime?
+  resolvedBy   String    @default("")
+  note         String    @default("")
+
+  reporter User @relation("reporter", fields: [reporterId], references: [id], onDelete: Cascade)
+
+  @@index([status, createdAt])
+  @@index([reporterId, createdAt])
+  @@index([targetUserId])
 }

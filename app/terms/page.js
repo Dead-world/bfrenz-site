@@ -35,7 +35,12 @@ export default function TermsPage() {
           <li>Uploading music, photos or other work you don&apos;t have the rights to</li>
           <li>Trying to break, hack, or overload the site</li>
         </ul>
-        <p>We can remove content or suspend accounts that break these rules.</p>
+        <p>
+          See something that breaks these rules? Use the <b>Report</b> link on any profile, comment, bulletin, photo or
+          message. Reports are private. You can also <b>Block</b> anyone so they can&apos;t message you, comment on your
+          page or add you. We can remove content or suspend (ban) accounts that break these rules, and paid extras on a
+          banned account aren&apos;t refunded.
+        </p>
 
         <h2>4. Paid extras</h2>
         <p>
@@ -49,6 +54,7 @@ export default function TermsPage() {
           <li><b>Featured spots, promoted songs and sponsored bulletins</b> start right away and run for the time shown.</li>
           <li><b>Sponsored bulletins</b> must follow these Terms and are labeled &ldquo;Sponsored&rdquo;. We can remove one that breaks the rules without a refund.</li>
           <li><b>Tips</b> are gifts to support the site and don&apos;t buy anything.</li>
+          <li><b>Invite rewards</b> are free perks for bringing in new members who make a real profile. Creating fake accounts to earn them isn&apos;t allowed, and we can take rewards back if that happens.</li>
         </ul>
 
         <h2>5. Refunds</h2>

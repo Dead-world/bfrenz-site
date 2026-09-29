@@ -1,11 +1,15 @@
 import Link from 'next/link';
 import { getCurrentUser } from '@/lib/auth';
 import { prisma } from '@/lib/db';
+import { isAdmin } from '@/lib/moderation';
 
 export default async function Header() {
   const me = await getCurrentUser();
   let unread = 0;
   let pending = 0;
+  let reports = 0;
+  const admin = isAdmin(me);
+  if (admin) reports = await prisma.report.count({ where: { status: 'OPEN' } });
   if (me) {
     [unread, pending] = await Promise.all([
       prisma.message.count({ where: { recipientId: me.id, read: false, recipientDeleted: false } }),
@@ -48,6 +52,10 @@ export default async function Header() {
             <Link href="/browse">Browse</Link>
             <Link href="/edit">Edit Profile</Link>
             <Link href="/shop">Shop</Link>
+            <Link href="/invite">Invite</Link>
+            {admin && (
+              <Link href="/admin" className={reports > 0 ? 'alert-link' : ''}>Admin{reports > 0 ? ` (${reports})` : ''}</Link>
+            )}
             {pending > 0 && (
               <Link href="/requests" className="alert-link">Friend Requests ({pending})</Link>
             )}

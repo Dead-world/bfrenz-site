@@ -13,6 +13,10 @@ import { addComment, deleteComment } from '@/app/actions/comments';
 import Badges, { Name } from '@/components/Badges';
 import { getTheme } from '@/lib/themes';
 import { canUseTheme, isSupporter, topFriendLimit } from '@/lib/perks';
+import { didBlock, isAdmin, isBlockedEither } from '@/lib/moderation';
+import { blockUser, unblockUser } from '@/app/actions/moderation';
+import ShareButtons from '@/components/ShareButtons';
+import { siteUrl } from '@/lib/email';
 
 async function loadUser(username) {
   return prisma.user.findUnique({ where: { username: String(username).toLowerCase() } });
@@ -21,10 +25,19 @@ async function loadUser(username) {
 export async function generateMetadata({ params }) {
   const { username } = await params;
   const user = await loadUser(username);
-  if (!user) return { title: 'Not found | BFRENZ.com' };
+  if (!user || user.bannedAt) return { title: 'Not found | BFRENZ.com', robots: { index: false } };
+  const title = `${user.displayName} (@${user.username}) | BFRENZ.com`;
+  const description = user.headline
+    ? `${user.headline} · ${user.displayName} is on BFRENZ. Check out their page, Top 8 and profile song.`
+    : `${user.displayName} is on BFRENZ. Check out their page, Top 8 and profile song.`;
+  const url = `/${user.username}`;
+  // Share previews use the BFRENZ logo card, not the member's photo.
   return {
-    title: `${user.displayName}'s profile | BFRENZ.com`,
-    description: user.headline || `${user.displayName} is on BFRENZ.com`,
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: { type: 'profile', siteName: 'BFRENZ', title, description, url, images: ['/share.png'] },
+    twitter: { card: 'summary_large_image', title, description, images: ['/share.png'] },
   };
 }
 
@@ -45,6 +58,10 @@ export default async function ProfilePage({ params, searchParams }) {
 
   const me = await getCurrentUser();
   const isMe = me?.id === user.id;
+  if (user.bannedAt && !isAdmin(me)) notFound();
+  const [iBlocked, blocked] = me && !isMe
+    ? await Promise.all([didBlock(me.id, user.id), isBlockedEither(me.id, user.id)])
+    : [false, false];
   if (!isMe) {
     await prisma.user.update({ where: { id: user.id }, data: { profileViews: { increment: 1 } } });
   }
@@ -54,12 +71,12 @@ export default async function ProfilePage({ params, searchParams }) {
     getTop8(user.id, topFriendLimit(user)),
     countFriends(user.id),
     prisma.comment.findMany({
-      where: { profileId: user.id },
+      where: { profileId: user.id, author: { bannedAt: null } },
       orderBy: { createdAt: 'desc' },
       take: showAll ? 200 : 20,
       include: { author: true },
     }),
-    prisma.comment.count({ where: { profileId: user.id } }),
+    prisma.comment.count({ where: { profileId: user.id, author: { bannedAt: null } } }),
     me && !isMe ? getFriendship(me.id, user.id) : null,
   ]);
 
@@ -89,6 +106,9 @@ export default async function ProfilePage({ params, searchParams }) {
       )}
       <Notice sp={sp} />
       {sp?.requested && <div className="notice ok">Friend request sent!</div>}
+      {sp?.blocked && <div className="notice ok">Blocked. They can&apos;t message you, comment, or add you.</div>}
+      {sp?.unblocked && <div className="notice ok">Unblocked.</div>}
+      {user.bannedAt && <div className="notice error">This member is banned. Only admins can see this page.</div>}
 
       <div className="cols">
         {/* ---------------- left column ---------------- */}
@@ -142,8 +162,14 @@ export default async function ProfilePage({ params, searchParams }) {
                   <Link href={`/${user.username}/photos`}><span className="ico">▣</span>My photos</Link>
                 </>
               ) : (
+                blocked ? (
+                  <span style={{ gridColumn: '1 / -1' }}>
+                    <span className="ico">⦸</span>
+                    {iBlocked ? `You blocked ${user.displayName}.` : `You can't contact ${user.displayName}.`}
+                  </span>
+                ) : (
                 <>
-                  <Link href={me ? `/mail/compose?to=${user.username}` : '/login'}>
+                  <Link href={me ? `/mail/compose?to=${user.username}` : `/signup?ref=${user.username}`}>
                     <span className="ico">✉</span>Send message
                   </Link>
                   {isFriend ? (
@@ -160,14 +186,38 @@ export default async function ProfilePage({ params, searchParams }) {
                       </button>
                     </form>
                   ) : (
-                    <Link href="/login"><span className="ico">+</span>Add to friends</Link>
+                    <Link href={`/signup?ref=${user.username}`}><span className="ico">+</span>Add to friends</Link>
                   )}
                   <a href="#comments"><span className="ico">💬</span>Add comment</a>
                   <Link href={`/${user.username}/photos`}><span className="ico">▣</span>View photos</Link>
                 </>
+                )
               )}
             </div>
+            {me && !isMe && (
+              <div className="safety-links small">
+                <Link href={`/report?kind=profile&id=${user.id}&back=${encodeURIComponent(back)}`}>Report</Link>
+                &middot;
+                <form action={iBlocked ? unblockUser : blockUser} className="inline">
+                  <input type="hidden" name="userId" value={user.id} />
+                  <input type="hidden" name="back" value={back} />
+                  <button type="submit" className="linkbtn small">{iBlocked ? 'Unblock' : 'Block'}</button>
+                </form>
+              </div>
+            )}
           </div>
+
+          {isMe && (
+            <div className="box share-box">
+              <div className="box-h">Share my profile</div>
+              <div className="box-b">
+                <ShareButtons url={`${siteUrl()}/${user.username}`} text="Check out my BFRENZ page!" />
+                <div className="small" style={{ marginTop: 10 }}>
+                  <Link href="/invite">Invite frenz and earn free stuff &raquo;</Link>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="box url-box">
             <b>{user.displayName}&apos;s URL:</b>
@@ -266,7 +316,7 @@ export default async function ProfilePage({ params, searchParams }) {
             )}
             {!canComment && !isMe && (
               <div className="box-b small muted">
-                {me ? `Add ${user.displayName} as a friend to leave a comment.` : <><Link href="/login">Log in</Link> to leave a comment.</>}
+                {me ? `Add ${user.displayName} as a friend to leave a comment.` : <><Link href={`/signup?ref=${user.username}`}>Join BFRENZ</Link> or <Link href="/login">log in</Link> to leave a comment.</>}
               </div>
             )}
 
@@ -285,13 +335,18 @@ export default async function ProfilePage({ params, searchParams }) {
                       <td className="said">
                         <div className="when">{fmtDate(c.createdAt)}</div>
                         <div dangerouslySetInnerHTML={{ __html: cleanHtml(c.body) }} />
-                        {me && (isMe || c.authorId === me.id) && (
-                          <form action={deleteComment} style={{ marginTop: 8 }}>
-                            <input type="hidden" name="id" value={c.id} />
-                            <input type="hidden" name="back" value={back} />
-                            <button type="submit" className="linkbtn small">Delete</button>
-                          </form>
-                        )}
+                        <div className="actions" style={{ marginTop: 8 }}>
+                          {me && (isMe || c.authorId === me.id) && (
+                            <form action={deleteComment}>
+                              <input type="hidden" name="id" value={c.id} />
+                              <input type="hidden" name="back" value={back} />
+                              <button type="submit" className="linkbtn small">Delete</button>
+                            </form>
+                          )}
+                          {me && c.authorId !== me.id && (
+                            <Link className="small muted" href={`/report?kind=comment&id=${c.id}&back=${encodeURIComponent(back)}`}>Report</Link>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}

@@ -18,6 +18,7 @@ export default function PrivacyPage() {
           <li><b>What you post:</b> profile details, photos, songs, comments, bulletins, messages, friends and your Top 8.</li>
           <li><b>Basic activity:</b> when you were last online and how many times your profile was viewed.</li>
           <li><b>Purchases:</b> what you bought and when. Card details go straight to Stripe; we never see or store them.</li>
+          <li><b>Safety:</b> reports you send, who you block, and who invited you to BFRENZ. The person you report or block isn&apos;t told it was you.</li>
         </ul>
 
         <h2>What&apos;s public</h2>
@@ -30,7 +31,7 @@ export default function PrivacyPage() {
         <h2>How we use it</h2>
         <p>
           To run the site, keep you logged in, send password reset emails, give you what you paid for, prevent spam and
-          abuse, and keep BFRENZ working. We don&apos;t sell your personal information.
+          abuse, review reports, and keep BFRENZ working. We don&apos;t sell your personal information.
         </p>
 
         <h2>Services we use</h2>

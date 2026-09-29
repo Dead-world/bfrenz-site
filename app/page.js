@@ -7,16 +7,36 @@ import LoginBox from '@/components/LoginBox';
 import FeaturedMusic from '@/components/FeaturedMusic';
 import { coolNewPeople } from '@/lib/featured';
 
+export const metadata = {
+  title: 'BFRENZ.com | Your page, your Top 8, your song',
+  description:
+    'BFRENZ is a free social network in the spirit of the old-school classics: a page you can style any way you want, a Top 8, a profile song, bulletins and comments.',
+  alternates: { canonical: '/' },
+};
+
+const JSON_LD = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: 'BFRENZ',
+  url: 'https://www.bfrenz.com',
+  potentialAction: {
+    '@type': 'SearchAction',
+    target: 'https://www.bfrenz.com/browse?q={search_term_string}',
+    'query-input': 'required name=search_term_string',
+  },
+};
+
 export default async function Splash() {
   if (await getCurrentUser()) redirect('/home');
 
   const [coolNew, memberCount] = await Promise.all([
     coolNewPeople(10),
-    prisma.user.count(),
+    prisma.user.count({ where: { bannedAt: null } }),
   ]);
 
   return (
     <div className="cols">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }} />
       <div className="col-right">
         <div className="splash-hero">
           <img src="/logo.png" alt="bfrenz" className="splash-logo" width={420} height={127} />

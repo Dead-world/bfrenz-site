@@ -5,6 +5,7 @@ import { getCurrentUser } from '@/lib/auth';
 import { getFriendIds } from '@/lib/friends';
 import { FriendTile } from '@/components/Avatar';
 import { removeFriend } from '@/app/actions/friends';
+import { isAdmin } from '@/lib/moderation';
 
 const PER_PAGE = 40;
 
@@ -19,6 +20,7 @@ export default async function FriendsPage({ params, searchParams }) {
   const user = await prisma.user.findUnique({ where: { username: username.toLowerCase() } });
   if (!user) notFound();
   const me = await getCurrentUser();
+  if (user.bannedAt && !isAdmin(me)) notFound();
   const isMe = me?.id === user.id;
 
   const page = Math.max(1, parseInt(sp?.page || '1', 10) || 1);
