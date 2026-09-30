@@ -2,6 +2,9 @@ import './globals.css';
 import Link from 'next/link';
 import Header from '@/components/Header';
 
+// Google AdSense publisher id (public, safe to have in code). NEXT_PUBLIC_ADSENSE_CLIENT overrides it.
+const ADSENSE_CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT || 'ca-pub-6605746910542515';
+
 const DESCRIPTION = 'BFRENZ — make a profile, pick your Top 8, post bulletins and leave comments for your frenz.';
 
 export const metadata = {
@@ -22,6 +25,8 @@ export const metadata = {
     description: DESCRIPTION,
   },
   keywords: ['BFRENZ', 'social network', 'Top 8', 'MySpace alternative', 'profile song', 'custom profile', 'friends'],
+  // AdSense "meta tag" verification.
+  other: { 'google-adsense-account': ADSENSE_CLIENT },
   // Google Search Console: paste the "content" value of its HTML-tag check into GOOGLE_SITE_VERIFICATION.
   ...(process.env.GOOGLE_SITE_VERIFICATION
     ? { verification: { google: process.env.GOOGLE_SITE_VERIFICATION } }
@@ -40,10 +45,10 @@ export default function RootLayout({ children }) {
           rel="stylesheet"
           href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
         />
-        {process.env.NEXT_PUBLIC_ADSENSE_CLIENT && (
+        {ADSENSE_CLIENT && (
           <script
             async
-            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_ADSENSE_CLIENT}`}
+            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`}
             crossOrigin="anonymous"
           />
         )}
