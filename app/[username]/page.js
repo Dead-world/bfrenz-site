@@ -72,12 +72,20 @@ export default async function ProfilePage({ params, searchParams }) {
     getTop8(user.id, topFriendLimit(user)),
     countFriends(user.id),
     prisma.comment.findMany({
-      where: { profileId: user.id, author: { bannedAt: null } },
+      where: { profileId: user.id, parentId: null, author: { bannedAt: null } },
       orderBy: { createdAt: 'desc' },
       take: showAll ? 200 : 20,
-      include: { author: true },
+      include: {
+        author: true,
+        replies: {
+          where: { author: { bannedAt: null } },
+          orderBy: { createdAt: 'asc' },
+          take: 50,
+          include: { author: true },
+        },
+      },
     }),
-    prisma.comment.count({ where: { profileId: user.id, author: { bannedAt: null } } }),
+    prisma.comment.count({ where: { profileId: user.id, parentId: null, author: { bannedAt: null } } }),
     me && !isMe ? getFriendship(me.id, user.id) : null,
   ]);
 
@@ -340,7 +348,7 @@ export default async function ProfilePage({ params, searchParams }) {
               <table className="comments">
                 <tbody>
                   {comments.map((c) => (
-                    <tr key={c.id}>
+                    <tr key={c.id} id={`c-${c.id}`}>
                       <td className="who">
                         <Link href={`/${c.author.username}`}><Name user={c.author} /></Link>
                         <Badges user={c.author} />
@@ -351,7 +359,10 @@ export default async function ProfilePage({ params, searchParams }) {
                       <td className="said">
                         <div className="when">{fmtDate(c.createdAt)}</div>
                         <div dangerouslySetInnerHTML={{ __html: cleanHtml(c.body) }} />
-                        <div className="actions" style={{ marginTop: 8 }}>
+                        <section className="actions comment-actions">
+                          {me && (canComment || c.authorId === me.id) && !blocked && (
+                            <a href={`#reply-${c.id}`} className="linkbtn small reply-link">Reply</a>
+                          )}
                           {me && (isMe || c.authorId === me.id) && (
                             <form action={deleteComment}>
                               <input type="hidden" name="id" value={c.id} />
@@ -362,7 +373,57 @@ export default async function ProfilePage({ params, searchParams }) {
                           {me && c.authorId !== me.id && (
                             <Link className="small muted" href={`/report?kind=comment&id=${c.id}&back=${encodeURIComponent(back)}`}>Report</Link>
                           )}
-                        </div>
+                        </section>
+
+                        {c.replies.length > 0 && (
+                          <section className="replies">
+                            {c.replies.map((r) => (
+                              <article key={r.id} className={`reply${r.authorId === user.id ? ' by-owner' : ''}`} id={`c-${r.id}`}>
+                                <Link href={`/${r.author.username}`} className="reply-pic"><Pic user={r.author} size={40} /></Link>
+                                <section className="reply-main">
+                                  <section className="reply-head small">
+                                    <Link href={`/${r.author.username}`}><b><Name user={r.author} /></b></Link>
+                                    <Badges user={r.author} />
+                                    {r.authorId === user.id && <span className="owner-tag">owner</span>}
+                                    <span className="muted"> &middot; {fmtDate(r.createdAt)}</span>
+                                  </section>
+                                  <section className="reply-body" dangerouslySetInnerHTML={{ __html: cleanHtml(r.body) }} />
+                                  {me && (
+                                    <section className="actions comment-actions">
+                                      {(isMe || r.authorId === me.id) && (
+                                        <form action={deleteComment}>
+                                          <input type="hidden" name="id" value={r.id} />
+                                          <input type="hidden" name="back" value={back} />
+                                          <button type="submit" className="linkbtn small">Delete</button>
+                                        </form>
+                                      )}
+                                      {r.authorId !== me.id && (
+                                        <Link className="small muted" href={`/report?kind=comment&id=${r.id}&back=${encodeURIComponent(back)}`}>Report</Link>
+                                      )}
+                                    </section>
+                                  )}
+                                </section>
+                              </article>
+                            ))}
+                          </section>
+                        )}
+
+                        {me && (canComment || c.authorId === me.id) && !blocked && (
+                          <form action={addComment} className="reply-form" id={`reply-${c.id}`}>
+                            <input type="hidden" name="profileId" value={user.id} />
+                            <input type="hidden" name="parentId" value={c.id} />
+                            <input type="hidden" name="back" value={back} />
+                            <textarea name="body" rows={2} maxLength={5000} placeholder={`Reply to ${c.author.displayName}…`} required />
+                            <section className="actions">
+                              <button className="btn small-btn" type="submit">Reply</button>
+                              {c.authorId !== me.id && c.authorId !== user.id && (
+                                <label className="small muted">
+                                  <input type="checkbox" name="alsoPost" defaultChecked={isMe} /> also post on {c.author.displayName}&apos;s page
+                                </label>
+                              )}
+                            </section>
+                          </form>
+                        )}
                       </td>
                     </tr>
                   ))}

@@ -63,7 +63,12 @@ export async function updatePic(formData) {
   if (avatarUrl) {
     // Keep a copy in their photos too.
     const exists = await prisma.photo.findFirst({ where: { userId: me.id, url: avatarUrl } });
-    if (!exists) await prisma.photo.create({ data: { userId: me.id, url: avatarUrl, caption: 'Profile pic' } });
+    if (!exists) {
+      // Keep them together in a "Profile Pics" album, like the old days.
+      let album = await prisma.album.findFirst({ where: { userId: me.id, name: 'Profile Pics' } });
+      if (!album) album = await prisma.album.create({ data: { userId: me.id, name: 'Profile Pics' } });
+      await prisma.photo.create({ data: { userId: me.id, url: avatarUrl, caption: 'Profile pic', albumId: album.id } });
+    }
   }
   done('pic');
 }

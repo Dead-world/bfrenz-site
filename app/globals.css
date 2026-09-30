@@ -602,3 +602,56 @@ input[type=color] { width: 44px; height: 32px; padding: 2px; border: 1px solid v
 .gift-form summary { cursor: pointer; list-style: none; color: var(--orange-hot); }
 .gift-form summary::-webkit-details-marker { display: none; }
 .theme-card img.about-thumb { object-position: center top; background: #111; }
+
+/* ================= comment replies ================= */
+.comment-actions { margin-top: 8px; }
+.replies { margin-top: 12px; display: grid; gap: 10px; padding-left: 14px; border-left: 2px solid var(--line); }
+.reply { display: flex; gap: 10px; align-items: flex-start; }
+.reply .reply-pic .pic { width: 40px; height: 40px; border-radius: 50%; margin: 0; }
+.reply-main { flex: 1; min-width: 0; }
+.reply-head { margin-bottom: 2px; }
+.reply-head .badges { margin-left: 4px; }
+.reply-body { word-break: break-word; }
+.reply.by-owner .reply-body { color: var(--text); }
+.owner-tag {
+  display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 999px; font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.5px; background: var(--orange-soft); color: var(--orange-hot);
+}
+/* the reply box stays tucked away until "Reply" is clicked (jumps to #reply-id) */
+.reply-form { display: none; margin-top: 10px; }
+.reply-form:target { display: block; }
+.reply-form textarea { width: 100%; }
+.reply-form .actions { margin-top: 6px; }
+
+/* ================= albums ================= */
+.album-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; padding: 16px; }
+.album-tile { display: grid; gap: 4px; color: var(--text); text-decoration: none; }
+.album-tile:hover b { color: var(--orange-hot); }
+.album-cover {
+  aspect-ratio: 1; border-radius: var(--radius-sm); overflow: hidden; background: var(--surface-2);
+  display: grid; place-items: center; color: var(--text-dim); font-size: 12px;
+  box-shadow: 6px 6px 0 -2px var(--surface-3), 6px 6px 0 0 var(--line);
+  transition: transform 0.15s;
+}
+.album-tile:hover .album-cover { transform: translateY(-3px); }
+.album-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.album-head { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; margin-bottom: 16px; flex-wrap: wrap; }
+.album-admin { justify-items: end; }
+.album-admin summary { list-style: none; cursor: pointer; }
+.album-admin summary::-webkit-details-marker { display: none; }
+.photo-tools { margin-top: 4px; text-align: left; }
+.photo-tools summary { list-style: none; cursor: pointer; text-align: center; }
+.photo-tools summary::-webkit-details-marker { display: none; }
+.photo-tools .stack { margin-top: 6px; padding: 8px; background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius-sm); }
+.photo-tools select { max-width: 100%; font-size: 12px; }
+.move-form { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.danger-link { color: #ff8a8a !important; }
+.cover-tag { color: var(--orange-hot); margin-top: -2px; }
+.photo-uploader .picker { cursor: pointer; }
+.pending-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 8px; margin-top: 10px; }
+.pending { position: relative; }
+.pending img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; display: block; }
+.pending button { position: absolute; top: 2px; right: 4px; color: #fff; text-shadow: 0 0 4px #000; }
+@media (max-width: 860px) {
+  .album-grid { grid-template-columns: repeat(2, 1fr); }
+}

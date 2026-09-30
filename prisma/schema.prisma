@@ -76,6 +76,7 @@ model User {
   sentMessages     Message[]    @relation("sender")
   receivedMessages Message[]    @relation("recipient")
   photos           Photo[]
+  albums           Album[]
   blocksMade       Block[]      @relation("blocker")
   blocksReceived   Block[]      @relation("blocked")
   reportsMade      Report[]     @relation("reporter")
@@ -114,11 +115,15 @@ model Comment {
   authorId  String
   body      String
   createdAt DateTime @default(now())
+  parentId  String? // set on replies; points at the top-level comment
 
-  profile User @relation("profile", fields: [profileId], references: [id], onDelete: Cascade)
-  author  User @relation("author", fields: [authorId], references: [id], onDelete: Cascade)
+  profile User      @relation("profile", fields: [profileId], references: [id], onDelete: Cascade)
+  author  User      @relation("author", fields: [authorId], references: [id], onDelete: Cascade)
+  parent  Comment?  @relation("replies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies Comment[] @relation("replies")
 
   @@index([profileId, createdAt])
+  @@index([parentId, createdAt])
 }
 
 model Bulletin {
@@ -160,8 +165,25 @@ model Photo {
   url       String
   caption   String   @default("")
   createdAt DateTime @default(now())
+  albumId   String? // null = not in an album
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  album Album? @relation(fields: [albumId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([albumId, createdAt])
+}
+
+model Album {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  description String   @default("")
+  coverUrl    String   @default("") // empty = use the newest photo
+  createdAt   DateTime @default(now())
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  photos Photo[]
 
   @@index([userId, createdAt])
 }

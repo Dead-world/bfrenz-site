@@ -72,32 +72,56 @@ export async function deleteMessage(formData) {
 
 // ---------- photos ----------
 
+/** Adds one or more photos (several "url" fields), optionally straight into an album. */
 export async function addPhoto(formData) {
   const me = await requireUser();
-  const back = `/${me.username}/photos`;
-  let url;
-  try {
-    url = cleanUrl(formData.get('url'));
-  } catch (e) {
-    redirect(withParam(back, 'error', e.message));
+  const albumId = str(formData, 'albumId', 40);
+  const back = safeBackPhotos(formData.get('back'), me.username);
+  const urls = [];
+  for (const raw of formData.getAll('url')) {
+    try {
+      const u = cleanUrl(raw);
+      if (u && !urls.includes(u)) urls.push(u);
+    } catch (e) {
+      redirect(withParam(back, 'error', e.message));
+    }
   }
-  if (!url) redirect(withParam(back, 'error', 'Choose a photo first.'));
-  const count = await prisma.photo.count({ where: { userId: me.id } });
-  if (count >= 300) redirect(withParam(back, 'error', 'You have hit the 300 photo limit.'));
+  if (!urls.length) redirect(withParam(back, 'error', 'Choose a photo first.'));
 
-  await prisma.photo.create({ data: { userId: me.id, url, caption: str(formData, 'caption', 200) } });
-  redirect(back);
+  let album = null;
+  if (albumId) {
+    album = await prisma.album.findFirst({ where: { id: albumId, userId: me.id } });
+    if (!album) redirect(withParam(back, 'error', 'That album is gone.'));
+  }
+  const count = await prisma.photo.count({ where: { userId: me.id } });
+  if (count + urls.length > 1000) redirect(withParam(back, 'error', 'You have hit the 1,000 photo limit.'));
+
+  const caption = str(formData, 'caption', 200);
+  await prisma.photo.createMany({
+    data: urls.map((url) => ({ userId: me.id, url, caption, albumId: album?.id || null })),
+  });
+  redirect(withParam(back, 'added', String(urls.length)));
+}
+
+function safeBackPhotos(value, username) {
+  const s = String(value || '');
+  return s.startsWith(`/${username}/photos`) ? s : `/${username}/photos`;
 }
 
 export async function deletePhoto(formData) {
   const me = await requireUser();
-  await prisma.photo.deleteMany({ where: { id: String(formData.get('id') || ''), userId: me.id } });
-  redirect(`/${me.username}/photos`);
+  const photo = await prisma.photo.findFirst({ where: { id: String(formData.get('id') || ''), userId: me.id } });
+  if (photo) {
+    await prisma.photo.delete({ where: { id: photo.id } });
+    // Don't leave a deleted photo as an album cover.
+    await prisma.album.updateMany({ where: { userId: me.id, coverUrl: photo.url }, data: { coverUrl: '' } });
+  }
+  redirect(safeBackPhotos(formData.get('back'), me.username));
 }
 
 export async function makeProfilePic(formData) {
   const me = await requireUser();
   const photo = await prisma.photo.findFirst({ where: { id: String(formData.get('id') || ''), userId: me.id } });
   if (photo) await prisma.user.update({ where: { id: me.id }, data: { avatarUrl: photo.url } });
-  redirect(`/${me.username}/photos?saved=1`);
+  redirect(withParam(safeBackPhotos(formData.get('back'), me.username), 'saved', '1'));
 }
