@@ -671,3 +671,8 @@ input[type=color] { width: 44px; height: 32px; padding: 2px; border: 1px solid v
 @media (max-width: 860px) {
   .video-grid { grid-template-columns: 1fr; }
 }
+
+/* ================= song links (YouTube, SoundCloud, Spotify...) ================= */
+.song-embed { display: block; width: 100%; border: 0; background: #000; }
+.song-meta-embed { padding: 10px 16px 8px; }
+.fm-embed { margin-top: 4px; border-radius: 8px; }

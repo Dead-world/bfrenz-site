@@ -162,8 +162,10 @@ export default async function EditPage({ searchParams }) {
           <div className="box-h">Profile song</div>
           <div className="box-b">
             <p className="small muted" style={{ marginTop: 0 }}>
-              Upload an MP3/M4A (up to 15 MB) or paste a link to an audio file. It plays when people visit your page.
-              Only upload music you have the rights to share.
+              Upload an MP3/M4A (up to 15 MB), or paste a link from <b>YouTube, SoundCloud, Spotify, Apple Music,
+              Audiomack, Deezer, Google Drive or Dropbox</b>. Uploaded files and direct audio links play in the BFRENZ
+              player; the others play in their own player on your page (Spotify and Apple Music play a 30-second
+              preview for people who aren&apos;t signed in to them). Only share music you have the rights to.
             </p>
             <UploadField name="songUrl" kind="song" accept="audio/*" defaultValue={me.songUrl} />
             <table className="form-table" style={{ marginTop: 10 }}>
