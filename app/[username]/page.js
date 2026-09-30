@@ -7,6 +7,7 @@ import { cleanCss, cleanHtml } from '@/lib/sanitize';
 import { fmtDate, fmtDay, isOnline, SITE_DOMAIN } from '@/lib/util';
 import { FriendTile, Pic } from '@/components/Avatar';
 import SongPlayer from '@/components/SongPlayer';
+import VideoPlayer from '@/components/VideoPlayer';
 import Notice from '@/components/Notice';
 import { sendFriendRequest } from '@/app/actions/friends';
 import { addComment, deleteComment } from '@/app/actions/comments';
@@ -89,6 +90,7 @@ export default async function ProfilePage({ params, searchParams }) {
     me && !isMe ? getFriendship(me.id, user.id) : null,
   ]);
 
+  const profileVideo = await prisma.video.findFirst({ where: { userId: user.id, onProfile: true } });
   const isFriend = friendship?.status === 'ACCEPTED';
   const iRequested = friendship?.status === 'PENDING' && friendship.requesterId === me?.id;
   const theyRequested = friendship?.status === 'PENDING' && friendship.addresseeId === me?.id;
@@ -168,12 +170,24 @@ export default async function ProfilePage({ params, searchParams }) {
               )}
               <div className="small muted" style={{ marginTop: 10 }}>
                 <Link href={`/${user.username}/photos`}>View pics</Link> &middot;{' '}
+                <Link href={`/${user.username}/videos`}>View videos</Link> &middot;{' '}
                 <Link href={`/${user.username}/friends`}>View friends</Link> &middot; {user.profileViews.toLocaleString()} views
               </div>
             </div>
           </div>
 
           {user.songUrl && <SongPlayer src={user.songUrl} title={user.songTitle} artist={user.songArtist} />}
+
+          {profileVideo && (
+            <div className="box video-box">
+              <div className="box-h">
+                &#9654; {user.displayName}&apos;s Video
+                <Link href={`/${user.username}/videos`} className="right small">All videos</Link>
+              </div>
+              <VideoPlayer video={profileVideo} />
+              <div className="box-b small"><b>{profileVideo.title}</b></div>
+            </div>
+          )}
 
           <div className="box orange contact-box">
             <div className="box-h orange">Contacting {user.displayName}</div>
@@ -184,6 +198,8 @@ export default async function ProfilePage({ params, searchParams }) {
                   <Link href="/edit/top8"><span className="ico">★</span>Edit Top 8</Link>
                   <Link href="/edit?tab=css"><span className="ico">◐</span>Customize</Link>
                   <Link href={`/${user.username}/photos`}><span className="ico">▣</span>My photos</Link>
+                  <Link href={`/${user.username}/videos`}><span className="ico">▶</span>My videos</Link>
+                  <Link href="/invite"><span className="ico">✦</span>Invite frenz</Link>
                 </>
               ) : (
                 blocked ? (
@@ -214,6 +230,8 @@ export default async function ProfilePage({ params, searchParams }) {
                   )}
                   <a href="#comments"><span className="ico">💬</span>Add comment</a>
                   <Link href={`/${user.username}/photos`}><span className="ico">▣</span>View photos</Link>
+                  <Link href={`/${user.username}/videos`}><span className="ico">▶</span>View videos</Link>
+                  <a href="#top8"><span className="ico">★</span>View friends</a>
                 </>
                 )
               )}
@@ -295,7 +313,7 @@ export default async function ProfilePage({ params, searchParams }) {
             </div>
           </div>
 
-          <div className="box top8-box">
+          <div className="box top8-box" id="top8">
             <div className="box-h">{user.displayName}&apos;s Friend Space</div>
             <div className="friend-count">
               {user.displayName} has <span className="red">{friendCount}</span>{' '}

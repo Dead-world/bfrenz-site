@@ -7,6 +7,11 @@ const RULES = {
     types: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
     max: 8 * 1024 * 1024,
   },
+  video: {
+    types: ['video/mp4', 'video/quicktime', 'video/webm', 'video/x-m4v'],
+    // Videos are big and cost storage + bandwidth. Change the limit with VIDEO_MAX_MB in Vercel.
+    max: Math.max(5, Math.min(500, parseInt(process.env.VIDEO_MAX_MB || '100', 10) || 100)) * 1024 * 1024,
+  },
   song: {
     types: ['audio/mpeg', 'audio/mp3', 'audio/mp4', 'audio/x-m4a', 'audio/aac', 'audio/ogg', 'audio/wav'],
     max: 15 * 1024 * 1024,

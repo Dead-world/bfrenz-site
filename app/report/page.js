@@ -13,6 +13,7 @@ const WHAT = {
   bulletin: 'this bulletin',
   message: 'this message',
   photo: 'this photo',
+  video: 'this video',
 };
 
 export default async function ReportPage({ searchParams }) {

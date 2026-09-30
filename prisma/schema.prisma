@@ -77,6 +77,7 @@ model User {
   receivedMessages Message[]    @relation("recipient")
   photos           Photo[]
   albums           Album[]
+  videos           Video[]
   blocksMade       Block[]      @relation("blocker")
   blocksReceived   Block[]      @relation("blocked")
   reportsMade      Report[]     @relation("reporter")
@@ -247,4 +248,20 @@ model Report {
   @@index([status, createdAt])
   @@index([reporterId, createdAt])
   @@index([targetUserId])
+}
+
+model Video {
+  id          String   @id @default(cuid())
+  userId      String
+  url         String   @default("") // uploaded file (Vercel Blob)
+  youtubeId   String   @default("") // or a YouTube video
+  title       String
+  description String   @default("")
+  onProfile   Boolean  @default(false) // shown in the Video box on their profile
+  views       Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
 }

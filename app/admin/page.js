@@ -26,7 +26,7 @@ function BanForm({ user, back }) {
         <input type="hidden" name="back" value={back} />
         <input type="text" name="reason" maxLength={300} placeholder="Reason (only admins see this)" />
         <label className="small">
-          <input type="checkbox" name="wipe" /> Also delete all their comments, bulletins, messages and photos
+          <input type="checkbox" name="wipe" /> Also delete all their comments, bulletins, messages, photos and videos
         </label>
         <div><button className="btn small-btn danger" type="submit">Ban member</button></div>
       </form>
