@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/db';
+import { SURVEYS } from '@/lib/surveys';
 
 const SITE = (process.env.SITE_URL || 'https://www.bfrenz.com').replace(/\/+$/, '');
 
@@ -13,6 +14,8 @@ export default async function sitemap() {
     { url: `${SITE}/browse`, changeFrequency: 'daily', priority: 0.7 },
     { url: `${SITE}/shop`, changeFrequency: 'weekly', priority: 0.5 },
     { url: `${SITE}/help`, changeFrequency: 'monthly', priority: 0.4 },
+    { url: `${SITE}/surveys`, changeFrequency: 'weekly', priority: 0.6 },
+    ...SURVEYS.map((sv) => ({ url: `${SITE}/surveys/${sv.slug}`, changeFrequency: 'monthly', priority: 0.4 })),
     { url: `${SITE}/terms`, changeFrequency: 'yearly', priority: 0.2 },
     { url: `${SITE}/privacy`, changeFrequency: 'yearly', priority: 0.2 },
   ].map((p) => ({ ...p, lastModified: now }));

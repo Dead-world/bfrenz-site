@@ -21,7 +21,7 @@ export async function GET() {
   const [users, unread] = await Promise.all([
     prisma.user.findMany({
       where: { id: { in: ids }, bannedAt: null },
-      select: { id: true, username: true, displayName: true, avatarUrl: true, lastSeen: true },
+      select: { id: true, username: true, displayName: true, avatarUrl: true, lastSeen: true, awayMessage: true },
     }),
     prisma.chatMessage.groupBy({
       by: ['fromId'],
@@ -39,11 +39,12 @@ export async function GET() {
       pic: u.avatarUrl || '/no-pic.svg',
       online: !!u.lastSeen && now - new Date(u.lastSeen).getTime() < ONLINE_MS,
       unread: unreadBy[u.id] || 0,
+      away: u.awayMessage || '',
     }))
     .sort((a, b) => b.unread - a.unread || Number(b.online) - Number(a.online) || a.name.localeCompare(b.name));
 
   return NextResponse.json(
-    { buddies, unread: Object.values(unreadBy).reduce((a, b) => a + b, 0) },
+    { buddies, unread: Object.values(unreadBy).reduce((a, b) => a + b, 0), away: me.awayMessage || '' },
     { headers: { 'Cache-Control': 'no-store' } },
   );
 }

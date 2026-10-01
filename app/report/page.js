@@ -16,6 +16,7 @@ const WHAT = {
   video: 'this video',
   post: 'this post',
   postcomment: 'this comment',
+  survey: 'these survey answers',
 };
 
 export default async function ReportPage({ searchParams }) {

@@ -107,6 +107,8 @@ export default function Messenger({ me }) {
   const prevUnread = useRef({});
   const lastAt = useRef({});
   const baseTitle = useRef('');
+  const [myAway, setMyAway] = useState(me.away || '');
+  const [awayOpen, setAwayOpen] = useState(false);
   const mutedRef = useRef(false);
   mutedRef.current = muted;
 
@@ -165,6 +167,7 @@ export default function Messenger({ me }) {
       const data = await r.json();
       setBuddies(data.buddies || []);
       setUnread(data.unread || 0);
+      if (typeof data.away === 'string') setMyAway(data.away);
       // New message from someone? Chime and pop their window open.
       let fresh = false;
       for (const b of data.buddies || []) {
@@ -257,6 +260,20 @@ export default function Messenger({ me }) {
     document.title = unread > 0 ? `(${unread}) ${base}` : base;
   }, [unread, ready]);
 
+  async function saveAway(message) {
+    setMyAway(message);
+    setAwayOpen(false);
+    try {
+      const r = await fetch('/api/im/away', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message }),
+      });
+      const data = await r.json().catch(() => ({}));
+      if (r.ok && typeof data.away === 'string') setMyAway(data.away);
+    } catch {}
+  }
+
   async function send(id, text) {
     const body = text.trim();
     if (!body) return;
@@ -294,12 +311,21 @@ export default function Messenger({ me }) {
   const onlineCount = buddies.filter((b) => b.online).length;
 
   const row = (b) => (
-    <button key={b.id} type="button" className={`im-buddy${b.online ? ' on' : ''}`} onClick={() => openChat(b.id)}>
+    <button
+      key={b.id}
+      type="button"
+      className={`im-buddy${b.online ? ' on' : ''}${b.away ? ' away' : ''}`}
+      onClick={() => openChat(b.id)}
+      title={b.away ? `Away: ${b.away}` : undefined}
+    >
       <span className="im-pic">
         <img src={b.pic} alt="" width={28} height={28} loading="lazy" />
         <i className="im-dot" />
       </span>
-      <span className="im-name">{b.name}</span>
+      <span className="im-name">
+        {b.name}
+        {b.away && <span className="im-away-sub">🌙 {b.away}</span>}
+      </span>
       {b.unread > 0 && <span className="im-badge">{b.unread}</span>}
     </button>
   );
@@ -339,9 +365,9 @@ export default function Messenger({ me }) {
               <img src={me.pic} alt="" width={32} height={32} />
               <div>
                 <b>{me.name}</b>
-                <div className="im-status">
-                  <i className="im-dot live" /> Available
-                </div>
+                <button type="button" className={`im-status im-status-btn${myAway ? ' is-away' : ''}`} onClick={() => setAwayOpen((o) => !o)}>
+                  {myAway ? <>🌙 Away <span className="im-away-edit">(edit)</span></> : <><i className="im-dot live" /> Available <span className="im-away-edit">· set away</span></>}
+                </button>
               </div>
               <button
                 type="button"
@@ -357,6 +383,7 @@ export default function Messenger({ me }) {
                 {muted ? '🔇' : '🔔'}
               </button>
             </div>
+            {awayOpen && <AwayEditor current={myAway} onSave={saveAway} onCancel={() => setAwayOpen(false)} />}
             {buddies.length > 8 && (
               <input className="im-search" type="search" placeholder="Find a fren…" value={query} onChange={(e) => setQuery(e.target.value)} />
             )}
@@ -407,7 +434,7 @@ function ChatWindow({ me, buddy, min, messages, onSend, onClose, onToggle }) {
       <div className="im-win-head" onClick={onToggle} role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && onToggle()}>
         <span className="im-pic">
           <img src={buddy.pic} alt="" width={24} height={24} />
-          <i className={`im-dot${buddy.online ? ' live' : ''}`} />
+          <i className={`im-dot${buddy.online ? ' live' : ''}${buddy.away ? ' away' : ''}`} />
         </span>
         <span className="im-name">{buddy.name}</span>
         {min && buddy.unread > 0 && <span className="im-badge">{buddy.unread}</span>}
@@ -424,6 +451,11 @@ function ChatWindow({ me, buddy, min, messages, onSend, onClose, onToggle }) {
       {!min && (
         <>
           <div className="im-msgs" ref={bodyRef}>
+            {buddy.away && (
+              <div className="im-away-note">
+                <b>🌙 {buddy.name} is away:</b> {buddy.away}
+              </div>
+            )}
             {messages.length === 0 && <div className="im-empty small">Say hi to {buddy.name}! 👋</div>}
             {messages.map((m) => {
               const mine = m.from === me.id;
@@ -457,5 +489,44 @@ function ChatWindow({ me, buddy, min, messages, onSend, onClose, onToggle }) {
         </>
       )}
     </div>
+  );
+}
+
+const AWAY_PRESETS = ['BRB 🏃', 'At work 💼', 'Sleeping 😴', 'Out with frenz 🍕', 'At the gym 💪', 'Watching a movie 🍿'];
+
+function AwayEditor({ current, onSave, onCancel }) {
+  const [text, setText] = useState(current || '');
+  return (
+    <form
+      className="im-away-editor"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (text.trim()) onSave(text.trim());
+      }}
+    >
+      <div className="im-away-title">Away message</div>
+      <div className="im-away-presets">
+        {AWAY_PRESETS.map((p) => (
+          <button key={p} type="button" className={`im-chip${text === p ? ' on' : ''}`} onClick={() => setText(p)}>
+            {p}
+          </button>
+        ))}
+      </div>
+      <textarea rows={2} maxLength={200} value={text} placeholder="Write your own… (your frenz see this)" onChange={(e) => setText(e.target.value)} />
+      <div className="im-away-actions">
+        <button type="submit" className="btn small-btn" disabled={!text.trim()}>
+          {current ? 'Update' : "I'm away"}
+        </button>
+        {current ? (
+          <button type="button" className="btn ghost small-btn" onClick={() => onSave('')}>
+            I&apos;m back
+          </button>
+        ) : (
+          <button type="button" className="btn ghost small-btn" onClick={onCancel}>
+            Cancel
+          </button>
+        )}
+      </div>
+    </form>
   );
 }

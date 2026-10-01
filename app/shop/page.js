@@ -82,6 +82,7 @@ export default async function ShopPage({ searchParams }) {
             <li><b>Every premium theme</b> and <b>About Me template</b> included</li>
             <li>Gold <span className="badge badge-supporter">★</span> Supporter badge next to your name</li>
             <li><b>Top 16</b> instead of Top 8</li>
+            <li>See <b>who&apos;s been creeping</b> on your profile</li>
             <li>Pick your own <b>name color</b> in comments</li>
             <li>Glowing animated border on your profile</li>
             <li>No ads, ever</li>

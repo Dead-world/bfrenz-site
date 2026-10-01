@@ -37,6 +37,11 @@ model User {
   songUpdatedAt DateTime? // when they last changed their profile song (shows in friends' feeds)
 
   profileViews   Int       @default(0)
+  showCounter    Boolean   @default(false) // show the retro hit counter on their profile
+  counterStyle   String    @default("")    // look of the hit counter (see lib/visitors.js)
+  privateBrowsing Boolean  @default(false) // their visits don't show in "Who's been creeping"
+  awayMessage    String    @default("")    // IM away message ("" = available)
+  awaySince      DateTime?
   lastSeen       DateTime?
   createdAt      DateTime  @default(now())
   sessionVersion Int       @default(0) // bumped on password reset to log out old sessions
@@ -85,6 +90,9 @@ model User {
   postComments     PostComment[]
   kudos            Kudos[]
   pushSubs         PushSubscription[]
+  visitsReceived   ProfileVisit[] @relation("visited")
+  visitsMade       ProfileVisit[] @relation("visitor")
+  surveyAnswers    SurveyAnswer[]
   blocksMade       Block[]      @relation("blocker")
   blocksReceived   Block[]      @relation("blocked")
   reportsMade      Report[]     @relation("reporter")
@@ -349,4 +357,34 @@ model PushSubscription {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+// Last time a member looked at someone's profile (one row per pair, updated on each visit).
+model ProfileVisit {
+  id        String   @id @default(cuid())
+  profileId String
+  visitorId String
+  at        DateTime @default(now())
+  hidden    Boolean  @default(false) // visited with private browsing on
+  profile   User     @relation("visited", fields: [profileId], references: [id], onDelete: Cascade)
+  visitor   User     @relation("visitor", fields: [visitorId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, visitorId])
+  @@index([profileId, at])
+}
+
+// A member's answers to one of the surveys in lib/surveys.js.
+model SurveyAnswer {
+  id         String   @id @default(cuid())
+  surveySlug String
+  userId     String
+  answers    String[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([surveySlug, userId])
+  @@index([userId])
+  @@index([surveySlug, createdAt])
+  @@index([createdAt])
 }

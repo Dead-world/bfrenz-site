@@ -79,7 +79,7 @@ export default async function DashboardPage({ searchParams }) {
               <Link href="/mail">Inbox</Link> | <Link href="/mail/sent">Sent</Link> |{' '}
               <Link href="/mail/compose">Compose</Link> | <Link href="/bulletins">Bulletins</Link>
               <br />
-              Profile views: <b>{me.profileViews.toLocaleString()}</b>
+              Profile views: <b>{me.profileViews.toLocaleString()}</b> &middot; <Link href="/visitors">Who&apos;s been creeping? 👀</Link>
               <br />
               Friends: <b>{friendIds.length}</b> &middot; Comments: <b>{commentCount}</b>
             </div>

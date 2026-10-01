@@ -28,6 +28,8 @@ async function ownerOf(kind, id, me) {
       return (await prisma.post.findUnique({ where: { id }, select: { authorId: true } }))?.authorId;
     case 'postcomment':
       return (await prisma.postComment.findUnique({ where: { id }, select: { authorId: true } }))?.authorId;
+    case 'survey':
+      return (await prisma.surveyAnswer.findUnique({ where: { id }, select: { userId: true } }))?.userId;
     case 'message': {
       const m = await prisma.message.findUnique({ where: { id }, select: { senderId: true, recipientId: true } });
       return m && m.recipientId === me.id ? m.senderId : null;
@@ -171,11 +173,14 @@ async function deleteContent(kind, id) {
     case 'postcomment':
       await prisma.postComment.deleteMany({ where: { id } });
       break;
+    case 'survey':
+      await prisma.surveyAnswer.deleteMany({ where: { id } });
+      break;
     case 'profile':
       // "Delete" on a profile report wipes the profile's text, pic, song and CSS (not the account).
       await prisma.user.updateMany({
         where: { id },
-        data: { aboutMe: '', meet: '', headline: '', mood: '', avatarUrl: '', customCss: '', songUrl: '', songTitle: '', songArtist: '', theme: '' },
+        data: { aboutMe: '', meet: '', headline: '', mood: '', avatarUrl: '', customCss: '', songUrl: '', songTitle: '', songArtist: '', theme: '', awayMessage: '' },
       });
       break;
   }
@@ -243,6 +248,7 @@ export async function banUser(formData) {
       prisma.chatMessage.deleteMany({ where: { fromId: userId } }),
       prisma.post.deleteMany({ where: { authorId: userId } }),
       prisma.postComment.deleteMany({ where: { authorId: userId } }),
+      prisma.surveyAnswer.deleteMany({ where: { userId } }),
     );
   }
   await prisma.$transaction(ops);

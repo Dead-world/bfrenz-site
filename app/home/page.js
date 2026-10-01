@@ -13,6 +13,7 @@ import { isAdmin } from '@/lib/moderation';
 import { videoMaxMb } from '@/lib/video';
 import NotificationToggle from '@/components/NotificationToggle';
 import { vapidPublicKey } from '@/lib/push';
+import { weeklySurvey } from '@/lib/surveys';
 
 export const metadata = { title: 'Feed | BFRENZ.com' };
 
@@ -23,11 +24,13 @@ export default async function HomePage({ searchParams }) {
 
   const beforeRaw = sp?.before ? new Date(String(sp.before)) : null;
   const before = beforeRaw && !isNaN(beforeRaw) ? beforeRaw : null;
-  const [unread, pending, feed, sponsored] = await Promise.all([
+  const weekly = weeklySurvey();
+  const [unread, pending, feed, sponsored, tookWeekly] = await Promise.all([
     prisma.message.count({ where: { recipientId: me.id, read: false, recipientDeleted: false } }),
     prisma.friendship.count({ where: { addresseeId: me.id, status: 'PENDING' } }),
     getFeed(me, before),
     before ? [] : bulletinsFor(me.id, friendIds, 0).then((list) => list.filter((b) => b._sponsored)),
+    before ? true : prisma.surveyAnswer.count({ where: { userId: me.id, surveySlug: weekly.slug } }),
   ]);
 
   return (
@@ -51,6 +54,17 @@ export default async function HomePage({ searchParams }) {
             me={{ name: me.displayName, pic: me.avatarUrl || '/no-pic.svg' }}
             videoMaxMb={videoMaxMb()}
           />
+        )}
+
+        {!tookWeekly && (
+          <Link href={`/surveys/${weekly.slug}`} className="box feed-item survey-prompt">
+            <span className="survey-emoji">{weekly.emoji}</span>
+            <span>
+              <b>This week&apos;s survey: {weekly.title}</b>
+              <span className="small muted">{weekly.blurb}</span>
+            </span>
+            <span className="btn small-btn">Take it</span>
+          </Link>
         )}
 
         {sponsored.map((b) => (

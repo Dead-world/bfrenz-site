@@ -21,6 +21,10 @@ import { didBlock, isAdmin, isBlockedEither } from '@/lib/moderation';
 import { blockUser, unblockUser } from '@/app/actions/moderation';
 import ShareButtons from '@/components/ShareButtons';
 import { siteUrl } from '@/lib/email';
+import { after } from 'next/server';
+import { headers } from 'next/headers';
+import HitCounter from '@/components/HitCounter';
+import { counterStyle, recordVisit } from '@/lib/visitors';
 
 async function loadUser(username) {
   return prisma.user.findUnique({ where: { username: String(username).toLowerCase() } });
@@ -66,8 +70,10 @@ export default async function ProfilePage({ params, searchParams }) {
   const [iBlocked, blocked] = me && !isMe
     ? await Promise.all([didBlock(me.id, user.id), isBlockedEither(me.id, user.id)])
     : [false, false];
-  if (!isMe) {
-    await prisma.user.update({ where: { id: user.id }, data: { profileViews: { increment: 1 } } });
+  if (!isMe && !user.bannedAt) {
+    // Counted after the page is sent, so it never slows the page down.
+    const ua = (await headers()).get('user-agent') || '';
+    after(() => recordVisit(user, me, ua).catch((e) => console.error('[visit]', e?.message)));
   }
 
   const showAll = sp?.comments === 'all';
@@ -184,11 +190,19 @@ export default async function ProfilePage({ params, searchParams }) {
                   <b>Mood:</b> {moodLabel(user.mood)}
                 </div>
               )}
+              {user.awayMessage && (isMe || isFriend) && (
+                <div className="away-line">
+                  <b>🌙 Away:</b> {user.awayMessage}
+                </div>
+              )}
               <div className="small muted" style={{ marginTop: 10 }}>
                 <Link href={`/${user.username}/photos`}>View pics</Link> &middot;{' '}
                 <Link href={`/${user.username}/videos`}>View videos</Link> &middot;{' '}
-                <Link href={`/${user.username}/friends`}>View friends</Link> &middot; {user.profileViews.toLocaleString()} views
+                <Link href={`/${user.username}/friends`}>View friends</Link>
+                {!user.showCounter && <> &middot; {user.profileViews.toLocaleString()} views</>}
+                {isMe && <> &middot; <Link href="/visitors">Who&apos;s been creeping?</Link></>}
               </div>
+              {user.showCounter && <HitCounter value={user.profileViews} look={counterStyle(user)} />}
             </div>
           </div>
 

@@ -7,6 +7,7 @@ import VideoPlayer from '@/components/VideoPlayer';
 import { toggleKudos, addPostComment, deletePost, deletePostComment } from '@/app/actions/posts';
 import { moodLabel } from '@/lib/moods';
 import { fmtDate, timeAgo } from '@/lib/util';
+import { answeredPairs, getSurvey } from '@/lib/surveys';
 
 function Who({ user }) {
   return (
@@ -193,6 +194,37 @@ export default function FeedItem({ item, me, back, admin }) {
           </div>
         </header>
         <div className="feed-media"><MiniSong url={u.songUrl} title={label} /></div>
+      </article>
+    );
+  }
+
+  if (item.type === 'survey') {
+    const s = getSurvey(item.answer.surveySlug);
+    if (!s) return null;
+    const pairs = answeredPairs(s, item.answer.answers);
+    const href = `/surveys/${s.slug}/${item.user.username}`;
+    const mine = item.user.id === me.id;
+    return (
+      <article className="box feed-item feed-event">
+        <header className="feed-head">
+          <Link href={`/${item.user.username}`}><Pic user={item.user} size={44} /></Link>
+          <div className="feed-head-main">
+            <div><Who user={item.user} /> took the <Link href={href}><b>{s.emoji} {s.title}</b></Link> survey</div>
+            <When at={item.at} />
+          </div>
+        </header>
+        <Link href={href} className="feed-survey">
+          {pairs.slice(0, 4).map(([q, a], i) => (
+            <span key={i} className="feed-survey-row">
+              <span className="feed-survey-q">{q}</span>
+              <span className="feed-survey-a">{a.length > 120 ? a.slice(0, 117) + '…' : a}</span>
+            </span>
+          ))}
+        </Link>
+        <footer className="feed-survey-foot">
+          <Link href={href} className="small">{pairs.length > 4 ? `See all ${pairs.length} answers` : 'See answers'} &raquo;</Link>
+          {!mine && <Link href={`/surveys/${s.slug}`} className="btn small-btn">Take it too ✍️</Link>}
+        </footer>
       </article>
     );
   }

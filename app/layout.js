@@ -81,7 +81,7 @@ export default async function RootLayout({ children }) {
         <PwaRegister />
         <AppBanner />
         {me && (
-          <Messenger me={{ id: me.id, name: me.displayName, pic: me.avatarUrl || '/no-pic.svg' }} />
+          <Messenger me={{ id: me.id, name: me.displayName, pic: me.avatarUrl || '/no-pic.svg', away: me.awayMessage || '' }} />
         )}
       </body>
     </html>
