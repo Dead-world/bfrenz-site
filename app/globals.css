@@ -459,6 +459,7 @@ pre.code { background: var(--surface-2); border: 1px solid var(--line); border-r
   .logo img { height: 36px; }
   .cols { flex-direction: column; }
   .col-left { width: 100% !important; }
+  .col-right { width: 100%; }
   .topbar { height: auto; flex-wrap: wrap; padding: 10px 0; }
   .topsearch { order: 3; max-width: none; flex-basis: 100%; }
   .navbar { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
@@ -860,4 +861,9 @@ body { padding-bottom: 56px; }
 }
 @media (max-width: 860px) {
   .composer-images, .composer-video, .composer-panel, .composer-moods, .composer-bar, .composer-error, .composer .small.muted { margin-left: 0; }
+}
+
+/* phones: the feed comes first on Home, the sidebar (mail, Top 8...) after it */
+@media (max-width: 860px) {
+  .home-cols .col-right { order: -1; }
 }

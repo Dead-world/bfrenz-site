@@ -38,7 +38,7 @@ export default async function HomePage({ searchParams }) {
   return (
     <>
     {sp?.reset && <div className="notice ok">Your password was changed. You&apos;re logged in.</div>}
-    <div className="cols">
+    <div className="cols home-cols">
       <div className="col-left">
         <div className="box">
           <div className="box-b">
