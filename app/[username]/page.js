@@ -26,6 +26,7 @@ import { headers } from 'next/headers';
 import HitCounter from '@/components/HitCounter';
 import { counterStyle, recordVisit } from '@/lib/visitors';
 import { birthdayLabel, isBirthdayToday } from '@/lib/birthdays';
+import { profileTracks } from '@/lib/playlist';
 
 async function loadUser(username) {
   return prisma.user.findUnique({ where: { username: String(username).toLowerCase() } });
@@ -115,6 +116,7 @@ export default async function ProfilePage({ params, searchParams }) {
   const back = `/${user.username}`;
   const interests = INTERESTS.filter(([, key]) => user[key]);
   const bdayToday = isBirthdayToday(user);
+  const tracks = profileTracks(user).map(({ url, title, artist }) => ({ url, title, artist }));
 
   // Shop theme: the owner can preview any theme with ?preview=slug; visitors see the applied one.
   const previewing = isMe && sp?.preview ? getTheme(String(sp.preview)) : null;
@@ -210,7 +212,7 @@ export default async function ProfilePage({ params, searchParams }) {
             </div>
           </div>
 
-          {user.songUrl && <SongPlayer src={user.songUrl} title={user.songTitle} artist={user.songArtist} />}
+          {tracks.length > 0 && <SongPlayer tracks={tracks} />}
 
           {profileVideo && (
             <div className="box video-box">

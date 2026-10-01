@@ -37,6 +37,7 @@ model User {
   songUrl    String @default("")
   songTitle  String @default("")
   songArtist String @default("")
+  playlist   Json   @default("[]") // more songs after the main one: [{ url, title, artist }]
   songUpdatedAt DateTime? // when they last changed their profile song (shows in friends' feeds)
 
   profileViews   Int       @default(0)

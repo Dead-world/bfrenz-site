@@ -5,6 +5,7 @@ import { prisma } from '@/lib/db';
 import { requireUser } from '@/lib/auth';
 import { cleanCss } from '@/lib/sanitize';
 import { cleanUrl, str, withParam } from '@/lib/util';
+import { cleanPlaylist } from '@/lib/playlist';
 
 function done(tab) {
   redirect(`/edit?tab=${tab}&saved=1`);
@@ -81,14 +82,25 @@ export async function updatePic(formData) {
 
 export async function updateSong(formData) {
   const me = await requireUser();
-  const songUrl = tryUrl(formData.get('songUrl'), 'song');
+  let songUrl = tryUrl(formData.get('songUrl'), 'song');
+  let songTitle = str(formData, 'songTitle', 100);
+  let songArtist = str(formData, 'songArtist', 100);
+  const playlist = cleanPlaylist(formData.get('playlist'));
+  // No main song but there are playlist songs? The first one becomes the main song.
+  if (!songUrl && playlist.length) {
+    const first = playlist.shift();
+    songUrl = first.url;
+    songTitle = first.title;
+    songArtist = first.artist;
+  }
   await prisma.user.update({
     where: { id: me.id },
     data: {
       songUrl,
       ...(songUrl && songUrl !== me.songUrl ? { songUpdatedAt: new Date() } : {}),
-      songTitle: str(formData, 'songTitle', 100),
-      songArtist: str(formData, 'songArtist', 100),
+      songTitle,
+      songArtist,
+      playlist,
     },
   });
   done('song');

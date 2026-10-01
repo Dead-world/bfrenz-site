@@ -180,7 +180,7 @@ async function deleteContent(kind, id) {
       // "Delete" on a profile report wipes the profile's text, pic, song and CSS (not the account).
       await prisma.user.updateMany({
         where: { id },
-        data: { aboutMe: '', meet: '', headline: '', mood: '', avatarUrl: '', customCss: '', songUrl: '', songTitle: '', songArtist: '', theme: '', awayMessage: '' },
+        data: { aboutMe: '', meet: '', headline: '', mood: '', avatarUrl: '', customCss: '', songUrl: '', songTitle: '', songArtist: '', playlist: [], theme: '', awayMessage: '' },
       });
       break;
   }

@@ -7,6 +7,8 @@ import { updateInfo, updateInterests, updatePic, updateSong, updateCss } from '@
 import { removeAboutTemplate, restoreAboutBackup } from '@/app/actions/shop';
 import { getAboutTemplate } from '@/lib/aboutTemplates';
 import NotificationToggle from '@/components/NotificationToggle';
+import PlaylistEditor from '@/components/PlaylistEditor';
+import { cleanPlaylist } from '@/lib/playlist';
 import { vapidPublicKey } from '@/lib/push';
 
 export const metadata = { title: 'Edit Profile | BFRENZ.com' };
@@ -15,7 +17,7 @@ const TABS = [
   ['info', 'Profile info'],
   ['interests', 'Interests'],
   ['pic', 'Profile pic'],
-  ['song', 'Profile song'],
+  ['song', 'Music / playlist'],
   ['css', 'Customize (CSS)'],
   ['notify', 'Notifications'],
 ];
@@ -181,7 +183,7 @@ export default async function EditPage({ searchParams }) {
 
       {tab === 'song' && (
         <form action={updateSong} className="box">
-          <div className="box-h">Profile song</div>
+          <div className="box-h">Profile music</div>
           <div className="box-b">
             <p className="small muted" style={{ marginTop: 0 }}>
               Upload an MP3/M4A (up to 15 MB), or paste a link from <b>YouTube, SoundCloud, Spotify, Apple Music,
@@ -189,6 +191,7 @@ export default async function EditPage({ searchParams }) {
               player; the others play in their own player on your page (Spotify and Apple Music play a 30-second
               preview for people who aren&apos;t signed in to them). Only share music you have the rights to.
             </p>
+            <div className="pl-section-title">Song 1 <span className="small muted">(main song: plays first, shows in Featured Music)</span></div>
             <UploadField name="songUrl" kind="song" accept="audio/*" defaultValue={me.songUrl} />
             <table className="form-table" style={{ marginTop: 10 }}>
               <tbody>
@@ -196,7 +199,11 @@ export default async function EditPage({ searchParams }) {
                 <tr><td className="lbl">Artist</td><td><input type="text" name="songArtist" defaultValue={me.songArtist} maxLength={100} /></td></tr>
               </tbody>
             </table>
-            <div className="small muted">To remove your song, clear the link and save.</div>
+            <div className="pl-section-title" style={{ marginTop: 22 }}>
+              Your playlist <span className="small muted">(up to 10 songs; they play one after another)</span>
+            </div>
+            <PlaylistEditor initial={cleanPlaylist(me.playlist)} />
+            <div className="small muted" style={{ marginTop: 10 }}>To remove a song, clear its link (or hit ✕) and save.</div>
             <div style={{ marginTop: 14 }}>
               <button className="btn" type="submit">Save</button>
             </div>

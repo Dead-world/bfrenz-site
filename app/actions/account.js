@@ -55,6 +55,7 @@ export async function deleteAccount(formData) {
   ]);
   const files = [
     me.avatarUrl, me.songUrl,
+    ...(Array.isArray(me.playlist) ? me.playlist.map((t) => t?.url) : []),
     ...photos.map((p) => p.url),
     ...videos.map((v) => v.url),
     ...posts.flatMap((p) => [...p.imageUrls, p.videoUrl]),
