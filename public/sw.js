@@ -48,7 +48,10 @@ self.addEventListener('push', (event) => {
       icon: '/icons/icon-192.png',
       badge: '/icons/badge-72.png',
       tag: data.tag || undefined,
-      renotify: !!data.tag,
+      renotify: !!data.tag, // a new message in the same chat still buzzes
+      silent: false, // use the phone's normal notification sound
+      vibrate: [180, 90, 180],
+      timestamp: Date.now(),
       data: { url: data.url || '/home' },
     }),
   );

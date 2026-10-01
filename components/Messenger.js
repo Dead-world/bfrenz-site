@@ -26,28 +26,62 @@ function save(key, value) {
   } catch {}
 }
 
-/** The classic two-note "new IM" chime, made in the browser (no sound file needed). */
+/*
+ * Sound. Browsers keep audio "locked" until the person clicks or types on the page,
+ * so the audio engine is created and unlocked on the first tap, then reused.
+ */
+function audioCtx() {
+  const Ctx = typeof window !== 'undefined' && (window.AudioContext || window.webkitAudioContext);
+  if (!Ctx) return null;
+  if (!audioCtx.ctx) audioCtx.ctx = new Ctx();
+  return audioCtx.ctx;
+}
+
+function unlockAudio() {
+  try {
+    const ctx = audioCtx();
+    if (!ctx) return;
+    if (ctx.state === 'suspended') ctx.resume();
+    // A silent blip makes iPhones fully unlock sound for later.
+    const b = ctx.createBuffer(1, 1, 22050);
+    const src = ctx.createBufferSource();
+    src.buffer = b;
+    src.connect(ctx.destination);
+    src.start(0);
+  } catch {}
+}
+
+/** The two-note "new IM" chime, made in the browser (no sound file needed). */
 function chime() {
   try {
-    const Ctx = window.AudioContext || window.webkitAudioContext;
-    if (!Ctx) return;
-    const ctx = chime.ctx || (chime.ctx = new Ctx());
-    const t = ctx.currentTime;
-    [
-      [880, 0],
-      [1320, 0.12],
-    ].forEach(([freq, delay]) => {
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-      o.type = 'sine';
-      o.frequency.value = freq;
-      g.gain.setValueAtTime(0.0001, t + delay);
-      g.gain.exponentialRampToValueAtTime(0.18, t + delay + 0.02);
-      g.gain.exponentialRampToValueAtTime(0.0001, t + delay + 0.22);
-      o.connect(g).connect(ctx.destination);
-      o.start(t + delay);
-      o.stop(t + delay + 0.25);
-    });
+    const ctx = audioCtx();
+    if (!ctx) return;
+    const play = () => {
+      const t = ctx.currentTime + 0.01;
+      [
+        [784, 0],
+        [1175, 0.13],
+      ].forEach(([freq, delay]) => {
+        // Two layered tones so it's clear on phone speakers too.
+        [
+          ['triangle', freq, 0.45],
+          ['sine', freq * 2, 0.12],
+        ].forEach(([type, f, vol]) => {
+          const o = ctx.createOscillator();
+          const g = ctx.createGain();
+          o.type = type;
+          o.frequency.value = f;
+          g.gain.setValueAtTime(0.0001, t + delay);
+          g.gain.exponentialRampToValueAtTime(vol, t + delay + 0.015);
+          g.gain.exponentialRampToValueAtTime(0.0001, t + delay + 0.32);
+          o.connect(g).connect(ctx.destination);
+          o.start(t + delay);
+          o.stop(t + delay + 0.35);
+        });
+      });
+    };
+    if (ctx.state === 'suspended') ctx.resume().then(play, () => {});
+    else play();
   } catch {}
 }
 
@@ -73,6 +107,8 @@ export default function Messenger({ me }) {
   const prevUnread = useRef({});
   const lastAt = useRef({});
   const baseTitle = useRef('');
+  const mutedRef = useRef(false);
+  mutedRef.current = muted;
 
   // Restore layout after the first render (avoids hydration mismatches).
   useEffect(() => {
@@ -143,6 +179,17 @@ export default function Messenger({ me }) {
     } catch {}
   }, [openChat, muted]);
 
+  // Unlock sound on the first tap, click or key press anywhere on the site.
+  useEffect(() => {
+    const events = ['pointerdown', 'keydown', 'touchstart'];
+    const onFirst = () => {
+      unlockAudio();
+      events.forEach((e) => window.removeEventListener(e, onFirst, true));
+    };
+    events.forEach((e) => window.addEventListener(e, onFirst, true));
+    return () => events.forEach((e) => window.removeEventListener(e, onFirst, true));
+  }, []);
+
   useEffect(() => {
     if (!ready) return;
     let timer;
@@ -181,6 +228,8 @@ export default function Messenger({ me }) {
         const pending = (t[id] || []).filter((m) => m.pending);
         return { ...t, [id]: [...merged, ...pending] };
       });
+      // A new message in a chat that's already open (not the first load of it).
+      if (after && !mutedRef.current && messages.some((m) => m.from === id)) chime();
       if (messages.some((m) => m.from === id)) {
         setBuddies((bs) => bs.map((b) => (b.id === id ? { ...b, unread: 0 } : b)));
         prevUnread.current[id] = 0;
@@ -299,7 +348,11 @@ export default function Messenger({ me }) {
                 className="im-icon"
                 title={muted ? 'Sounds off' : 'Sounds on'}
                 aria-label={muted ? 'Turn sounds on' : 'Turn sounds off'}
-                onClick={() => setMuted((m) => !m)}
+                onClick={() => {
+                  // Turning sound on plays the chime so you know it works.
+                  if (muted) chime();
+                  setMuted(!muted);
+                }}
               >
                 {muted ? '🔇' : '🔔'}
               </button>
