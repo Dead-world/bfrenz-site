@@ -14,6 +14,9 @@ import { videoMaxMb } from '@/lib/video';
 import NotificationToggle from '@/components/NotificationToggle';
 import { vapidPublicKey } from '@/lib/push';
 import { weeklySurvey } from '@/lib/surveys';
+import { birthdaysToday, isBirthdayToday } from '@/lib/birthdays';
+import { hiddenUserIds } from '@/lib/moderation';
+import { Pic } from '@/components/Avatar';
 
 export const metadata = { title: 'Feed | BFRENZ.com' };
 
@@ -25,13 +28,17 @@ export default async function HomePage({ searchParams }) {
   const beforeRaw = sp?.before ? new Date(String(sp.before)) : null;
   const before = beforeRaw && !isNaN(beforeRaw) ? beforeRaw : null;
   const weekly = weeklySurvey();
-  const [unread, pending, feed, sponsored, tookWeekly] = await Promise.all([
+  const [unread, pending, feed, sponsored, tookWeekly, bdays] = await Promise.all([
     prisma.message.count({ where: { recipientId: me.id, read: false, recipientDeleted: false } }),
     prisma.friendship.count({ where: { addresseeId: me.id, status: 'PENDING' } }),
     getFeed(me, before),
     before ? [] : bulletinsFor(me.id, friendIds, 0).then((list) => list.filter((b) => b._sponsored)),
     before ? true : prisma.surveyAnswer.count({ where: { userId: me.id, surveySlug: weekly.slug } }),
+    before
+      ? []
+      : hiddenUserIds(me.id).then((hidden) => birthdaysToday(friendIds.filter((id) => !hidden.includes(id)))),
   ]);
+  const myBirthday = !before && isBirthdayToday(me);
 
   return (
     <>
@@ -55,6 +62,27 @@ export default async function HomePage({ searchParams }) {
             videoMaxMb={videoMaxMb()}
           />
         )}
+
+        {myBirthday && (
+          <div className="box feed-item bday-card bday-me">
+            <span className="bday-emoji">🎉</span>
+            <span>
+              <b>Happy birthday, {me.displayName}!</b>
+              <span className="small muted">From everyone at BFRENZ. Check your page for birthday comments 🎂</span>
+            </span>
+            <Link href={`/${me.username}#comments`} className="btn small-btn">My page</Link>
+          </div>
+        )}
+        {bdays.map((u) => (
+          <div key={u.id} className="box feed-item bday-card">
+            <Link href={`/${u.username}`}><Pic user={u} size={48} /></Link>
+            <span>
+              <b>🎂 It&apos;s <Link href={`/${u.username}`}>{u.displayName}</Link>&apos;s birthday today!</b>
+              <span className="small muted">Leave them some birthday love.</span>
+            </span>
+            <Link href={`/${u.username}?bday=1#add-comment`} className="btn small-btn">Wish them HBD</Link>
+          </div>
+        ))}
 
         {!tookWeekly && (
           <Link href={`/surveys/${weekly.slug}`} className="box feed-item survey-prompt">

@@ -19,6 +19,9 @@ model User {
   gender   String @default("")
   age      Int?
   location String @default("")
+  birthMonth Int? // 1-12 (no year, so age stays private)
+  birthDay   Int? // 1-31
+  bdayPushYear Int? // last year frenz got the birthday notification (so it's sent once)
 
   aboutMe          String @default("")
   meet             String @default("")

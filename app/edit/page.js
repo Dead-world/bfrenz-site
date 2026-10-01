@@ -69,6 +69,24 @@ export default async function EditPage({ searchParams }) {
                 <tr><td className="lbl">Mood</td><td><input type="text" name="mood" defaultValue={me.mood} maxLength={60} placeholder="chillin 😎" /></td></tr>
                 <tr><td className="lbl">Gender</td><td><input type="text" name="gender" defaultValue={me.gender} maxLength={30} /></td></tr>
                 <tr><td className="lbl">Age</td><td><input type="number" name="age" defaultValue={me.age ?? ''} min={13} max={120} style={{ width: 90 }} /></td></tr>
+                <tr>
+                  <td className="lbl">Birthday</td>
+                  <td>
+                    <div className="actions">
+                      <select name="birthMonth" defaultValue={me.birthMonth ?? ''} aria-label="Birthday month">
+                        <option value="">Month</option>
+                        {['January','February','March','April','May','June','July','August','September','October','November','December'].map((m, i) => (
+                          <option key={m} value={i + 1}>{m}</option>
+                        ))}
+                      </select>
+                      <select name="birthDay" defaultValue={me.birthDay ?? ''} aria-label="Birthday day">
+                        <option value="">Day</option>
+                        {Array.from({ length: 31 }, (_, i) => <option key={i} value={i + 1}>{i + 1}</option>)}
+                      </select>
+                    </div>
+                    <div className="small muted">Your frenz get a heads-up on your birthday. The year is never shown.</div>
+                  </td>
+                </tr>
                 <tr><td className="lbl">Location</td><td><input type="text" name="location" defaultValue={me.location} maxLength={80} placeholder="City, State" /></td></tr>
                 <tr>
                   <td className="lbl">Artist</td>

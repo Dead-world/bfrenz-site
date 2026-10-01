@@ -1050,3 +1050,23 @@ label.check { display: flex; gap: 8px; align-items: center; font-size: 14px; cur
   .survey-prompt .btn { display: none; }
 }
 .im-dot.away { background: #ffcf66; }
+
+/* ================= birthdays + Top 8 ================= */
+.bday-card { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-color: rgba(255, 79, 216, 0.45); background: linear-gradient(90deg, rgba(255, 79, 216, 0.12), transparent 70%), var(--surface); }
+.bday-card > span { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.bday-card .pic { width: 48px; height: 48px; border-radius: 12px; object-fit: cover; box-shadow: 0 0 0 2px #ff4fd8; }
+.bday-card.bday-me { border-color: var(--orange); background: linear-gradient(90deg, rgba(255, 122, 26, 0.18), rgba(255, 79, 216, 0.1) 60%, transparent), var(--surface); }
+.bday-card > .bday-emoji { flex: none; }
+.bday-emoji { font-size: 34px; animation: bday-bounce 1.2s ease-in-out infinite; }
+@keyframes bday-bounce { 50% { transform: translateY(-4px) rotate(-6deg); } }
+.bday-banner { margin: 2px 0 10px; padding: 8px 12px; border-radius: var(--radius-sm); font-weight: 700; text-align: center; color: #fff; background: linear-gradient(90deg, #ff7a1a, #ff4fd8, #8a5cff, #ff4fd8, #ff7a1a); background-size: 200% 100%; animation: bday-shine 4s linear infinite; }
+@keyframes bday-shine { to { background-position: -200% 0; } }
+.bday-list { display: flex; flex-direction: column; gap: 6px; }
+.in-top-of { display: flex; flex-wrap: wrap; gap: 6px; }
+.in-top-chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px 3px 3px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--line); text-decoration: none; color: var(--text); }
+.in-top-chip:hover { border-color: var(--orange); }
+.in-top-chip .pic { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; }
+.in-top-chip b { font-size: 11px; color: var(--orange-hot); }
+.in-top-chip b.crown { color: #ffcf66; }
+@media (max-width: 640px) { .bday-card .btn { padding-left: 10px; padding-right: 10px; } }
+@media (prefers-reduced-motion: reduce) { .bday-emoji, .bday-banner { animation: none; } }

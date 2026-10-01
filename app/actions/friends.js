@@ -101,11 +101,38 @@ export async function saveTop8(formData) {
   const ok = new Set(valid.map((f) => (f.requesterId === me.id ? f.addresseeId : f.requesterId)));
   const final = picks.filter((id) => ok.has(id));
 
+  const before = await prisma.topFriend.findMany({ where: { userId: me.id }, select: { friendId: true, position: true } });
+
   await prisma.$transaction([
     prisma.topFriend.deleteMany({ where: { userId: me.id } }),
     prisma.topFriend.createMany({
       data: final.map((friendId, i) => ({ userId: me.id, friendId, position: i + 1 })),
     }),
   ]);
+  top8Alerts(me, before, final);
   redirect('/edit/top8?saved=1');
+}
+
+/**
+ * Top 8 drama, delivered as notifications:
+ * added to someone's Top 8, moved up to #1, or bumped out.
+ */
+function top8Alerts(me, before, after) {
+  const was = new Map(before.map((t) => [t.friendId, t.position]));
+  const page = `/${me.username}#top8`;
+  after.forEach((id, i) => {
+    const pos = i + 1;
+    const old = was.get(id);
+    if (pos === 1 && old !== 1) {
+      notify(id, { title: `👑 You're #1 in ${me.displayName}'s Top 8!`, body: 'Top spot. Big moves.', url: page, tag: `top8-${me.id}` });
+    } else if (!old) {
+      notify(id, { title: `🔥 ${me.displayName} added you to their Top 8`, body: `You're #${pos}. Go see.`, url: page, tag: `top8-${me.id}` });
+    }
+  });
+  const still = new Set(after);
+  for (const t of before) {
+    if (!still.has(t.friendId)) {
+      notify(t.friendId, { title: `😬 You got bumped from ${me.displayName}'s Top 8`, body: 'Better leave a comment and win your spot back.', url: `/${me.username}`, tag: `top8-${me.id}` });
+    }
+  }
 }

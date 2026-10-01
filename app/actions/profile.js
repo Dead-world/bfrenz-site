@@ -22,6 +22,10 @@ export async function updateInfo(formData) {
   const me = await requireUser();
   const ageRaw = str(formData, 'age', 3);
   const age = ageRaw ? Math.min(Math.max(parseInt(ageRaw, 10) || 0, 13), 120) : null;
+  const bm = parseInt(str(formData, 'birthMonth', 2), 10);
+  const bd = parseInt(str(formData, 'birthDay', 2), 10);
+  const DAYS = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  const hasBday = bm >= 1 && bm <= 12 && bd >= 1 && bd <= DAYS[bm - 1];
   await prisma.user.update({
     where: { id: me.id },
     data: {
@@ -30,6 +34,8 @@ export async function updateInfo(formData) {
       mood: str(formData, 'mood', 60),
       gender: str(formData, 'gender', 30),
       age,
+      birthMonth: hasBday ? bm : null,
+      birthDay: hasBday ? bd : null,
       location: str(formData, 'location', 80),
       aboutMe: str(formData, 'aboutMe', 20000),
       meet: str(formData, 'meet', 10000),

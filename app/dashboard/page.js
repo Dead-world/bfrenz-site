@@ -10,6 +10,8 @@ import FeaturedMusic from '@/components/FeaturedMusic';
 import AdSlot from '@/components/AdSlot';
 import Badges from '@/components/Badges';
 import Notice from '@/components/Notice';
+import { birthdaysToday, upcomingBirthdays, birthdayLabel } from '@/lib/birthdays';
+import { hiddenUserIds } from '@/lib/moderation';
 
 export const metadata = { title: 'Dashboard | BFRENZ.com', robots: { index: false } };
 
@@ -18,13 +20,23 @@ export default async function DashboardPage({ searchParams }) {
   const sp = await searchParams;
   const friendIds = await getFriendIds(me.id);
 
-  const [unread, pending, bulletins, top8, coolNew, commentCount] = await Promise.all([
+  const hidden = await hiddenUserIds(me.id);
+  const visibleFrenz = friendIds.filter((id) => !hidden.includes(id));
+  const [unread, pending, bulletins, top8, coolNew, commentCount, bdayToday, bdaySoon, inTopOf] = await Promise.all([
     prisma.message.count({ where: { recipientId: me.id, read: false, recipientDeleted: false } }),
     prisma.friendship.count({ where: { addresseeId: me.id, status: 'PENDING' } }),
     bulletinsFor(me.id, friendIds, 10),
     getTop8(me.id, topFriendLimit(me)),
     coolNewPeople(5, me.id),
     prisma.comment.count({ where: { profileId: me.id } }),
+    birthdaysToday(visibleFrenz),
+    upcomingBirthdays(visibleFrenz, 7),
+    prisma.topFriend.findMany({
+      where: { friendId: me.id, user: { bannedAt: null }, ...(hidden.length ? { userId: { notIn: hidden } } : {}) },
+      orderBy: { position: 'asc' },
+      take: 30,
+      include: { user: { select: { id: true, username: true, displayName: true, avatarUrl: true } } },
+    }),
   ]);
 
   return (
@@ -83,6 +95,45 @@ export default async function DashboardPage({ searchParams }) {
               <br />
               Friends: <b>{friendIds.length}</b> &middot; Comments: <b>{commentCount}</b>
             </div>
+          </div>
+        </div>
+
+        {(bdayToday.length > 0 || bdaySoon.length > 0) && (
+          <div className="box">
+            <div className="box-h">🎂 Birthdays</div>
+            <div className="box-b small bday-list">
+              {bdayToday.map((u) => (
+                <div key={u.id}>
+                  <b><Link href={`/${u.username}`}>{u.displayName}</Link></b> is celebrating today!{' '}
+                  <Link href={`/${u.username}?bday=1#add-comment`}>Wish them HBD &raquo;</Link>
+                </div>
+              ))}
+              {bdaySoon.map((u) => (
+                <div key={u.id}>
+                  <Link href={`/${u.username}`}>{u.displayName}</Link>{' '}
+                  <span className="muted">{birthdayLabel(u)} · {u.inDays === 1 ? 'tomorrow' : `in ${u.inDays} days`}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="box">
+          <div className="box-h">Who has me in their Top 8</div>
+          <div className="box-b small">
+            {inTopOf.length === 0 ? (
+              <span className="muted">Nobody yet. Leave some comments and earn your spot 😉</span>
+            ) : (
+              <div className="in-top-of">
+                {inTopOf.map((t) => (
+                  <Link key={t.id} href={`/${t.user.username}#top8`} className="in-top-chip" title={`#${t.position} in ${t.user.displayName}'s Top 8`}>
+                    <Pic user={t.user} size={28} />
+                    <span>{t.user.displayName}</span>
+                    <b className={t.position === 1 ? 'crown' : ''}>{t.position === 1 ? '👑 #1' : `#${t.position}`}</b>
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 

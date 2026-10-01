@@ -25,6 +25,7 @@ import { after } from 'next/server';
 import { headers } from 'next/headers';
 import HitCounter from '@/components/HitCounter';
 import { counterStyle, recordVisit } from '@/lib/visitors';
+import { birthdayLabel, isBirthdayToday } from '@/lib/birthdays';
 
 async function loadUser(username) {
   return prisma.user.findUnique({ where: { username: String(username).toLowerCase() } });
@@ -113,6 +114,7 @@ export default async function ProfilePage({ params, searchParams }) {
   const canComment = !!me && (isMe || isFriend);
   const back = `/${user.username}`;
   const interests = INTERESTS.filter(([, key]) => user[key]);
+  const bdayToday = isBirthdayToday(user);
 
   // Shop theme: the owner can preview any theme with ?preview=slug; visitors see the applied one.
   const previewing = isMe && sp?.preview ? getTheme(String(sp.preview)) : null;
@@ -158,6 +160,7 @@ export default async function ProfilePage({ params, searchParams }) {
           <div className="box profile-card">
             <div className="box-b">
               <h1 className="bigname profile-name">{user.displayName}<Badges user={user} /></h1>
+              {bdayToday && <div className="bday-banner">🎂 It&apos;s {isMe ? 'your' : `${user.displayName}'s`} birthday today! 🎉</div>}
               {user.isArtist && (
                 <div className="artist-line">♫ Artist{user.genre ? ` · ${user.genre}` : ''}</div>
               )}
@@ -168,6 +171,7 @@ export default async function ProfilePage({ params, searchParams }) {
                   {user.gender && <div>{user.gender}</div>}
                   {user.age && <div>{user.age} years old</div>}
                   {user.location && <div>{user.location}</div>}
+                  {user.birthMonth && user.birthDay && <div>🎂 {birthdayLabel(user)}</div>}
                   <div style={{ marginTop: 6 }}>
                     {isOnline(user) ? (
                       <span className="online">Online now</span>
@@ -380,7 +384,15 @@ export default async function ProfilePage({ params, searchParams }) {
               <form action={addComment} className="box-b" id="add-comment">
                 <input type="hidden" name="profileId" value={user.id} />
                 <input type="hidden" name="back" value={back} />
-                <textarea name="body" rows={3} maxLength={5000} placeholder={`Say something to ${user.displayName}… (HTML welcome)`} required />
+                <textarea
+                  name="body"
+                  rows={3}
+                  maxLength={5000}
+                  placeholder={`Say something to ${user.displayName}… (HTML welcome)`}
+                  defaultValue={!isMe && sp?.bday ? `Happy birthday ${user.displayName}!! 🎂🎉 Hope your day is amazing!` : ''}
+                  autoFocus={!!sp?.bday}
+                  required
+                />
                 <div style={{ marginTop: 8 }}>
                   <button className="btn small-btn" type="submit">Post comment</button>
                 </div>
