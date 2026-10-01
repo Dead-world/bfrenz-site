@@ -920,3 +920,33 @@ body { padding-bottom: 56px; }
 }
 .delete-form label { display: grid; gap: 6px; }
 .delete-form input { max-width: 320px; }
+
+/* ================= get the app ================= */
+.app-page { max-width: 640px; margin: 0 auto; }
+.app-hero { text-align: center; margin: 10px 0 22px; }
+.app-hero-icon { border-radius: 30px; box-shadow: 0 20px 60px rgba(255, 122, 26, 0.35); }
+.app-hero h1 { font-family: var(--display); font-size: 34px; margin: 18px 0 6px; letter-spacing: -1px; }
+.install-wrap { display: grid; gap: 14px; margin-bottom: 22px; }
+.install-btn { justify-self: center; font-size: 18px; padding: 14px 34px; box-shadow: 0 10px 30px rgba(255, 122, 26, 0.4); }
+.install-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 18px; }
+.install-card.ok { text-align: center; border-color: rgba(61, 220, 132, 0.4); }
+.install-big { font-size: 40px; color: #3ddc84; }
+.install-steps { margin: 10px 0 0; padding-left: 22px; line-height: 1.9; }
+.ios-share { display: inline-block; border: 1.5px solid currentColor; border-radius: 5px; padding: 0 4px; font-size: 12px; }
+.app-perks { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 18px; }
+.app-perks > div { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 14px; display: grid; gap: 4px; text-align: center; }
+.app-perks span { font-size: 26px; }
+.app-perks small { color: var(--text-dim); }
+.app-banner {
+  position: fixed; left: 10px; right: 10px; bottom: 62px; z-index: 990; display: flex; align-items: center; gap: 10px;
+  background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px; padding: 10px 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5); animation: menu-in 0.25s ease-out;
+}
+.app-banner img { border-radius: 10px; }
+.app-banner-text { flex: 1; min-width: 0; display: grid; line-height: 1.25; }
+.app-banner-text span { font-size: 12px; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.app-banner-x { background: none; border: 0; color: var(--text-dim); font-size: 16px; padding: 6px; cursor: pointer; }
+.not-in-app { font-style: italic; }
+@media (max-width: 560px) {
+  .app-perks { grid-template-columns: 1fr; }
+}

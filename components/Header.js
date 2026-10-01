@@ -33,6 +33,7 @@ export default async function Header() {
         { href: '/edit', label: 'Edit Profile', icon: '✎' },
         { href: '/shop', label: 'Shop', icon: '🛍' },
         { href: '/invite', label: 'Invite', icon: '✦' },
+        { href: '/app', label: 'Get the app', icon: '📲' },
         ...(pending > 0 ? [{ href: '/requests', label: 'Friend Requests', icon: '➕', count: pending, alert: true }] : []),
         ...(admin ? [{ href: '/admin', label: 'Admin', icon: '🛡', count: reports, alert: reports > 0 }] : []),
       ]
@@ -40,6 +41,7 @@ export default async function Header() {
         { href: '/', label: 'Home', icon: '🏠' },
         { href: '/browse', label: 'Browse', icon: '🔍' },
         { href: '/shop', label: 'Shop', icon: '🛍' },
+        { href: '/app', label: 'Get the app', icon: '📲' },
         { href: '/help', label: 'Help', icon: '?' },
         { href: '/login', label: 'Log in', icon: '→' },
         { href: '/signup', label: 'Join free', icon: '✦', alert: true },

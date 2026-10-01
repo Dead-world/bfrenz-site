@@ -3,6 +3,7 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import Messenger from '@/components/Messenger';
 import PwaRegister from '@/components/PwaRegister';
+import AppBanner from '@/components/AppBanner';
 import { getCurrentUser } from '@/lib/auth';
 
 // Google AdSense publisher id (public, safe to have in code). NEXT_PUBLIC_ADSENSE_CLIENT overrides it.
@@ -64,7 +65,7 @@ export default async function RootLayout({ children }) {
           <Header />
           <main className="content">{children}</main>
           <footer>
-            <Link href="/help">Help</Link> &middot; <Link href="/browse">Browse</Link> &middot;{' '}
+            <Link href="/app">📲 Get the app</Link> &middot; <Link href="/help">Help</Link> &middot; <Link href="/browse">Browse</Link> &middot;{' '}
             <Link href="/shop">Shop</Link> &middot; <Link href="/shop#tip">Support BFRENZ</Link> &middot;{' '}
             {process.env.MERCH_URL && (
               <>
@@ -78,6 +79,7 @@ export default async function RootLayout({ children }) {
           </footer>
         </div>
         <PwaRegister />
+        <AppBanner />
         {me && (
           <Messenger me={{ id: me.id, name: me.displayName, pic: me.avatarUrl || '/no-pic.svg' }} />
         )}
