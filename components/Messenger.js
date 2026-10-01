@@ -77,7 +77,8 @@ export default function Messenger({ me }) {
   // Restore layout after the first render (avoids hydration mismatches).
   useEffect(() => {
     setListOpen(load('im.listOpen', false));
-    setWindows(load('im.windows', []));
+    const saved = load('im.windows', []);
+    setWindows(Array.isArray(saved) ? saved.filter((w) => w && typeof w.id === 'string').slice(0, MAX_WINDOWS) : []);
     setMuted(load('im.muted', false));
     setShowOffline(load('im.showOffline', true));
     const mq = window.matchMedia('(max-width: 640px)');
@@ -88,10 +89,19 @@ export default function Messenger({ me }) {
     setReady(true);
     return () => mq.removeEventListener?.('change', onMq);
   }, []);
-  useEffect(() => ready && save('im.listOpen', listOpen), [listOpen, ready]);
-  useEffect(() => ready && save('im.windows', windows), [windows, ready]);
-  useEffect(() => ready && save('im.muted', muted), [muted, ready]);
-  useEffect(() => ready && save('im.showOffline', showOffline), [showOffline, ready]);
+  // Effects must return nothing (or a cleanup function), so these use full blocks.
+  useEffect(() => {
+    if (ready) save('im.listOpen', listOpen);
+  }, [listOpen, ready]);
+  useEffect(() => {
+    if (ready) save('im.windows', windows);
+  }, [windows, ready]);
+  useEffect(() => {
+    if (ready) save('im.muted', muted);
+  }, [muted, ready]);
+  useEffect(() => {
+    if (ready) save('im.showOffline', showOffline);
+  }, [showOffline, ready]);
 
   const maxWindows = narrow ? 1 : MAX_WINDOWS;
 
