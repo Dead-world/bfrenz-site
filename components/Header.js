@@ -21,7 +21,7 @@ export default async function Header() {
   // One list of links: shown as the menu bar on computers and inside the ☰ menu on phones.
   const links = me
     ? [
-        { href: '/home', label: 'Home', icon: '🏠' },
+        { href: '/home', label: 'Feed', icon: '📰' },
         { href: '/dashboard', label: 'Dashboard', icon: '☰' },
         { href: `/${me.username}`, label: 'Profile', icon: '👤' },
         { href: `/${me.username}/friends`, label: 'Friends', icon: '★' },

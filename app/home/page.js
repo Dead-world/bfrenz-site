@@ -12,7 +12,7 @@ import { getFeed } from '@/lib/feed';
 import { isAdmin } from '@/lib/moderation';
 import { videoMaxMb } from '@/lib/video';
 
-export const metadata = { title: 'Home | BFRENZ.com' };
+export const metadata = { title: 'Feed | BFRENZ.com' };
 
 export default async function HomePage({ searchParams }) {
   const me = await requireUser();
