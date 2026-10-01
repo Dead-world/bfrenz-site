@@ -24,6 +24,10 @@ async function ownerOf(kind, id, me) {
       return (await prisma.photo.findUnique({ where: { id }, select: { userId: true } }))?.userId;
     case 'video':
       return (await prisma.video.findUnique({ where: { id }, select: { userId: true } }))?.userId;
+    case 'post':
+      return (await prisma.post.findUnique({ where: { id }, select: { authorId: true } }))?.authorId;
+    case 'postcomment':
+      return (await prisma.postComment.findUnique({ where: { id }, select: { authorId: true } }))?.authorId;
     case 'message': {
       const m = await prisma.message.findUnique({ where: { id }, select: { senderId: true, recipientId: true } });
       return m && m.recipientId === me.id ? m.senderId : null;
@@ -161,6 +165,12 @@ async function deleteContent(kind, id) {
     case 'video':
       await prisma.video.deleteMany({ where: { id } });
       break;
+    case 'post':
+      await prisma.post.deleteMany({ where: { id } });
+      break;
+    case 'postcomment':
+      await prisma.postComment.deleteMany({ where: { id } });
+      break;
     case 'profile':
       // "Delete" on a profile report wipes the profile's text, pic, song and CSS (not the account).
       await prisma.user.updateMany({
@@ -231,6 +241,8 @@ export async function banUser(formData) {
       prisma.photo.deleteMany({ where: { userId } }),
       prisma.video.deleteMany({ where: { userId } }),
       prisma.chatMessage.deleteMany({ where: { fromId: userId } }),
+      prisma.post.deleteMany({ where: { authorId: userId } }),
+      prisma.postComment.deleteMany({ where: { authorId: userId } }),
     );
   }
   await prisma.$transaction(ops);

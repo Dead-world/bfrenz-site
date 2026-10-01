@@ -9,6 +9,12 @@ import { coolNewPeople, bulletinsFor } from '@/lib/featured';
 import FeaturedMusic from '@/components/FeaturedMusic';
 import AdSlot from '@/components/AdSlot';
 import Badges from '@/components/Badges';
+import PostComposer from '@/components/PostComposer';
+import FeedItem from '@/components/FeedItem';
+import Notice from '@/components/Notice';
+import { getFeed } from '@/lib/feed';
+import { isAdmin } from '@/lib/moderation';
+import { videoMaxMb } from '@/lib/video';
 
 export const metadata = { title: 'Home | BFRENZ.com' };
 
@@ -17,10 +23,13 @@ export default async function HomePage({ searchParams }) {
   const sp = await searchParams;
   const friendIds = await getFriendIds(me.id);
 
-  const [unread, pending, bulletins, top8, coolNew, commentCount] = await Promise.all([
+  const beforeRaw = sp?.before ? new Date(String(sp.before)) : null;
+  const before = beforeRaw && !isNaN(beforeRaw) ? beforeRaw : null;
+  const [unread, pending, feed, sponsored, top8, coolNew, commentCount] = await Promise.all([
     prisma.message.count({ where: { recipientId: me.id, read: false, recipientDeleted: false } }),
     prisma.friendship.count({ where: { addresseeId: me.id, status: 'PENDING' } }),
-    bulletinsFor(me.id, friendIds, 10),
+    getFeed(me, before),
+    before ? [] : bulletinsFor(me.id, friendIds, 0).then((list) => list.filter((b) => b._sponsored)),
     getTop8(me.id, topFriendLimit(me)),
     coolNewPeople(5, me.id),
     prisma.comment.count({ where: { profileId: me.id } }),
@@ -76,7 +85,7 @@ export default async function HomePage({ searchParams }) {
             )}
             <div className="small" style={{ lineHeight: 1.8 }}>
               <Link href="/mail">Inbox</Link> | <Link href="/mail/sent">Sent</Link> |{' '}
-              <Link href="/mail/compose">Compose</Link>
+              <Link href="/mail/compose">Compose</Link> | <Link href="/bulletins">Bulletins</Link>
               <br />
               Profile views: <b>{me.profileViews.toLocaleString()}</b>
               <br />
@@ -103,58 +112,15 @@ export default async function HomePage({ searchParams }) {
             </div>
           </div>
         </div>
-        <FeaturedMusic />
-      </div>
-
-      <div className="col-right">
         <div className="box">
           <div className="box-h">
-            My Bulletin Space
-            <Link href="/bulletins?post=1" className="right">+ Post bulletin</Link>
-          </div>
-          {bulletins.length === 0 ? (
-            <div className="box-b small">
-              No bulletins yet. Add some frenz or <Link href="/bulletins?post=1">post the first one</Link>!
-            </div>
-          ) : (
-            <table className="list">
-              <thead>
-                <tr>
-                  <th>From</th>
-                  <th>Date</th>
-                  <th>Bulletin</th>
-                </tr>
-              </thead>
-              <tbody>
-                {bulletins.map((b) => (
-                  <tr key={b.id}>
-                    <td>
-                      <Link href={`/${b.author.username}`}>{b.author.displayName}</Link>
-                    </td>
-                    <td className="muted" style={{ whiteSpace: 'nowrap' }}>{fmtDate(b.createdAt)}</td>
-                    <td>
-                      {b._sponsored && <span className="sponsored-tag">Sponsored</span>}
-                      <Link href={`/bulletins/${b.id}`}>{b.subject}</Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-          <div className="small" style={{ padding: 6, textAlign: 'right' }}>
-            <Link href="/bulletins">View all bulletins</Link>
-          </div>
-        </div>
-
-        <div className="box">
-          <div className="box-h">{me.displayName}&apos;s Friend Space</div>
-          <div className="friend-count">
-            You have <span className="red">{friendIds.length}</span> {friendIds.length === 1 ? 'friend' : 'friends'}.
+            My Friend Space
+            <Link href={`/${me.username}/friends`} className="right small">All ({friendIds.length})</Link>
           </div>
           {top8.length > 0 ? (
-            <div className="top8">
+            <div className="top8 top8-compact">
               {top8.map((f) => (
-                <FriendTile key={f.id} user={f} />
+                <FriendTile key={f.id} user={f} size={60} />
               ))}
             </div>
           ) : (
@@ -163,7 +129,56 @@ export default async function HomePage({ searchParams }) {
             </div>
           )}
         </div>
-        {!isSupporter(me) && <AdSlot />}
+        <FeaturedMusic />
+      </div>
+
+      <div className="col-right">
+        <Notice sp={sp} />
+        {sp?.posted && <div className="notice ok">Posted!</div>}
+        {!before && (
+          <PostComposer
+            key={String(Date.now())}
+            me={{ name: me.displayName, pic: me.avatarUrl || '/no-pic.svg' }}
+            videoMaxMb={videoMaxMb()}
+          />
+        )}
+
+        {sponsored.map((b) => (
+          <div key={b.id} className="box feed-item feed-event">
+            <div className="feed-bulletin" style={{ padding: '12px 16px' }}>
+              <span className="sponsored-tag">Sponsored</span>
+              <Link href={`/bulletins/${b.id}`}><b>{b.subject}</b></Link>
+              <span className="small muted"> from <Link href={`/${b.author.username}`}>{b.author.displayName}</Link></span>
+            </div>
+          </div>
+        ))}
+
+        {feed.items.length === 0 ? (
+          <div className="box">
+            <div className="box-b">
+              {before ? (
+                <>That&apos;s everything! <Link href="/home">Back to the top</Link></>
+              ) : friendIds.length === 0 ? (
+                <>Your feed is empty because you don&apos;t have frenz yet. <Link href="/browse">Find some</Link> or{' '}
+                <Link href="/invite">invite yours</Link>, then their posts, photos and songs show up here.</>
+              ) : (
+                <>Nothing here yet. Post something above to get it started!</>
+              )}
+            </div>
+          </div>
+        ) : (
+          feed.items.map((item, i) => (
+            <div key={item.id}>
+              <FeedItem item={item} me={me} back={before ? `/home?before=${encodeURIComponent(before.toISOString())}` : '/home'} admin={isAdmin(me)} />
+              {i === 4 && !isSupporter(me) && <AdSlot />}
+            </div>
+          ))
+        )}
+        {feed.next && (
+          <div className="pager">
+            <Link href={`/home?before=${encodeURIComponent(feed.next)}`}>Older posts &raquo;</Link>
+          </div>
+        )}
       </div>
     </div>
     </>

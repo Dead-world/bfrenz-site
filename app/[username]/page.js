@@ -8,6 +8,8 @@ import { fmtDate, fmtDay, isOnline, SITE_DOMAIN } from '@/lib/util';
 import { FriendTile, Pic } from '@/components/Avatar';
 import SongPlayer from '@/components/SongPlayer';
 import VideoPlayer from '@/components/VideoPlayer';
+import { moodLabel } from '@/lib/moods';
+import { timeAgo } from '@/lib/util';
 import Notice from '@/components/Notice';
 import { sendFriendRequest } from '@/app/actions/friends';
 import { addComment, deleteComment } from '@/app/actions/comments';
@@ -90,7 +92,15 @@ export default async function ProfilePage({ params, searchParams }) {
     me && !isMe ? getFriendship(me.id, user.id) : null,
   ]);
 
-  const profileVideo = await prisma.video.findFirst({ where: { userId: user.id, onProfile: true } });
+  const [profileVideo, status] = await Promise.all([
+    prisma.video.findFirst({ where: { userId: user.id, onProfile: true } }),
+    // Their latest status update (text only) shows on the profile, like the old status line.
+    prisma.post.findFirst({
+      where: { authorId: user.id, body: { not: '' } },
+      orderBy: { createdAt: 'desc' },
+      select: { id: true, body: true, createdAt: true },
+    }),
+  ]);
   const isFriend = friendship?.status === 'ACCEPTED';
   const iRequested = friendship?.status === 'PENDING' && friendship.requesterId === me?.id;
   const theyRequested = friendship?.status === 'PENDING' && friendship.addresseeId === me?.id;
@@ -163,9 +173,15 @@ export default async function ProfilePage({ params, searchParams }) {
                   </div>
                 </div>
               </div>
+              {status && (
+                <div className="status-line">
+                  <b>{user.displayName}</b> {status.body.length > 160 ? status.body.slice(0, 157) + '…' : status.body}
+                  <span className="small muted"> &middot; {timeAgo(status.createdAt)}</span>
+                </div>
+              )}
               {user.mood && (
                 <div className="mood">
-                  <b>Mood:</b> {user.mood}
+                  <b>Mood:</b> {moodLabel(user.mood)}
                 </div>
               )}
               <div className="small muted" style={{ marginTop: 10 }}>

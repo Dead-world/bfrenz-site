@@ -80,6 +80,7 @@ export async function updateSong(formData) {
     where: { id: me.id },
     data: {
       songUrl,
+      ...(songUrl && songUrl !== me.songUrl ? { songUpdatedAt: new Date() } : {}),
       songTitle: str(formData, 'songTitle', 100),
       songArtist: str(formData, 'songArtist', 100),
     },

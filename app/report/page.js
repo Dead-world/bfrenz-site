@@ -14,6 +14,8 @@ const WHAT = {
   message: 'this message',
   photo: 'this photo',
   video: 'this video',
+  post: 'this post',
+  postcomment: 'this comment',
 };
 
 export default async function ReportPage({ searchParams }) {

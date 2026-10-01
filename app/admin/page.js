@@ -26,7 +26,7 @@ function BanForm({ user, back }) {
         <input type="hidden" name="back" value={back} />
         <input type="text" name="reason" maxLength={300} placeholder="Reason (only admins see this)" />
         <label className="small">
-          <input type="checkbox" name="wipe" /> Also delete all their comments, bulletins, messages, photos and videos
+          <input type="checkbox" name="wipe" /> Also delete everything they posted (comments, bulletins, posts, messages, IMs, photos, videos)
         </label>
         <div><button className="btn small-btn danger" type="submit">Ban member</button></div>
       </form>
@@ -195,7 +195,7 @@ export default async function AdminPage({ searchParams }) {
                         <input type="hidden" name="action" value="remove" />
                         <input type="hidden" name="back" value={back} />
                         <button className="btn small-btn" type="submit">
-                          {r.kind === 'profile' ? 'Clear profile' : `Remove ${r.kind}`}
+                          {r.kind === 'profile' ? 'Clear profile' : r.kind === 'postcomment' ? 'Remove comment' : `Remove ${r.kind}`}
                         </button>
                       </form>
                     )}
