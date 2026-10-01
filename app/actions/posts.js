@@ -10,6 +10,7 @@ import { songSource } from '@/lib/songEmbed';
 import { MOODS } from '@/lib/moods';
 import { canSeePost } from '@/lib/feed';
 import { isAdmin } from '@/lib/moderation';
+import { notify } from '@/lib/push';
 
 const BLOB = /^https:\/\/[a-z0-9-]+\.public\.blob\.vercel-storage\.com\//i;
 const MAX_IMAGES = 4;
@@ -84,7 +85,12 @@ export async function toggleKudos(formData) {
   if (post) {
     const existing = await prisma.kudos.findUnique({ where: { postId_userId: { postId: post.id, userId: me.id } } });
     if (existing) await prisma.kudos.delete({ where: { id: existing.id } });
-    else await prisma.kudos.create({ data: { postId: post.id, userId: me.id } }).catch(() => {});
+    else {
+      const made = await prisma.kudos.create({ data: { postId: post.id, userId: me.id } }).catch(() => null);
+      if (made && post.authorId !== me.id) {
+        notify(post.authorId, { title: `★ ${me.displayName} gave your post kudos`, body: post.body.slice(0, 100), url: `/post/${post.id}`, tag: `kudos-${post.id}` });
+      }
+    }
   }
   redirect(`${back(formData)}#${post ? `post-${post.id}` : ''}`);
 }
@@ -101,6 +107,9 @@ export async function addPostComment(formData) {
   });
   if (recent >= 15) redirect(withParam(to, 'error', 'Slow down! Too many comments in a minute.'));
   await prisma.postComment.create({ data: { postId: post.id, authorId: me.id, body } });
+  if (post.authorId !== me.id) {
+    notify(post.authorId, { title: `💬 ${me.displayName} commented on your post`, body: body.slice(0, 110), url: `/post/${post.id}` });
+  }
   redirect(`${to}#post-${post.id}`);
 }
 

@@ -7,6 +7,7 @@ import { getFriendship } from '@/lib/friends';
 import { safeBack, withParam } from '@/lib/util';
 import { topFriendLimit } from '@/lib/perks';
 import { isBlockedEither } from '@/lib/moderation';
+import { notify } from '@/lib/push';
 
 export async function sendFriendRequest(formData) {
   const me = await requireUser();
@@ -21,11 +22,13 @@ export async function sendFriendRequest(formData) {
   const existing = await getFriendship(me.id, targetId);
   if (!existing) {
     await prisma.friendship.create({ data: { requesterId: me.id, addresseeId: targetId } });
+    notify(targetId, { title: '➕ New friend request', body: `${me.displayName} wants to be your fren!`, url: '/requests', tag: 'requests' });
     redirect(withParam(back, 'requested', '1'));
   }
   // They already asked us: adding them back accepts it.
   if (existing.status === 'PENDING' && existing.addresseeId === me.id) {
     await prisma.friendship.update({ where: { id: existing.id }, data: { status: 'ACCEPTED' } });
+    notify(existing.requesterId, { title: '🤝 You have a new fren', body: `${me.displayName} accepted your friend request.`, url: `/${me.username}` });
   }
   redirect(back);
 }
@@ -36,8 +39,10 @@ export async function respondToRequest(formData) {
   const accept = formData.get('accept') === '1';
   const req = await prisma.friendship.findUnique({ where: { id } });
   if (req && req.addresseeId === me.id && req.status === 'PENDING') {
-    if (accept) await prisma.friendship.update({ where: { id }, data: { status: 'ACCEPTED' } });
-    else await prisma.friendship.delete({ where: { id } });
+    if (accept) {
+      await prisma.friendship.update({ where: { id }, data: { status: 'ACCEPTED' } });
+      notify(req.requesterId, { title: '🤝 You have a new fren', body: `${me.displayName} accepted your friend request.`, url: `/${me.username}` });
+    } else await prisma.friendship.delete({ where: { id } });
   }
   redirect('/requests');
 }

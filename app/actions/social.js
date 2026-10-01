@@ -5,6 +5,7 @@ import { prisma } from '@/lib/db';
 import { requireUser } from '@/lib/auth';
 import { cleanUrl, str, withParam } from '@/lib/util';
 import { isBlockedEither } from '@/lib/moderation';
+import { notify } from '@/lib/push';
 
 // ---------- bulletins ----------
 
@@ -50,9 +51,10 @@ export async function sendMessage(formData) {
   });
   if (recentCount >= 10) redirect(withParam(back, 'error', 'Slow down! Too many messages in a minute.'));
 
-  await prisma.message.create({
+  const msg = await prisma.message.create({
     data: { senderId: me.id, recipientId: recipient.id, subject, body },
   });
+  notify(recipient.id, { title: `✉️ Mail from ${me.displayName}`, body: subject, url: `/mail/${msg.id}`, tag: 'mail' });
   redirect('/mail/sent?sent=1');
 }
 

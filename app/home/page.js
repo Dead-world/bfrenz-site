@@ -11,6 +11,8 @@ import Notice from '@/components/Notice';
 import { getFeed } from '@/lib/feed';
 import { isAdmin } from '@/lib/moderation';
 import { videoMaxMb } from '@/lib/video';
+import NotificationToggle from '@/components/NotificationToggle';
+import { vapidPublicKey } from '@/lib/push';
 
 export const metadata = { title: 'Feed | BFRENZ.com' };
 
@@ -42,6 +44,7 @@ export default async function HomePage({ searchParams }) {
       </div>
         <Notice sp={sp} />
         {sp?.posted && <div className="notice ok">Posted!</div>}
+        {!before && <NotificationToggle publicKey={vapidPublicKey()} compact />}
         {!before && (
           <PostComposer
             key={String(Date.now())}

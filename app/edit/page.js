@@ -6,6 +6,8 @@ import { Pic } from '@/components/Avatar';
 import { updateInfo, updateInterests, updatePic, updateSong, updateCss } from '@/app/actions/profile';
 import { removeAboutTemplate, restoreAboutBackup } from '@/app/actions/shop';
 import { getAboutTemplate } from '@/lib/aboutTemplates';
+import NotificationToggle from '@/components/NotificationToggle';
+import { vapidPublicKey } from '@/lib/push';
 
 export const metadata = { title: 'Edit Profile | BFRENZ.com' };
 
@@ -15,6 +17,7 @@ const TABS = [
   ['pic', 'Profile pic'],
   ['song', 'Profile song'],
   ['css', 'Customize (CSS)'],
+  ['notify', 'Notifications'],
 ];
 
 const CSS_EXAMPLE = `/* make the page yours */
@@ -199,6 +202,17 @@ export default async function EditPage({ searchParams }) {
             </div>
           </div>
         </form>
+      )}
+      {tab === 'notify' && (
+        <div className="box">
+          <div className="box-h">Notifications</div>
+          <div className="box-b">
+            <NotificationToggle publicKey={vapidPublicKey()} />
+            <p className="small muted" style={{ marginBottom: 0 }}>
+              Notifications are set per device. Turn them on separately on your phone and your computer.
+            </p>
+          </div>
+        </div>
       )}
     </div>
   );

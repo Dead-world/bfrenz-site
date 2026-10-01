@@ -6,6 +6,7 @@ import { requireUser } from '@/lib/auth';
 import { areFriends } from '@/lib/friends';
 import { safeBack, withParam } from '@/lib/util';
 import { isBlockedEither } from '@/lib/moderation';
+import { notify } from '@/lib/push';
 
 async function tooFast(me) {
   const recent = await prisma.comment.count({
@@ -48,10 +49,27 @@ export async function addComment(formData) {
     data: { profileId, authorId: me.id, body, parentId: parent?.id || null },
   });
 
+  // Notifications: the page owner hears about new comments; the original commenter hears about replies.
+  const snippet = body.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 110);
+  const owner = profileId !== me.id ? await prisma.user.findUnique({ where: { id: profileId }, select: { username: true } }) : null;
+  if (owner) {
+    notify(profileId, {
+      title: parent ? `↩︎ ${me.displayName} replied on your page` : `💬 ${me.displayName} commented on your page`,
+      body: snippet,
+      url: `/${owner.username}#c-${parent?.id || c.id}`,
+    });
+  }
+  if (parent && parent.authorId !== me.id && parent.authorId !== profileId) {
+    const page = await prisma.user.findUnique({ where: { id: profileId }, select: { username: true } });
+    notify(parent.authorId, { title: `↩︎ ${me.displayName} replied to your comment`, body: snippet, url: `/${page?.username || ''}#c-${parent.id}` });
+  }
+
   // Old-school "comment back": also drop the reply on the other person's page.
   if (parent && formData.get('alsoPost') === 'on' && parent.authorId !== me.id && parent.authorId !== profileId) {
     const ok = (await areFriends(me.id, parent.authorId)) && !(await isBlockedEither(me.id, parent.authorId));
-    if (ok) await prisma.comment.create({ data: { profileId: parent.authorId, authorId: me.id, body } });
+    if (ok) {
+      await prisma.comment.create({ data: { profileId: parent.authorId, authorId: me.id, body } });
+    }
   }
 
   redirect(`${back}#c-${parent?.id || c.id}`);
