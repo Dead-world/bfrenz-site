@@ -2,6 +2,7 @@ import './globals.css';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Messenger from '@/components/Messenger';
+import PwaRegister from '@/components/PwaRegister';
 import { getCurrentUser } from '@/lib/auth';
 
 // Google AdSense publisher id (public, safe to have in code). NEXT_PUBLIC_ADSENSE_CLIENT overrides it.
@@ -26,6 +27,8 @@ export const metadata = {
     title: 'BFRENZ.com | where your frenz are at',
     description: DESCRIPTION,
   },
+  applicationName: 'BFRENZ',
+  appleWebApp: { capable: true, title: 'BFRENZ', statusBarStyle: 'black-translucent' },
   keywords: ['BFRENZ', 'social network', 'Top 8', 'MySpace alternative', 'profile song', 'custom profile', 'friends'],
   // AdSense "meta tag" verification.
   other: { 'google-adsense-account': ADSENSE_CLIENT },
@@ -35,7 +38,7 @@ export const metadata = {
     : {}),
 };
 
-export const viewport = { themeColor: '#0b0b0c' };
+export const viewport = { themeColor: '#0b0b0c', viewportFit: 'cover' };
 
 export default async function RootLayout({ children }) {
   const me = await getCurrentUser();
@@ -68,11 +71,13 @@ export default async function RootLayout({ children }) {
                 <a href={process.env.MERCH_URL} target="_blank" rel="noopener noreferrer">Merch</a> &middot;{' '}
               </>
             )}
-            <Link href="/terms">Terms</Link> &middot; <Link href="/privacy">Privacy</Link>
+            <Link href="/terms">Terms</Link> &middot; <Link href="/privacy">Privacy</Link> &middot;{' '}
+            <Link href="/account/delete">Delete account</Link>
             <br />
             &copy; {new Date().getFullYear()} BFRENZ.com &mdash; all your frenz, one place.
           </footer>
         </div>
+        <PwaRegister />
         {me && (
           <Messenger me={{ id: me.id, name: me.displayName, pic: me.avatarUrl || '/no-pic.svg' }} />
         )}

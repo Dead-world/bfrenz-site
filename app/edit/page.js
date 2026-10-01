@@ -41,6 +41,7 @@ export default async function EditPage({ searchParams }) {
         <h1 className="bigname" style={{ margin: 0 }}>Edit your profile</h1>
         <div className="actions">
           <Link href="/blocked" className="btn ghost small-btn">Blocked members</Link>
+          <Link href="/account/delete" className="btn ghost small-btn">Delete account</Link>
           <Link href="/edit/top8" className="btn ghost small-btn">Change Top 8</Link>
           <Link href={`/${me.username}`} className="btn small-btn">View my profile</Link>
         </div>

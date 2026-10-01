@@ -918,3 +918,5 @@ body { padding-bottom: 56px; }
   .toplinks { margin-left: auto; }
   .feed-top h1 { font-size: 22px; }
 }
+.delete-form label { display: grid; gap: 6px; }
+.delete-form input { max-width: 320px; }

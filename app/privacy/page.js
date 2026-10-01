@@ -54,7 +54,9 @@ export default function PrivacyPage() {
 
         <h2>Your choices</h2>
         <p>
-          You can edit your profile at any time. To download or delete your account and data, email{' '}
+          You can edit your profile at any time, and delete your whole account yourself at{' '}
+          <a href="/delete-account">bfrenz.com/delete-account</a> (also under Edit Profile). Deleting removes your profile,
+          posts, photos, videos, messages and friends right away. To download your data, or if you can&apos;t log in, email{' '}
           <a href={`mailto:${CONTACT}`}>{CONTACT}</a>. We keep purchase records as long as the law requires.
         </p>
 

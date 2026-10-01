@@ -11,6 +11,7 @@ import { prisma } from '@/lib/db';
 import BuyButton from '@/components/BuyButton';
 import Notice from '@/components/Notice';
 import { fmtDay } from '@/lib/util';
+import { inAndroidApp } from '@/lib/appMode';
 
 export const metadata = { title: 'Shop | BFRENZ.com' };
 
@@ -38,6 +39,7 @@ export default async function ShopPage({ searchParams }) {
   const isOwner = !!me && (process.env.FOUNDER_USERNAME || '').toLowerCase() === me.username;
   const debug = isOwner && payments && sp?.debug ? await diagnoseSupporter(me) : null;
   const merch = process.env.MERCH_URL || '';
+  const androidApp = await inAndroidApp();
 
   const signIn = (label) => (
     <Link href="/login" className="btn small-btn">{label}</Link>
@@ -55,6 +57,11 @@ export default async function ShopPage({ searchParams }) {
         )}
       </div>
       <Notice sp={sp} />
+      {androidApp && (
+        <div className="notice ok">
+          Purchases aren&apos;t available in the Android app. Anything you already own (or earn from invites) works here.
+        </div>
+      )}
       {isOwner && payments && (
         <div className="small muted" style={{ margin: '-6px 0 12px' }}>
           Owner tools: <a href="/shop?debug=1#debug">check Supporter lookup</a>

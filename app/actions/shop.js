@@ -11,6 +11,7 @@ import { ABOUT_TEMPLATES, getAboutTemplate } from '@/lib/aboutTemplates';
 import { canUseTheme, canUseAboutTemplate, cleanColor, isSupporter, ownedThemeSlugs, ownedAboutSlugs } from '@/lib/perks';
 import { withParam } from '@/lib/util';
 import { findSubscription, syncSubscription } from '@/lib/fulfill';
+import { inAndroidApp } from '@/lib/appMode';
 
 function fail(path, msg) {
   redirect(withParam(path, 'error', msg));
@@ -60,6 +61,7 @@ export async function startCheckout(formData) {
   const safeBack = back.startsWith('/') && !back.startsWith('//') ? back : '/shop';
 
   if (!stripeConfigured()) fail(safeBack, "Payments aren't switched on yet. Check back soon!");
+  if (await inAndroidApp()) fail(safeBack, "Purchases aren't available in the Android app.");
 
   if (kind === 'supporter' && isSupporter(me) && me.stripeSubscription) {
     fail('/shop', "You're already a Supporter. Thank you!");
