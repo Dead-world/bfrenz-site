@@ -78,6 +78,8 @@ model User {
   photos           Photo[]
   albums           Album[]
   videos           Video[]
+  imsSent          ChatMessage[] @relation("imFrom")
+  imsReceived      ChatMessage[] @relation("imTo")
   blocksMade       Block[]      @relation("blocker")
   blocksReceived   Block[]      @relation("blocked")
   reportsMade      Report[]     @relation("reporter")
@@ -264,4 +266,20 @@ model Video {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
+}
+
+// Instant messages (the bottom-right messenger). Separate from Mail.
+model ChatMessage {
+  id        String    @id @default(cuid())
+  fromId    String
+  toId      String
+  body      String
+  createdAt DateTime  @default(now())
+  readAt    DateTime?
+
+  from User @relation("imFrom", fields: [fromId], references: [id], onDelete: Cascade)
+  to   User @relation("imTo", fields: [toId], references: [id], onDelete: Cascade)
+
+  @@index([fromId, toId, createdAt])
+  @@index([toId, readAt])
 }

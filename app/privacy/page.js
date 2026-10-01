@@ -24,7 +24,7 @@ export default function PrivacyPage() {
         <h2>What&apos;s public</h2>
         <p>
           Your profile page, photos, Top 8, friends list and profile comments can be seen by anyone who visits
-          bfrenz.com. Private messages are only visible to you and the person you&apos;re messaging. Your email address
+          bfrenz.com. Private messages and instant messages (IMs) are only visible to you and the person you&apos;re messaging (we don't read them, except when needed to look into abuse or answer a legal request). Your email address
           is never shown to other members.
         </p>
 

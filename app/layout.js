@@ -1,6 +1,8 @@
 import './globals.css';
 import Link from 'next/link';
 import Header from '@/components/Header';
+import Messenger from '@/components/Messenger';
+import { getCurrentUser } from '@/lib/auth';
 
 // Google AdSense publisher id (public, safe to have in code). NEXT_PUBLIC_ADSENSE_CLIENT overrides it.
 const ADSENSE_CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT || 'ca-pub-6605746910542515';
@@ -35,7 +37,8 @@ export const metadata = {
 
 export const viewport = { themeColor: '#0b0b0c' };
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+  const me = await getCurrentUser();
   return (
     <html lang="en">
       <head>
@@ -70,6 +73,9 @@ export default function RootLayout({ children }) {
             &copy; {new Date().getFullYear()} BFRENZ.com &mdash; all your frenz, one place.
           </footer>
         </div>
+        {me && (
+          <Messenger me={{ id: me.id, name: me.displayName, pic: me.avatarUrl || '/no-pic.svg' }} />
+        )}
       </body>
     </html>
   );

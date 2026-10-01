@@ -230,6 +230,7 @@ export async function banUser(formData) {
       prisma.message.deleteMany({ where: { senderId: userId } }),
       prisma.photo.deleteMany({ where: { userId } }),
       prisma.video.deleteMany({ where: { userId } }),
+      prisma.chatMessage.deleteMany({ where: { fromId: userId } }),
     );
   }
   await prisma.$transaction(ops);
