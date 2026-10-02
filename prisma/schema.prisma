@@ -67,6 +67,8 @@ model User {
 
   // ---- invites + moderation ----
   referredById String? // who invited this member (signup?ref=username)
+  heardFrom    String  @default("") // "How did you hear about BFRENZ?" answer at sign-up
+  signupSrc    String  @default("") // ?src= tag from the first link they came in on (e.g. bfrenz.com/?src=tiktok)
   bannedAt     DateTime? // suspended by an admin: can't log in, profile hidden
   banReason    String    @default("")
 
@@ -103,6 +105,9 @@ model User {
   groupMemberships GroupMember[]
   groupPosts       GroupPost[]
   groupReplies     GroupReply[]
+  potwVotesCast    PotwVote[]   @relation("potwVoter")
+  potwVotesGot     PotwVote[]   @relation("potwNominee")
+  potwWins         PotwWinner[]
   blocksMade       Block[]      @relation("blocker")
   blocksReceived   Block[]      @relation("blocked")
   reportsMade      Report[]     @relation("reporter")
@@ -487,4 +492,30 @@ model GroupReply {
   author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
 
   @@index([postId, createdAt])
+}
+
+// ---------------- Profile of the Week ----------------
+// week = the Monday it started (Eastern time), e.g. "2026-10-05"
+model PotwVote {
+  id        String   @id @default(cuid())
+  week      String
+  voterId   String
+  nomineeId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  voter     User     @relation("potwVoter", fields: [voterId], references: [id], onDelete: Cascade)
+  nominee   User     @relation("potwNominee", fields: [nomineeId], references: [id], onDelete: Cascade)
+
+  @@unique([week, voterId])
+  @@index([week, nomineeId])
+}
+
+model PotwWinner {
+  id        String   @id @default(cuid())
+  week      String   @unique
+  userId    String
+  votes     Int
+  notified  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

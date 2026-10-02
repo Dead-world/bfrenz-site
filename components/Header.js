@@ -31,6 +31,7 @@ export default async function Header() {
         { href: '/groups', label: 'Groups', icon: '👥' },
         { href: '/blog', label: 'Blogs', icon: '✍️' },
         { href: '/surveys', label: 'Surveys', icon: '📝' },
+        { href: '/potw', label: 'Top Profile', icon: '🏆' },
         { href: '/mail', label: 'Mail', icon: '✉', count: unread },
         { href: '/browse', label: 'Browse', icon: '🔍' },
         { href: '/edit', label: 'Edit Profile', icon: '✎' },

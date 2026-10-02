@@ -5,6 +5,8 @@ import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/db';
 import { createSession } from '@/lib/auth';
 import { str, validateUsername, withParam } from '@/lib/util';
+import { cookies } from 'next/headers';
+import { HEARD_FROM, cleanSrc } from '@/lib/sources';
 
 function fail(path, msg) {
   redirect(withParam(path, 'error', msg));
@@ -48,6 +50,8 @@ export async function signup(formData) {
         passwordHash: await bcrypt.hash(password, 10),
         headline: 'new to bfrenz!',
         referredById: referrer?.id || null,
+        heardFrom: HEARD_FROM.some(([k]) => k === str(formData, 'heardFrom', 20)) ? str(formData, 'heardFrom', 20) : '',
+        signupSrc: cleanSrc((await cookies()).get('bfrenz_src')?.value),
       },
     });
   } catch (e) {

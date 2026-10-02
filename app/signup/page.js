@@ -5,6 +5,8 @@ import { getCurrentUser } from '@/lib/auth';
 import Notice from '@/components/Notice';
 import { prisma } from '@/lib/db';
 import { Pic } from '@/components/Avatar';
+import { cookies } from 'next/headers';
+import { HEARD_FROM, cleanSrc } from '@/lib/sources';
 
 export const metadata = { title: 'Sign Up | BFRENZ.com' };
 
@@ -15,6 +17,9 @@ export default async function SignupPage({ searchParams }) {
   const inviter = ref
     ? await prisma.user.findFirst({ where: { username: ref, bannedAt: null } })
     : null;
+  // Pre-pick the answer when they came in on a tagged link (bfrenz.com/?src=tiktok) or an invite.
+  const src = cleanSrc((await cookies()).get('bfrenz_src')?.value);
+  const guess = inviter ? 'friend' : HEARD_FROM.some(([k]) => k === src) ? src : '';
   return (
     <div className="cols">
       <div className="col-right">
@@ -57,6 +62,15 @@ export default async function SignupPage({ searchParams }) {
                   <tr>
                     <td className="lbl">Confirm Password:</td>
                     <td><input type="password" name="confirm" required minLength={8} /></td>
+                  </tr>
+                  <tr>
+                    <td className="lbl">How did you hear about BFRENZ?</td>
+                    <td>
+                      <select name="heardFrom" defaultValue={guess} aria-label="How did you hear about BFRENZ?">
+                        <option value="">Pick one (optional)</option>
+                        {HEARD_FROM.map(([k, label]) => <option key={k} value={k}>{label}</option>)}
+                      </select>
+                    </td>
                   </tr>
                   <tr>
                     <td />

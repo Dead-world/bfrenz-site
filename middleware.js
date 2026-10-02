@@ -7,8 +7,14 @@ import { NextResponse } from 'next/server';
  */
 export function middleware(request) {
   const app = request.nextUrl.searchParams.get('app');
-  if (app !== 'android' && app !== 'web') return NextResponse.next();
+  // Links can carry a source tag (bfrenz.com/?src=tiktok). Remember the first one for 30 days,
+  // so sign-ups can be counted by where they came from.
+  const src = (request.nextUrl.searchParams.get('src') || '').toLowerCase();
+  const tagSrc = /^[a-z0-9_-]{1,30}$/.test(src) && !request.cookies.get('bfrenz_src');
+  if (app !== 'android' && app !== 'web' && !tagSrc) return NextResponse.next();
   const res = NextResponse.next();
+  if (tagSrc) res.cookies.set('bfrenz_src', src, { path: '/', maxAge: 60 * 60 * 24 * 30, sameSite: 'lax' });
+  if (app !== 'android' && app !== 'web') return res;
   if (app === 'android') {
     res.cookies.set('bfrenz_app', 'android', { path: '/', maxAge: 60 * 60 * 24 * 365, sameSite: 'lax' });
   } else {

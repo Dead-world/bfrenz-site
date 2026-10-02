@@ -17,6 +17,7 @@ import { weeklySurvey } from '@/lib/surveys';
 import { birthdaysToday, isBirthdayToday } from '@/lib/birthdays';
 import { hiddenUserIds } from '@/lib/moderation';
 import { Pic } from '@/components/Avatar';
+import { currentChampion } from '@/lib/potw';
 
 export const metadata = { title: 'Feed | BFRENZ.com' };
 
@@ -28,7 +29,7 @@ export default async function HomePage({ searchParams }) {
   const beforeRaw = sp?.before ? new Date(String(sp.before)) : null;
   const before = beforeRaw && !isNaN(beforeRaw) ? beforeRaw : null;
   const weekly = weeklySurvey();
-  const [unread, pending, feed, sponsored, tookWeekly, bdays] = await Promise.all([
+  const [unread, pending, feed, sponsored, tookWeekly, bdays, champ] = await Promise.all([
     prisma.message.count({ where: { recipientId: me.id, read: false, recipientDeleted: false } }),
     prisma.friendship.count({ where: { addresseeId: me.id, status: 'PENDING' } }),
     getFeed(me, before),
@@ -37,6 +38,7 @@ export default async function HomePage({ searchParams }) {
     before
       ? []
       : hiddenUserIds(me.id).then((hidden) => birthdaysToday(friendIds.filter((id) => !hidden.includes(id)))),
+    before ? null : currentChampion().catch(() => null),
   ]);
   const myBirthday = !before && isBirthdayToday(me);
 
@@ -63,6 +65,17 @@ export default async function HomePage({ searchParams }) {
           />
         )}
 
+        {champ && (
+          <div className="box feed-item potw-card">
+            <Link href={`/${champ.user.username}`}><Pic user={champ.user} size={52} /></Link>
+            <span>
+              <span className="small potw-kicker">🏆 Profile of the Week</span>
+              <b><Link href={`/${champ.user.username}`}>{champ.user.displayName}</Link></b>
+              <span className="small muted">{champ.userId === me.id ? "That's you! Everyone sees your page here all week 👑" : <>Check out their page, then <Link href="/potw">vote for this week&apos;s</Link>.</>}</span>
+            </span>
+            <Link href={`/${champ.user.username}`} className="btn small-btn">Visit</Link>
+          </div>
+        )}
         {myBirthday && (
           <div className="box feed-item bday-card bday-me">
             <span className="bday-emoji">🎉</span>

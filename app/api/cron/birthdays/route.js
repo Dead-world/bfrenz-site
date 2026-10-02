@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db';
 import { birthdayKeys, localDate } from '@/lib/birthdays';
 import { imBuddyIds } from '@/lib/im';
 import { pushConfigured, sendPushNow } from '@/lib/push';
+import { currentChampion } from '@/lib/potw';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -18,6 +19,26 @@ export async function GET(req) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
   if (!pushConfigured()) return NextResponse.json({ skipped: 'push not set up' });
+
+  // Profile of the Week: crown last week's winner (once) and tell them.
+  let potw = null;
+  try {
+    const champ = await currentChampion();
+    if (champ && !champ.notified) {
+      const claimed = await prisma.potwWinner.updateMany({ where: { id: champ.id, notified: false }, data: { notified: true } });
+      if (claimed.count) {
+        await sendPushNow(champ.userId, {
+          title: "🏆 You're BFRENZ Profile of the Week!",
+          body: `You won with ${champ.votes} ${champ.votes === 1 ? 'vote' : 'votes'}. Your page is featured on everyone's Feed all week.`,
+          url: `/${champ.user.username}`,
+          tag: 'potw',
+        }).catch(() => 0);
+        potw = champ.user.username;
+      }
+    }
+  } catch (err) {
+    console.error('[cron] potw failed:', err?.message);
+  }
 
   const today = localDate();
   const people = await prisma.user.findMany({
@@ -59,5 +80,5 @@ export async function GET(req) {
     );
     sent += results.filter((r) => r.status === 'fulfilled' && r.value > 0).length;
   }
-  return NextResponse.json({ birthdays: people.length, notified: sent });
+  return NextResponse.json({ birthdays: people.length, notified: sent, potw });
 }

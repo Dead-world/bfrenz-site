@@ -1188,3 +1188,36 @@ label.check { display: flex; gap: 8px; align-items: center; font-size: 14px; cur
 }
 .group-hero { margin-bottom: 18px; }
 @media (max-width: 860px) { .group-page .cols .col-right { order: -1; } }
+
+/* ================= admin growth ================= */
+.growth-bars { display: flex; align-items: flex-end; gap: 6px; height: 170px; padding: 16px 16px 8px; }
+.growth-bar { flex: 1; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; min-width: 0; }
+.growth-bar i { display: block; width: 100%; max-width: 34px; background: var(--orange); border-radius: 4px 4px 0 0; }
+.growth-n { color: var(--text-dim); }
+.growth-day { font-size: 10px; color: var(--text-dim); white-space: nowrap; }
+.growth-table td:not(:first-child), .growth-table th:not(:first-child) { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* ================= Profile of the Week ================= */
+.potw-banner { display: block; margin: 2px 0 10px; padding: 8px 12px; border-radius: var(--radius-sm); font-weight: 800; text-align: center; text-decoration: none; color: #1a1000; background: linear-gradient(90deg, #ffcf66, #ff9a2e, #ffcf66); box-shadow: 0 0 18px rgba(255, 207, 102, 0.45); }
+.potw-vote { padding: 0 12px 12px; }
+.potw-btn { background: linear-gradient(90deg, #ffcf66, #ff9a2e); color: #1a1000; }
+.potw-kicker { color: #ffcf66; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; font-size: 11px; }
+.potw-card { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-color: rgba(255, 207, 102, 0.5); background: linear-gradient(90deg, rgba(255, 207, 102, 0.14), transparent 70%), var(--surface); }
+.potw-card > span { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.potw-card .pic { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 2px #ffcf66; }
+.potw-champ { position: relative; display: flex; align-items: center; gap: 22px; padding: 22px; margin-bottom: 18px; border-color: rgba(255, 207, 102, 0.55); background: radial-gradient(500px 200px at 10% 0, rgba(255, 207, 102, 0.2), transparent 70%), var(--surface); }
+.potw-champ .pic { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 3px #ffcf66, 0 0 30px rgba(255, 207, 102, 0.5); }
+.potw-crown { position: absolute; left: 70px; top: 2px; font-size: 32px; transform: rotate(-14deg); }
+.potw-name { font-family: var(--display); font-size: 30px; margin: 2px 0 4px; }
+.potw-board { list-style: none; margin: 0; padding: 8px 0; }
+.potw-board li { display: flex; align-items: center; gap: 12px; padding: 8px 16px; }
+.potw-board li.lead { background: rgba(255, 207, 102, 0.1); }
+.potw-board .pic { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+.potw-rank { width: 22px; text-align: center; font-weight: 800; color: var(--text-dim); }
+.potw-board li.lead .potw-rank { color: #ffcf66; }
+.potw-who { flex: 1; min-width: 0; color: var(--text); }
+.potw-votes { font-weight: 700; color: var(--orange-hot); font-variant-numeric: tabular-nums; }
+.potw-past { list-style: none; margin: 0; padding: 8px 12px; display: flex; flex-direction: column; gap: 8px; }
+.potw-past li { display: flex; align-items: center; gap: 10px; }
+.potw-past .pic { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; }
+@media (max-width: 640px) { .potw-champ { flex-direction: column; text-align: center; } .potw-crown { left: calc(50% - 60px); } }

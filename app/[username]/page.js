@@ -28,6 +28,8 @@ import { counterStyle, recordVisit } from '@/lib/visitors';
 import { birthdayLabel, isBirthdayToday } from '@/lib/birthdays';
 import { profileTracks } from '@/lib/playlist';
 import { latestBlogs } from '@/lib/blogs';
+import { currentChampion, myVote } from '@/lib/potw';
+import { votePotw } from '@/app/actions/potw';
 
 async function loadUser(username) {
   return prisma.user.findUnique({ where: { username: String(username).toLowerCase() } });
@@ -124,6 +126,9 @@ export default async function ProfilePage({ params, searchParams }) {
   const back = `/${user.username}`;
   const interests = INTERESTS.filter(([, key]) => user[key]);
   const bdayToday = isBirthdayToday(user);
+  const [champ, vote] = await Promise.all([currentChampion().catch(() => null), me && !isMe ? myVote(me.id) : null]);
+  const isChamp = champ?.userId === user.id;
+  const votedHere = vote?.nomineeId === user.id;
   const tracks = profileTracks(user).map(({ url, title, artist }) => ({ url, title, artist }));
 
   // Shop theme: the owner can preview any theme with ?preview=slug; visitors see the applied one.
@@ -170,6 +175,9 @@ export default async function ProfilePage({ params, searchParams }) {
           <div className="box profile-card">
             <div className="box-b">
               <h1 className="bigname profile-name">{user.displayName}<Badges user={user} /></h1>
+              {isChamp && (
+                <Link href="/potw" className="potw-banner">🏆 Profile of the Week</Link>
+              )}
               {bdayToday && <div className="bday-banner">🎂 It&apos;s {isMe ? 'your' : `${user.displayName}'s`} birthday today! 🎉</div>}
               {user.isArtist && (
                 <div className="artist-line">♫ Artist{user.genre ? ` · ${user.genre}` : ''}</div>
@@ -280,6 +288,20 @@ export default async function ProfilePage({ params, searchParams }) {
                 )
               )}
             </div>
+            {me && !isMe && !blocked && (
+              <div className="potw-vote">
+                {votedHere ? (
+                  <span className="small">🏆 <b>You voted for {user.displayName}</b> for Profile of the Week. <Link href="/potw">See the votes</Link></span>
+                ) : (
+                  <form action={votePotw} className="actions">
+                    <input type="hidden" name="userId" value={user.id} />
+                    <input type="hidden" name="back" value={back} />
+                    <button type="submit" className="btn small-btn potw-btn">🏆 Vote for Profile of the Week</button>
+                    {vote && <span className="small muted">(moves your vote here)</span>}
+                  </form>
+                )}
+              </div>
+            )}
             {me && !isMe && (
               <div className="safety-links small">
                 <Link href={`/report?kind=profile&id=${user.id}&back=${encodeURIComponent(back)}`}>Report</Link>

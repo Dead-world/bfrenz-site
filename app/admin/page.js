@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { heardLabel } from '@/lib/sources';
 import { notFound } from 'next/navigation';
 import { requireUser } from '@/lib/auth';
 import { prisma } from '@/lib/db';
@@ -15,7 +16,60 @@ const TABS = [
   ['closed', 'Closed reports'],
   ['members', 'Members'],
   ['banned', 'Banned'],
+  ['growth', 'Growth'],
 ];
+
+const DAY = 24 * 60 * 60 * 1000;
+
+/** Sign-up counts per value of `field` for the last 7 days, 30 days and all time. */
+async function signupsBy(field) {
+  const run = (since) =>
+    prisma.user.groupBy({ by: [field], where: since ? { createdAt: { gte: since } } : {}, _count: { _all: true } });
+  const [w, m, all] = await Promise.all([run(new Date(Date.now() - 7 * DAY)), run(new Date(Date.now() - 30 * DAY)), run(null)]);
+  const rows = {};
+  const add = (list, key) => list.forEach((r) => { (rows[r[field]] ||= { key: r[field], w: 0, m: 0, all: 0 })[key] = r._count._all; });
+  add(w, 'w'); add(m, 'm'); add(all, 'all');
+  return Object.values(rows).sort((a, b) => !a.key - !b.key || b.m - a.m || b.all - a.all); // unanswered last
+}
+
+async function growthData() {
+  const since14 = new Date(Date.now() - 14 * DAY);
+  const [heard, tags, recent, cameBack, oldMembers] = await Promise.all([
+    signupsBy('heardFrom'),
+    signupsBy('signupSrc'),
+    prisma.user.findMany({ where: { createdAt: { gte: since14 } }, select: { createdAt: true } }),
+    prisma.user.count({ where: { bannedAt: null, createdAt: { lt: new Date(Date.now() - 7 * DAY) }, lastSeen: { gte: new Date(Date.now() - 7 * DAY) } } }),
+    prisma.user.count({ where: { bannedAt: null, createdAt: { lt: new Date(Date.now() - 7 * DAY) } } }),
+  ]);
+  const days = [];
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date(Date.now() - i * DAY);
+    const key = d.toLocaleDateString('en-US', { timeZone: 'America/New_York', month: 'short', day: 'numeric' });
+    days.push({ key, n: 0 });
+  }
+  for (const r of recent) {
+    const key = r.createdAt.toLocaleDateString('en-US', { timeZone: 'America/New_York', month: 'short', day: 'numeric' });
+    const d = days.find((x) => x.key === key);
+    if (d) d.n++;
+  }
+  return { heard, tags: tags.filter((t) => t.key), days, cameBack, oldMembers };
+}
+
+function SourceTable({ rows, label, empty }) {
+  if (!rows.length) return <div className="box-b small muted">{empty}</div>;
+  return (
+    <table className="list growth-table">
+      <thead><tr><th>{label}</th><th>Last 7 days</th><th>Last 30 days</th><th>All time</th></tr></thead>
+      <tbody>
+        {rows.map((r) => (
+          <tr key={r.key || 'none'}>
+            <td>{r.label}</td><td>{r.w}</td><td>{r.m}</td><td>{r.all}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
 
 function BanForm({ user, back }) {
   return (
@@ -77,6 +131,7 @@ export default async function AdminPage({ searchParams }) {
 
   let reports = [];
   let people = [];
+  const growth = tab === 'growth' ? await growthData() : null;
   if (tab === 'reports' || tab === 'closed') {
     const rows = await prisma.report.findMany({
       where: tab === 'reports' ? { status: 'OPEN' } : { status: { not: 'OPEN' } },
@@ -97,7 +152,7 @@ export default async function AdminPage({ searchParams }) {
     reports = await Promise.all(
       rows.map(async (r) => ({ ...r, target: await reportTarget(r), who: byId[r.targetUserId], whoReports: countBy[r.targetUserId] || 0 })),
     );
-  } else {
+  } else if (tab !== 'growth') {
     const where = tab === 'banned' ? { bannedAt: { not: null } } : {};
     if (q) {
       where.OR = [
@@ -137,6 +192,43 @@ export default async function AdminPage({ searchParams }) {
           </Link>
         ))}
       </div>
+
+      {growth && (
+        <>
+          <div className="stat-row">
+            <div className="stat"><b>{growth.cameBack}</b><span>came back this week</span></div>
+            <div className="stat">
+              <b>{growth.oldMembers ? Math.round((growth.cameBack / growth.oldMembers) * 100) : 0}%</b>
+              <span>of members older than a week</span>
+            </div>
+          </div>
+          <div className="box">
+            <div className="box-h">Sign-ups, last 14 days</div>
+            <div className="growth-bars">
+              {growth.days.map((d) => (
+                <div key={d.key} className="growth-bar" title={`${d.key}: ${d.n}`}>
+                  <span className="growth-n small">{d.n || ''}</span>
+                  <i style={{ height: `${Math.max(2, (d.n / Math.max(1, ...growth.days.map((x) => x.n))) * 100)}%` }} />
+                  <span className="growth-day">{d.key.replace(/^\w+ /, '')}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="box">
+            <div className="box-h">How did you hear about BFRENZ?</div>
+            <SourceTable rows={growth.heard.map((r) => ({ ...r, label: heardLabel(r.key) }))} label="Answer" empty="No sign-ups yet." />
+          </div>
+          <div className="box">
+            <div className="box-h">Tagged links (?src=)</div>
+            <SourceTable rows={growth.tags.map((r) => ({ ...r, label: r.key }))} label="Tag" empty="No sign-ups from tagged links yet." />
+            <div className="box-b small muted">
+              Add <b>?src=</b> to links you post so you can see which one works: <code>bfrenz.com/?src=tiktok</code>,{' '}
+              <code>bfrenz.com/?src=ig-bio</code>, <code>bfrenz.com/?src=flyer</code>, <code>bfrenz.com/?src=dj-maya</code>.
+              The first tagged link someone opens is remembered for 30 days, so it still counts if they sign up later.
+            </div>
+          </div>
+        </>
+      )}
 
       {(tab === 'reports' || tab === 'closed') && (
         <>
