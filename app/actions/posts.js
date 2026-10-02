@@ -55,8 +55,10 @@ export async function createPost(formData) {
   });
   if (recent >= 10) redirect(withParam(to, 'error', 'Slow down! You can post 10 times every 10 minutes.'));
 
+  // Creators can post publicly (followers and everyone see it); everyone else posts to frenz.
+  const visibility = me.creatorType && formData.get('visibility') === 'public' ? 'public' : 'frenz';
   await prisma.post.create({
-    data: { authorId: me.id, body, mood, imageUrls, videoUrl, youtubeId: yt, songUrl },
+    data: { authorId: me.id, body, mood, imageUrls, videoUrl, youtubeId: yt, songUrl, visibility },
   });
   // Posting a mood also updates the Mood line on your profile.
   if (mood) await prisma.user.update({ where: { id: me.id }, data: { mood } });

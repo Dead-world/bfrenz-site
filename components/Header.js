@@ -29,6 +29,7 @@ export default async function Header() {
         { href: `/${me.username}/videos`, label: 'Videos', icon: '🎬' },
         { href: '/bulletins', label: 'Bulletins', icon: '📢' },
         { href: '/groups', label: 'Groups', icon: '👥' },
+        { href: '/creators', label: 'Creators', icon: '🎥' },
         { href: '/blog', label: 'Blogs', icon: '✍️' },
         { href: '/surveys', label: 'Surveys', icon: '📝' },
         { href: '/potw', label: 'Top Profile', icon: '🏆' },

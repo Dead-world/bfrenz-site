@@ -29,8 +29,9 @@ async function uploadProblem(err) {
 }
 
 /** "What's on your mind?" box at the top of the feed. */
-export default function PostComposer({ me, back = '/home', videoMaxMb = 100 }) {
+export default function PostComposer({ me, back = '/home', videoMaxMb = 100, creator = false }) {
   const [body, setBody] = useState('');
+  const [visibility, setVisibility] = useState('public'); // creators only
   const [images, setImages] = useState([]);
   const [videoUrl, setVideoUrl] = useState('');
   const [panel, setPanel] = useState(''); // '', 'video', 'song', 'mood'
@@ -168,6 +169,17 @@ export default function PostComposer({ me, back = '/home', videoMaxMb = 100 }) {
         <button type="button" className={`composer-tool${panel === 'mood' || mood ? ' on' : ''}`} onClick={() => toggle('mood')}>
           {mood ? `${MOODS.find(([, m]) => m === mood)?.[0] || '🙂'} ${mood}` : '🙂 Mood'}
         </button>
+        {creator && (
+          <button
+            type="button"
+            className={`composer-tool composer-vis${visibility === 'public' ? ' on' : ''}`}
+            onClick={() => setVisibility(visibility === 'public' ? 'frenz' : 'public')}
+            title={visibility === 'public' ? 'Public: your followers and anyone on BFRENZ can see it' : 'Frenz only'}
+          >
+            {visibility === 'public' ? '🌍 Public' : '👥 Frenz'}
+          </button>
+        )}
+        <input type="hidden" name="visibility" value={creator ? visibility : 'frenz'} />
         <button type="submit" className="btn small-btn composer-post" disabled={!hasContent || !!busy || sending}>
           {sending ? 'Posting…' : 'Post'}
         </button>

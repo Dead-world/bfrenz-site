@@ -34,6 +34,8 @@ import { votePotw } from '@/app/actions/potw';
 import { stampCollection } from '@/lib/stampsDb';
 import { getStamp } from '@/lib/stamps';
 import { activeNameEffect } from '@/lib/nameEffects';
+import { creatorLabel, displayLinks, followerCount, isFollowing } from '@/lib/creators';
+import { followCreator, unfollowCreator } from '@/app/actions/creators';
 import { hiddenUserIds } from '@/lib/moderation';
 
 async function loadUser(username) {
@@ -138,6 +140,20 @@ export default async function ProfilePage({ params, searchParams }) {
   ]);
   const stampTotal = stamps.reduce((n, i) => n + i.count, 0);
   const nameFx = activeNameEffect(user);
+  const creator = creatorLabel(user.creatorType);
+  const links = creator ? displayLinks(user) : [];
+  const [followers, iFollow, publicPosts] = creator
+    ? await Promise.all([
+        followerCount(user.id),
+        me && !isMe ? isFollowing(me.id, user.id) : false,
+        blocked ? [] : prisma.post.findMany({
+          where: { authorId: user.id, visibility: 'public' },
+          orderBy: { createdAt: 'desc' },
+          take: 3,
+          select: { id: true, body: true, imageUrls: true, videoUrl: true, youtubeId: true, songUrl: true, createdAt: true, _count: { select: { kudos: true, comments: true } } },
+        }),
+      ])
+    : [0, false, []];
   // Recent Supporter gifts (shown while the gifted time could still be running).
   const giftedBy = isSupporter(user)
     ? await prisma.purchase.findMany({
@@ -199,6 +215,21 @@ export default async function ProfilePage({ params, searchParams }) {
                 {nameFx ? <span className={`name-fx ${nameFx.cls}`}>{user.displayName}</span> : user.displayName}
                 <Badges user={user} />
               </h1>
+              {creator && (
+                <div className="creator-line">
+                  <span className="creator-tag">{creator.emoji} {creator.label}</span>
+                  <span className="small"><b>{followers.toLocaleString()}</b> {followers === 1 ? 'follower' : 'followers'}</span>
+                  {me && !isMe && !blocked && (
+                    <form action={iFollow ? unfollowCreator : followCreator} className="inline">
+                      <input type="hidden" name="userId" value={user.id} />
+                      <input type="hidden" name="back" value={back} />
+                      <button type="submit" className={`btn small-btn${iFollow ? ' ghost' : ''}`}>{iFollow ? '✓ Following' : '+ Follow'}</button>
+                    </form>
+                  )}
+                  {!me && <Link href={`/signup?ref=${user.username}`} className="btn small-btn">+ Follow</Link>}
+                  {isMe && <Link href="/creator/stats" className="small">📊 My stats</Link>}
+                </div>
+              )}
               {giftedBy.length > 0 && (
                 <div className="gifted-by small">
                   🎁 Supporter gifted by{' '}
@@ -259,6 +290,21 @@ export default async function ProfilePage({ params, searchParams }) {
               {user.showCounter && <HitCounter value={user.profileViews} look={counterStyle(user)} />}
             </div>
           </div>
+
+          {links.length > 0 && !blocked && (
+            <div className="box links-box">
+              <div className="box-h">{isMe ? 'My Links' : `${user.displayName}'s Links`}</div>
+              <div className="my-links">
+                {links.map((l) => (
+                  <a key={l.i} href={`/go/${user.username}/${l.i}`} target="_blank" rel="nofollow noopener noreferrer" className="my-link">
+                    <span className="my-link-ico">{l.emoji}</span>
+                    <span className="my-link-text">{l.text}</span>
+                    <span className="my-link-go">↗</span>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
 
           {tracks.length > 0 && <SongPlayer tracks={tracks} />}
 
@@ -443,6 +489,22 @@ export default async function ProfilePage({ params, searchParams }) {
                   <Link href={`/stamps/give?to=${user.username}`} className="btn small-btn">🎟️ Give {user.displayName} a stamp</Link>
                 </div>
               )}
+            </div>
+          )}
+
+          {publicPosts.length > 0 && (
+            <div className="box">
+              <div className="box-h">{user.displayName}&apos;s Latest Posts</div>
+              <ul className="creator-posts">
+                {publicPosts.map((p) => (
+                  <li key={p.id}>
+                    <Link href={me ? `/post/${p.id}` : `/signup?ref=${user.username}`}>
+                      {p.body ? (p.body.length > 140 ? p.body.slice(0, 137) + '…' : p.body) : p.imageUrls.length ? '📷 Photo' : p.videoUrl || p.youtubeId ? '🎬 Video' : p.songUrl ? '🎵 Song' : 'Post'}
+                    </Link>
+                    <span className="small muted"> · {timeAgo(p.createdAt)} · ★ {p._count.kudos} · 💬 {p._count.comments}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
 

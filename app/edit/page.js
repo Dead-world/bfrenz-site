@@ -9,6 +9,8 @@ import { getAboutTemplate } from '@/lib/aboutTemplates';
 import NotificationToggle from '@/components/NotificationToggle';
 import PlaylistEditor from '@/components/PlaylistEditor';
 import RichTextarea from '@/components/RichTextarea';
+import { CREATOR_TYPES, MAX_LINKS, cleanLinks } from '@/lib/creators';
+import { saveCreatorSettings } from '@/app/actions/creators';
 import { cleanPlaylist } from '@/lib/playlist';
 import { vapidPublicKey } from '@/lib/push';
 
@@ -19,6 +21,7 @@ const TABS = [
   ['interests', 'Interests'],
   ['pic', 'Profile pic'],
   ['song', 'Music / playlist'],
+  ['creator', '🎥 Creator'],
   ['css', 'Customize (CSS)'],
   ['notify', 'Notifications'],
 ];
@@ -229,6 +232,53 @@ export default async function EditPage({ searchParams }) {
           </div>
         </form>
       )}
+      {tab === 'creator' && (
+        <form action={saveCreatorSettings} className="box">
+          <div className="box-h">Creator mode</div>
+          <div className="box-b">
+            <p className="small muted" style={{ marginTop: 0 }}>
+              Make music, videos, streams, art or anything else? Turn on creator mode: fans can <b>follow</b> you with one tap
+              (no friend request), you can post <b>publicly</b> to all your followers, add <b>My Links</b> buttons to your
+              page, show up on <Link href="/creators">Discover Creators</Link> and see your <Link href="/creator/stats">stats</Link>.
+              Your frenz work exactly the same.
+            </p>
+            <label className="blog-label" htmlFor="ct">I&apos;m a…</label>
+            <select id="ct" name="creatorType" defaultValue={me.creatorType || ''}>
+              <option value="">Not a creator (creator mode off)</option>
+              {CREATOR_TYPES.map(([k, label, emoji]) => <option key={k} value={k}>{emoji} {label}</option>)}
+            </select>
+
+            <div className="blog-label" style={{ marginTop: 20 }}>My Links <span className="small muted">(link-in-bio buttons on your page, up to {MAX_LINKS})</span></div>
+            <div className="small muted" style={{ marginBottom: 8 }}>
+              Paste your YouTube, TikTok, Instagram, Twitch, Spotify, merch store… The icon is picked automatically. Then put
+              <b> bfrenz.com/{me.username}</b> in your bio everywhere.
+            </div>
+            <table className="form-table link-rows">
+              <tbody>
+                {Array.from({ length: MAX_LINKS }, (_, i) => {
+                  const l = cleanLinks(Array.isArray(me.creatorLinks) ? me.creatorLinks : [])[i] || {};
+                  return (
+                    <tr key={i}>
+                      <td className="lbl">{i + 1}</td>
+                      <td>
+                        <div className="link-row">
+                          <input type="url" name={`url${i}`} defaultValue={l.url || ''} placeholder="https://youtube.com/@you" />
+                          <input type="text" name={`label${i}`} defaultValue={l.label || ''} maxLength={40} placeholder="Button text (optional)" />
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+            <div className="actions" style={{ marginTop: 14 }}>
+              <button className="btn" type="submit">Save</button>
+              {me.creatorType && <Link href="/creator/stats" className="btn ghost small-btn">📊 My stats</Link>}
+            </div>
+          </div>
+        </form>
+      )}
+
       {tab === 'notify' && (
         <div className="box">
           <div className="box-h">Notifications</div>

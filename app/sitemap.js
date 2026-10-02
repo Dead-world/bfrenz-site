@@ -17,6 +17,7 @@ export default async function sitemap() {
     { url: `${SITE}/surveys`, changeFrequency: 'weekly', priority: 0.6 },
     { url: `${SITE}/groups`, changeFrequency: 'daily', priority: 0.7 },
     { url: `${SITE}/potw`, changeFrequency: 'weekly', priority: 0.5 },
+    { url: `${SITE}/creators`, changeFrequency: 'daily', priority: 0.7 },
     { url: `${SITE}/blog`, changeFrequency: 'daily', priority: 0.6 },
     ...SURVEYS.map((sv) => ({ url: `${SITE}/surveys/${sv.slug}`, changeFrequency: 'monthly', priority: 0.4 })),
     { url: `${SITE}/terms`, changeFrequency: 'yearly', priority: 0.2 },

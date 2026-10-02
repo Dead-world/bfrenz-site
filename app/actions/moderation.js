@@ -126,6 +126,9 @@ export async function blockUser(formData) {
         ],
       },
     }),
+    prisma.follow.deleteMany({
+      where: { OR: [{ followerId: me.id, followingId: otherId }, { followerId: otherId, followingId: me.id }] },
+    }),
     // Their comments on my page go away too.
     prisma.comment.deleteMany({ where: { profileId: me.id, authorId: otherId } }),
   ]);

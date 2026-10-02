@@ -62,6 +62,7 @@ export default async function HomePage({ searchParams }) {
             key={String(Date.now())}
             me={{ name: me.displayName, pic: me.avatarUrl || '/no-pic.svg' }}
             videoMaxMb={videoMaxMb()}
+            creator={!!me.creatorType}
           />
         )}
 

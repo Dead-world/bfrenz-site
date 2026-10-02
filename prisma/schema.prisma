@@ -66,6 +66,8 @@ model User {
   bonusSupporterUntil DateTime? // free Supporter time earned from invites or gifted by a friend
   lifetimeSupporter  Boolean   @default(false) // bought Lifetime Supporter (never expires)
   isOfficial         Boolean   @default(false) // the site's own labeled bot account (BFRENZ Bot)
+  creatorType        String    @default("") // creator mode: youtuber, streamer, ... ("" = regular member)
+  creatorLinks       Json      @default("[]") // "My Links" buttons: [{ url, label }]
   nameEffect         String    @default("") // name effect showing on their name (lib/nameEffects.js)
   nameEffectsOwned   String[]  @default([]) // name effects they bought
 
@@ -114,6 +116,9 @@ model User {
   potwWins         PotwWinner[]
   stampsGiven      StampGift[]  @relation("stampFrom")
   stampsGot        StampGift[]  @relation("stampTo")
+  following        Follow[]     @relation("follower")
+  followers        Follow[]     @relation("following")
+  linkClicks       LinkClick[]
   blocksMade       Block[]      @relation("blocker")
   blocksReceived   Block[]      @relation("blocked")
   reportsMade      Report[]     @relation("reporter")
@@ -328,6 +333,7 @@ model Post {
   imageUrls  String[] @default([])
   videoUrl   String   @default("") // uploaded video (Vercel Blob)
   youtubeId  String   @default("")
+  visibility String @default("frenz") // frenz | public (creators can post publicly)
   songUrl    String   @default("")
   createdAt  DateTime @default(now())
 
@@ -541,4 +547,29 @@ model StampGift {
   @@unique([stampSlug, fromId, toId])
   @@index([toId, createdAt])
   @@index([fromId, createdAt])
+}
+
+// ---------------- Creators ----------------
+// Fans follow creators (one-way, no approval). Friendship is unchanged.
+model Follow {
+  id          String   @id @default(cuid())
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+  follower    User     @relation("follower", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User     @relation("following", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+  @@index([followingId, createdAt])
+}
+
+// A tap on one of a creator's "My Links" buttons (for their stats page).
+model LinkClick {
+  id        String   @id @default(cuid())
+  ownerId   String
+  label     String
+  createdAt DateTime @default(now())
+  owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@index([ownerId, createdAt])
 }

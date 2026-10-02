@@ -39,7 +39,10 @@ export function PostCard({ post, me, back, admin = false, allComments = false })
             <Who user={post.author} />
             {post.mood && <span className="feed-mood"> is feeling <b>{moodLabel(post.mood)}</b></span>}
           </div>
-          <When at={post.createdAt} href={`/post/${post.id}`} />
+          <span>
+            <When at={post.createdAt} href={`/post/${post.id}`} />
+            {post.visibility === 'public' && <span className="small muted" title="Public post: anyone on BFRENZ can see it"> · 🌍</span>}
+          </span>
         </div>
         {(mine || admin) && (
           <form action={deletePost}>
