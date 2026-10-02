@@ -4,6 +4,7 @@ import { birthdayKeys, localDate } from '@/lib/birthdays';
 import { imBuddyIds } from '@/lib/im';
 import { pushConfigured, sendPushNow } from '@/lib/push';
 import { currentChampion } from '@/lib/potw';
+import { runDailyBot } from '@/lib/houseBot';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -18,7 +19,15 @@ export async function GET(req) {
   if (secret && req.headers.get('authorization') !== `Bearer ${secret}`) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
-  if (!pushConfigured()) return NextResponse.json({ skipped: 'push not set up' });
+  // BFRENZ Bot's daily posts (question of the day, Song of the Day, Monday survey).
+  let bot = null;
+  try {
+    bot = await runDailyBot();
+  } catch (err) {
+    console.error('[cron] bot failed:', err?.message);
+  }
+
+  if (!pushConfigured()) return NextResponse.json({ skipped: 'push not set up', bot });
 
   // Profile of the Week: crown last week's winner (once) and tell them.
   let potw = null;
@@ -80,5 +89,5 @@ export async function GET(req) {
     );
     sent += results.filter((r) => r.status === 'fulfilled' && r.value > 0).length;
   }
-  return NextResponse.json({ birthdays: people.length, notified: sent, potw });
+  return NextResponse.json({ birthdays: people.length, notified: sent, potw, bot });
 }

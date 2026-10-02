@@ -65,6 +65,7 @@ model User {
   songBoostUntil     DateTime? // paid spot in Featured Music
   bonusSupporterUntil DateTime? // free Supporter time earned from invites or gifted by a friend
   lifetimeSupporter  Boolean   @default(false) // bought Lifetime Supporter (never expires)
+  isOfficial         Boolean   @default(false) // the site's own labeled bot account (BFRENZ Bot)
   nameEffect         String    @default("") // name effect showing on their name (lib/nameEffects.js)
   nameEffectsOwned   String[]  @default([]) // name effects they bought
 

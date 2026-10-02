@@ -7,6 +7,8 @@ import { createSession } from '@/lib/auth';
 import { str, validateUsername, withParam } from '@/lib/util';
 import { cookies } from 'next/headers';
 import { HEARD_FROM, cleanSrc } from '@/lib/sources';
+import { after } from 'next/server';
+import { welcomeNewMember } from '@/lib/houseBot';
 
 function fail(path, msg) {
   redirect(withParam(path, 'error', msg));
@@ -76,6 +78,9 @@ export async function signup(formData) {
       .create({ data: { requesterId: referrer.id, addresseeId: user.id, status: 'ACCEPTED' } })
       .catch(() => {}); // already friends (e.g. the inviter is the founder)
   }
+
+  // BFRENZ Bot says hi on their page (after the response, so sign-up stays fast).
+  after(() => welcomeNewMember(user));
 
   await createSession(user.id);
   redirect('/edit?welcome=1');

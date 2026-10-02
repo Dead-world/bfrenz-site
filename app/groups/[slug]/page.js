@@ -19,7 +19,7 @@ import { fmtDate, timeAgo } from '@/lib/util';
 const PAGE = 25;
 const RANK = { owner: 0, mod: 1, member: 2 };
 const sortMembers = (list) => [...list].sort((a, b) => (RANK[a.role] ?? 3) - (RANK[b.role] ?? 3));
-const PERSON = { select: { id: true, username: true, displayName: true, avatarUrl: true, nameColor: true, nameEffect: true, nameEffectsOwned: true, lifetimeSupporter: true, supporterUntil: true, bonusSupporterUntil: true, artistPro: true, isArtist: true } };
+const PERSON = { select: { id: true, username: true, displayName: true, avatarUrl: true, nameColor: true, nameEffect: true, nameEffectsOwned: true, lifetimeSupporter: true, isOfficial: true, supporterUntil: true, bonusSupporterUntil: true, artistPro: true, isArtist: true } };
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;

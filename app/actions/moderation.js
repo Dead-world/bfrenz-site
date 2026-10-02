@@ -328,3 +328,12 @@ export async function giftPerk(formData) {
   console.log(`[admin] @${me.username} gifted ${gift}${gift === 'pro_artist' ? '' : ` (${days}d)`} to @${u.username}`);
   redirect(withParam(back, 'gifted', u.username));
 }
+
+/** Admin button: run BFRENZ Bot's daily posts right now (it skips anything already posted today). */
+export async function runBotNow() {
+  await requireAdmin();
+  const { runDailyBot } = await import('@/lib/houseBot');
+  const res = await runDailyBot();
+  const msg = res.skipped ? `Bot skipped: ${res.skipped}` : res.posted.length ? `Bot posted: ${res.posted.join(', ')}` : 'Nothing new to post today.';
+  redirect(withParam('/admin?tab=growth', 'botmsg', msg));
+}

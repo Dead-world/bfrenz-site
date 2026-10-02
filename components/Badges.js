@@ -5,9 +5,12 @@ import { activeNameEffect } from '@/lib/nameEffects';
 export default function Badges({ user }) {
   if (!user) return null;
   const supporter = isSupporter(user);
-  if (!supporter && !user.isArtist) return null;
+  if (!supporter && !user.isArtist && !user.isOfficial) return null;
   return (
     <span className="badges">
+      {user.isOfficial && (
+        <span className="badge badge-bot" title="Official BFRENZ account (automated, not a real person)">🤖 BOT</span>
+      )}
       {supporter && (
         <span className={`badge badge-supporter${user.lifetimeSupporter ? ' badge-lifetime' : ''}`} title={user.lifetimeSupporter ? 'Lifetime BFRENZ Supporter' : 'BFRENZ Supporter'}>
           {user.lifetimeSupporter ? '★∞' : '★'}

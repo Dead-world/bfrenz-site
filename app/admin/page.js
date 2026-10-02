@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 import { requireUser } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { isAdmin, reasonLabel, reportTarget } from '@/lib/moderation';
-import { handleReport, banUser, unbanUser, giftPerk } from '@/app/actions/moderation';
+import { handleReport, banUser, unbanUser, giftPerk, runBotNow } from '@/app/actions/moderation';
 import { fmtDate, fmtDay } from '@/lib/util';
 import { Pic } from '@/components/Avatar';
 import Notice from '@/components/Notice';
@@ -195,6 +195,18 @@ export default async function AdminPage({ searchParams }) {
 
       {growth && (
         <>
+          <div className="box">
+            <div className="box-h">🤖 BFRENZ Bot</div>
+            <div className="box-b small">
+              {sp?.botmsg && <div className="notice ok">{String(sp.botmsg)}</div>}
+              The bot posts a question of the day and a Song of the Day (a real member&apos;s profile song) every morning,
+              announces the survey on Mondays, and welcomes every new member. It shows a 🤖 BOT badge everywhere.{' '}
+              <a href="/bfrenzbot">See its page</a>.
+              <form action={runBotNow} style={{ marginTop: 10 }}>
+                <button type="submit" className="btn small-btn">Post today&apos;s bot posts now</button>
+              </form>
+            </div>
+          </div>
           <div className="stat-row">
             <div className="stat"><b>{growth.cameBack}</b><span>came back this week</span></div>
             <div className="stat">
