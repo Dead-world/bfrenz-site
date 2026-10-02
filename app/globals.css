@@ -1303,3 +1303,26 @@ label.check { display: flex; gap: 8px; align-items: center; font-size: 14px; cur
 .profile-stamp:nth-child(odd) { transform: rotate(-2deg); }
 .profile-stamp:nth-child(even) { transform: rotate(2deg); }
 .profile-stamp:hover { transform: rotate(0) scale(1.08); z-index: 1; }
+
+/* ================= name effects + gifts + lifetime ================= */
+.name-fx.glitter { font-weight: inherit; }
+.name-fx.glitter::after { font-size: 0.45em; }
+.name-neon { color: #fff; text-shadow: 0 0 4px #fff, 0 0 10px #ff4fd8, 0 0 22px #ff4fd8, 0 0 40px #b24bff; animation: neon-flicker 3s infinite; }
+@keyframes neon-flicker { 0%, 100% { opacity: 1; } 41% { opacity: 1; } 42% { opacity: 0.55; } 43% { opacity: 1; } 77% { opacity: 0.85; } 78% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .name-neon { animation: none; } }
+.fx-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; padding: 16px; }
+.fx-card { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 18px 12px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface-2); text-align: center; }
+.fx-card.applied { border-color: var(--orange); background: var(--orange-soft); }
+.fx-preview { font-size: 26px; font-weight: 800; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 4px 10px; }
+.lifetime-box { display: flex; gap: 14px; align-items: center; justify-content: space-between; margin-top: 14px; padding: 14px; border: 1px dashed rgba(255, 207, 102, 0.6); border-radius: var(--radius-sm); background: rgba(255, 207, 102, 0.06); }
+.badge-lifetime { background: linear-gradient(90deg, #ffcf66, #ff9a2e) !important; color: #1a1000 !important; }
+.gifted-by { margin: -4px 0 8px; color: var(--text-dim); }
+.gift-hero { display: flex; gap: 18px; align-items: center; padding: 20px; position: relative; }
+.gift-hero .pic { width: 96px; height: 96px; border-radius: 20px; object-fit: cover; box-shadow: 0 0 0 3px var(--orange); }
+.gift-emoji { position: absolute; left: 82px; top: 8px; font-size: 34px; transform: rotate(-12deg); }
+.gift-options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 14px 0; }
+.gift-option { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 18px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface-2); }
+.gift-option.best { border-color: var(--orange); }
+.gift-price { font-family: var(--display); font-size: 28px; font-weight: 800; color: var(--orange-hot); }
+.gift-tag { position: absolute; top: -10px; padding: 2px 10px; border-radius: 999px; background: var(--orange); color: #000; font-size: 11px; font-weight: 800; }
+@media (max-width: 640px) { .gift-options { grid-template-columns: 1fr; } .lifetime-box { flex-direction: column; align-items: flex-start; } }

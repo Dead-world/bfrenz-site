@@ -5,7 +5,8 @@ import { THEMES } from '@/lib/themes';
 import { ABOUT_TEMPLATES } from '@/lib/aboutTemplates';
 import { PRICES, FEATURE_DAYS, SONG_BOOST_DAYS, SPONSOR_HOURS, money } from '@/lib/pricing';
 import { isSupporter, isFeatured, ownedThemeSlugs, ownedAboutSlugs } from '@/lib/perks';
-import { applyTheme, applyAboutTemplate, cancelSupporter, resumeSupporter, saveSupporterPrefs } from '@/app/actions/shop';
+import { applyTheme, applyAboutTemplate, cancelSupporter, resumeSupporter, saveSupporterPrefs, setNameEffect } from '@/app/actions/shop';
+import { NAME_EFFECTS, ownsNameEffect } from '@/lib/nameEffects';
 import { refreshSupporter, diagnoseSupporter } from '@/lib/fulfill';
 import { prisma } from '@/lib/db';
 import BuyButton from '@/components/BuyButton';
@@ -123,6 +124,61 @@ export default async function ShopPage({ searchParams }) {
           ) : (
             <BuyButton kind="supporter" label={`Become a Supporter · ${money(PRICES.supporterMonthly)}/mo`} />
           )}
+          {me && !me.lifetimeSupporter && (
+            <div className="lifetime-box">
+              <div>
+                <b>★∞ Lifetime Supporter</b> · {money(PRICES.supporterLifetime)} once
+                <div className="small muted">
+                  Every perk, forever, plus a special ★∞ badge for early believers. No monthly bill
+                  {subActive ? ' (your monthly plan is cancelled automatically)' : ''}.
+                </div>
+              </div>
+              <BuyButton kind="supporter_lifetime" back="/shop#supporter" label="Go Lifetime" ghost />
+            </div>
+          )}
+          {me?.lifetimeSupporter && <div className="notice ok" style={{ marginTop: 10 }}>★∞ You&apos;re a Lifetime Supporter. Thank you!</div>}
+          <div className="small" style={{ marginTop: 10 }}>
+            🎁 Want to treat a fren? Hit <b>Gift Supporter</b> on their profile.
+          </div>
+        </div>
+      </div>
+
+      {/* ---------------- Name effects ---------------- */}
+      <div className="box" id="name-effects">
+        <div className="box-h">
+          ✨ Name Effects
+          {me?.nameEffect && (
+            <form action={setNameEffect} className="right">
+              <input type="hidden" name="slug" value="" />
+              <button className="linkbtn small" type="submit">Remove effect</button>
+            </form>
+          )}
+        </div>
+        <div className="box-b small muted" style={{ paddingBottom: 0 }}>
+          Your name sparkles everywhere it shows up: comments, Top 8, the Feed and your profile.{' '}
+          {money(PRICES.nameEffect)} each, forever, or <b>all of them</b> with Supporter.
+        </div>
+        <div className="fx-grid">
+          {NAME_EFFECTS.map((fx) => {
+            const usable = me && ownsNameEffect(me, fx.slug);
+            const on = me?.nameEffect === fx.slug && usable;
+            return (
+              <div key={fx.slug} className={`fx-card${on ? ' applied' : ''}`}>
+                <span className={`fx-preview ${fx.cls}`}>{me?.displayName || 'Your Name'}</span>
+                <span className="small muted">{fx.name}</span>
+                {!me ? null : on ? (
+                  <span className="small"><b>✓ On your name</b></span>
+                ) : usable ? (
+                  <form action={setNameEffect}>
+                    <input type="hidden" name="slug" value={fx.slug} />
+                    <button className="btn small-btn" type="submit">Use</button>
+                  </form>
+                ) : (
+                  <BuyButton kind="name_effect" itemId={fx.slug} back="/shop#name-effects" label={`Get · ${money(PRICES.nameEffect)}`} />
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
 

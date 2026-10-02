@@ -37,7 +37,7 @@ export default async function TakeSurveyPage({ params, searchParams }) {
           where: { surveySlug: survey.slug, userId: { in: people.filter((id) => id !== me.id) }, user: { bannedAt: null } },
           orderBy: { createdAt: 'desc' },
           take: 30,
-          include: { user: { select: { id: true, username: true, displayName: true, avatarUrl: true, nameColor: true, supporterUntil: true, bonusSupporterUntil: true } } },
+          include: { user: { select: { id: true, username: true, displayName: true, avatarUrl: true, nameColor: true, nameEffect: true, nameEffectsOwned: true, lifetimeSupporter: true, supporterUntil: true, bonusSupporterUntil: true } } },
         }),
       ])
     : [null, []];

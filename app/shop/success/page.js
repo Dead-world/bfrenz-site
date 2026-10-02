@@ -12,6 +12,9 @@ const MESSAGES = {
   feature: ["You're featured! ⭐", 'Look for yourself at the top of Cool New People.'],
   song_boost: ['Your song is promoted! 🎵', "It's now in Featured Music on the homepage."],
   sponsor_bulletin: ['Bulletin sponsored! 📢', 'Every member will see it in their bulletins.'],
+  supporter_lifetime: ["You're a Lifetime Supporter! ★∞", 'Every perk, forever. If you had a monthly plan, it has been cancelled so you are never charged again. Thank you for believing in BFRENZ early. 🧡'],
+  gift_supporter: ['Gift sent! 🎁', 'Your fren just got Supporter perks and a notification saying it was from you.'],
+  name_effect: ['Name effect unlocked! ✨', 'It is already on your name. Change it anytime in the shop.'],
   stamp: ['Stamp unlocked! 🎟️', 'You can give it to as many frenz as you like. Visit a profile and hit "Give a stamp".'],
   tip: ['Thank you! 🧡', 'Your tip helps keep BFRENZ free for everyone.'],
 };

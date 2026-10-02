@@ -63,7 +63,10 @@ model User {
   supporterUntil     DateTime? // Supporter perks active while this is in the future
   featuredUntil      DateTime? // paid "Featured" spot in Cool New People
   songBoostUntil     DateTime? // paid spot in Featured Music
-  bonusSupporterUntil DateTime? // free Supporter time earned from invites
+  bonusSupporterUntil DateTime? // free Supporter time earned from invites or gifted by a friend
+  lifetimeSupporter  Boolean   @default(false) // bought Lifetime Supporter (never expires)
+  nameEffect         String    @default("") // name effect showing on their name (lib/nameEffects.js)
+  nameEffectsOwned   String[]  @default([]) // name effects they bought
 
   // ---- invites + moderation ----
   referredById String? // who invited this member (signup?ref=username)

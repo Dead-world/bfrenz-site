@@ -9,6 +9,8 @@ import { PRICES, FEATURE_DAYS, SONG_BOOST_DAYS, SPONSOR_HOURS, TAX_CODE, money }
 import { getTheme } from '@/lib/themes';
 import { ABOUT_TEMPLATES, getAboutTemplate } from '@/lib/aboutTemplates';
 import { getStamp } from '@/lib/stamps';
+import { getNameEffect, ownsNameEffect } from '@/lib/nameEffects';
+import { isBlockedEither } from '@/lib/moderation';
 import { ownedStampSlugs } from '@/lib/stampsDb';
 import { canUseTheme, canUseAboutTemplate, cleanColor, isSupporter, ownedThemeSlugs, ownedAboutSlugs } from '@/lib/perks';
 import { withParam } from '@/lib/util';
@@ -34,6 +36,24 @@ async function describe(me, kind, itemId, amountRaw) {
     }
     case 'supporter':
       return { amount: PRICES.supporterMonthly, name: 'BFRENZ Supporter (monthly)', recurring: true };
+    case 'supporter_lifetime':
+      return { amount: PRICES.supporterLifetime, name: 'BFRENZ Lifetime Supporter (one time, forever)' };
+    case 'gift_supporter': {
+      const [toId, monthsRaw] = String(itemId).split(':');
+      const months = Number(monthsRaw);
+      const amount = PRICES.giftSupporter[months];
+      if (!amount) return null;
+      const to = await prisma.user.findUnique({ where: { id: toId }, select: { id: true, displayName: true, bannedAt: true } });
+      if (!to || to.bannedAt) return { error: 'That member could not be found.' };
+      if (to.id === me.id) return { error: 'Gifts are for frenz! To get Supporter yourself, use the Supporter button.' };
+      if (await isBlockedEither(me.id, to.id)) return { error: "You can't send a gift to this member." };
+      return { amount, name: `Gift: ${months} ${months === 1 ? 'month' : 'months'} of BFRENZ Supporter for ${to.displayName}` };
+    }
+    case 'name_effect': {
+      const fx = getNameEffect(itemId);
+      if (!fx) return null;
+      return { amount: PRICES.nameEffect, name: `BFRENZ name effect: ${fx.name}` };
+    }
     case 'pro_artist':
       return { amount: PRICES.proArtist, name: 'BFRENZ Pro Artist badge (lifetime)' };
     case 'feature':
@@ -77,6 +97,8 @@ export async function startCheckout(formData) {
   if (kind === 'theme' && (await ownedThemeSlugs(me.id)).has(itemId)) fail('/shop', 'You already own that theme.');
   if (kind === 'about' && (await ownedAboutSlugs(me.id)).has(itemId)) fail('/shop#about', 'You already own that template.');
   if (kind === 'stamp' && (await ownedStampSlugs(me.id)).has(itemId)) fail('/stamps', 'You already own that stamp.');
+  if (kind === 'supporter_lifetime' && me.lifetimeSupporter) fail('/shop#supporter', "You're already a Lifetime Supporter. Thank you!");
+  if (kind === 'name_effect' && ownsNameEffect(me, itemId)) fail('/shop#name-effects', isSupporter(me) ? 'Name effects are included with Supporter. Just hit "Use".' : 'You already own that effect.');
 
   const item = await describe(me, kind, itemId, formData.get('amount'));
   if (!item) fail(safeBack, 'That item is not available.');
@@ -202,4 +224,13 @@ export async function restoreAboutBackup() {
     data: { aboutMe: me.aboutMeBackup, aboutMeBackup: me.aboutMe, aboutTemplate: '' },
   });
   redirect('/edit?tab=info&saved=1');
+}
+
+/** Show (or remove, with an empty slug) a name effect the member owns. */
+export async function setNameEffect(formData) {
+  const me = await requireUser();
+  const slug = String(formData.get('slug') || '');
+  if (slug && !ownsNameEffect(me, slug)) fail('/shop#name-effects', 'Get that effect first.');
+  await prisma.user.update({ where: { id: me.id }, data: { nameEffect: slug } });
+  redirect('/shop?saved=1#name-effects');
 }

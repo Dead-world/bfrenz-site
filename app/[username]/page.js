@@ -33,6 +33,7 @@ import { currentChampion, myVote } from '@/lib/potw';
 import { votePotw } from '@/app/actions/potw';
 import { stampCollection } from '@/lib/stampsDb';
 import { getStamp } from '@/lib/stamps';
+import { activeNameEffect } from '@/lib/nameEffects';
 import { hiddenUserIds } from '@/lib/moderation';
 
 async function loadUser(username) {
@@ -136,6 +137,16 @@ export default async function ProfilePage({ params, searchParams }) {
     blocked ? [] : (me ? hiddenUserIds(me.id) : Promise.resolve([])).then((h) => stampCollection(user.id, h)),
   ]);
   const stampTotal = stamps.reduce((n, i) => n + i.count, 0);
+  const nameFx = activeNameEffect(user);
+  // Recent Supporter gifts (shown while the gifted time could still be running).
+  const giftedBy = isSupporter(user)
+    ? await prisma.purchase.findMany({
+        where: { kind: 'gift_supporter', itemId: { startsWith: `${user.id}:` }, createdAt: { gte: new Date(Date.now() - 93 * 24 * 60 * 60 * 1000) }, user: { bannedAt: null } },
+        orderBy: { createdAt: 'desc' },
+        take: 3,
+        include: { user: { select: { id: true, username: true, displayName: true } } },
+      })
+    : [];
   const justStamped = sp?.stamped ? getStamp(String(sp.stamped)) : null;
   const isChamp = champ?.userId === user.id;
   const votedHere = vote?.nomineeId === user.id;
@@ -184,7 +195,18 @@ export default async function ProfilePage({ params, searchParams }) {
         <div className="col-left profile-left">
           <div className="box profile-card">
             <div className="box-b">
-              <h1 className="bigname profile-name">{user.displayName}<Badges user={user} /></h1>
+              <h1 className="bigname profile-name">
+                {nameFx ? <span className={`name-fx ${nameFx.cls}`}>{user.displayName}</span> : user.displayName}
+                <Badges user={user} />
+              </h1>
+              {giftedBy.length > 0 && (
+                <div className="gifted-by small">
+                  🎁 Supporter gifted by{' '}
+                  {giftedBy.map((g, i) => (
+                    <span key={g.id}>{i > 0 && ', '}<Link href={`/${g.user.username}`}>{g.user.displayName}</Link></span>
+                  ))}
+                </div>
+              )}
               {isChamp && (
                 <Link href="/potw" className="potw-banner">🏆 Profile of the Week</Link>
               )}
@@ -292,6 +314,7 @@ export default async function ProfilePage({ params, searchParams }) {
                   )}
                   <a href="#comments"><span className="ico">💬</span>Add comment</a>
                   <Link href={me ? `/stamps/give?to=${user.username}` : `/signup?ref=${user.username}`}><span className="ico">🎟️</span>Give a stamp</Link>
+                  <Link href={me ? `/gift?to=${user.username}` : `/signup?ref=${user.username}`}><span className="ico">🎁</span>Gift Supporter</Link>
                   <Link href={`/${user.username}/photos`}><span className="ico">▣</span>View photos</Link>
                   <Link href={`/${user.username}/videos`}><span className="ico">▶</span>View videos</Link>
                   <a href="#top8"><span className="ico">★</span>View friends</a>
