@@ -27,6 +27,7 @@ import HitCounter from '@/components/HitCounter';
 import { counterStyle, recordVisit } from '@/lib/visitors';
 import { birthdayLabel, isBirthdayToday } from '@/lib/birthdays';
 import { profileTracks } from '@/lib/playlist';
+import { latestBlogs } from '@/lib/blogs';
 
 async function loadUser(username) {
   return prisma.user.findUnique({ where: { username: String(username).toLowerCase() } });
@@ -100,13 +101,20 @@ export default async function ProfilePage({ params, searchParams }) {
     me && !isMe ? getFriendship(me.id, user.id) : null,
   ]);
 
-  const [profileVideo, status] = await Promise.all([
+  const [profileVideo, status, blogs, groups] = await Promise.all([
     prisma.video.findFirst({ where: { userId: user.id, onProfile: true } }),
     // Their latest status update (text only) shows on the profile, like the old status line.
     prisma.post.findFirst({
       where: { authorId: user.id, body: { not: '' } },
       orderBy: { createdAt: 'desc' },
       select: { id: true, body: true, createdAt: true },
+    }),
+    blocked ? [] : latestBlogs(me, user.id, 3),
+    prisma.groupMember.findMany({
+      where: { userId: user.id, role: { not: 'banned' } },
+      orderBy: { joinedAt: 'desc' },
+      take: 8,
+      include: { group: { select: { slug: true, name: true, avatarUrl: true, memberCount: true } } },
     }),
   ]);
   const isFriend = friendship?.status === 'ACCEPTED';
@@ -305,6 +313,28 @@ export default async function ProfilePage({ params, searchParams }) {
             </Link>
           </div>
 
+          {groups.length > 0 && (
+            <div className="box groups-box">
+              <div className="box-h">
+                {user.displayName}&apos;s Groups
+                <Link href="/groups" className="right small">All groups</Link>
+              </div>
+              <ul className="profile-groups">
+                {groups.map((m) => (
+                  <li key={m.id}>
+                    <Link href={`/groups/${m.group.slug}`}>
+                      <img src={m.group.avatarUrl || '/no-pic.svg'} alt="" width={32} height={32} className="pic" />
+                      <span>
+                        <b>{m.group.name}</b>
+                        <span className="small muted">{m.group.memberCount} {m.group.memberCount === 1 ? 'member' : 'members'}{m.role === 'owner' ? ' · owner' : ''}</span>
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           {interests.length > 0 && (
             <div className="box interests-box">
               <div className="box-h">{user.displayName}&apos;s Interests</div>
@@ -329,6 +359,32 @@ export default async function ProfilePage({ params, searchParams }) {
           ) : !isMe ? (
             <div className="extended-network">{user.displayName} is in your extended network</div>
           ) : null}
+
+          {(blogs.length > 0 || isMe) && (
+            <div className="box blog-box">
+              <div className="box-h">
+                {user.displayName}&apos;s Latest Blog Entries
+                <Link href={`/${user.username}/blog`} className="right small">View all</Link>
+              </div>
+              <div className="box-b">
+                {blogs.length === 0 ? (
+                  <span className="small muted">No entries yet. <Link href="/blog/write">Write your first one</Link>!</span>
+                ) : (
+                  <ul className="blog-latest">
+                    {blogs.map((b) => (
+                      <li key={b.id}>
+                        <Link href={`/${user.username}/blog/${b.id}`}>{b.title}</Link>
+                        <span className="small muted"> · {fmtDay(b.createdAt)}{b.visibility === 'frenz' ? ' · 🔒' : ''}{b._count.comments ? ` · ${b._count.comments} 💬` : ''}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {isMe && blogs.length > 0 && (
+                  <div className="small" style={{ marginTop: 8 }}><Link href="/blog/write">+ New entry</Link></div>
+                )}
+              </div>
+            </div>
+          )}
 
           <div className="box blurbs">
             <div className="box-h">{user.displayName}&apos;s Blurbs</div>

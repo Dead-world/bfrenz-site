@@ -17,6 +17,11 @@ const WHAT = {
   post: 'this post',
   postcomment: 'this comment',
   survey: 'these survey answers',
+  blog: 'this blog entry',
+  blogcomment: 'this comment',
+  group: 'this group',
+  grouppost: 'this group post',
+  groupreply: 'this reply',
 };
 
 export default async function ReportPage({ searchParams }) {

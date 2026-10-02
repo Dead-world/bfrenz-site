@@ -62,6 +62,8 @@ export default async function DashboardPage({ searchParams }) {
                 <br />
                 <Link href="/edit/top8">Change Top 8</Link>
                 <br />
+                <Link href={`/${me.username}/blog`}>My Blog</Link> | <Link href="/groups">Groups</Link>
+                <br />
                 <Link href="/invite"><b>Invite frenz</b></Link>
               </div>
             </div>

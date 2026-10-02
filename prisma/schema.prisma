@@ -97,6 +97,12 @@ model User {
   visitsReceived   ProfileVisit[] @relation("visited")
   visitsMade       ProfileVisit[] @relation("visitor")
   surveyAnswers    SurveyAnswer[]
+  blogPosts        BlogPost[]
+  blogComments     BlogComment[]
+  groupsOwned      Group[]       @relation("groupOwner")
+  groupMemberships GroupMember[]
+  groupPosts       GroupPost[]
+  groupReplies     GroupReply[]
   blocksMade       Block[]      @relation("blocker")
   blocksReceived   Block[]      @relation("blocked")
   reportsMade      Report[]     @relation("reporter")
@@ -391,4 +397,94 @@ model SurveyAnswer {
   @@index([userId])
   @@index([surveySlug, createdAt])
   @@index([createdAt])
+}
+
+// ---------------- blogs ----------------
+model BlogPost {
+  id         String        @id @default(cuid())
+  authorId   String
+  title      String
+  body       String        // HTML, cleaned like About Me
+  mood       String        @default("")
+  visibility String        @default("public") // public | frenz
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  author     User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  comments   BlogComment[]
+
+  @@index([authorId, createdAt])
+  @@index([createdAt])
+}
+
+model BlogComment {
+  id        String   @id @default(cuid())
+  postId    String
+  authorId  String
+  body      String
+  createdAt DateTime @default(now())
+  post      BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([postId, createdAt])
+}
+
+// ---------------- groups ----------------
+model Group {
+  id          String        @id @default(cuid())
+  slug        String        @unique
+  name        String
+  description String        @default("")
+  category    String        @default("")
+  avatarUrl   String        @default("")
+  ownerId     String
+  memberCount Int           @default(1)
+  lastPostAt  DateTime?
+  createdAt   DateTime      @default(now())
+  owner       User          @relation("groupOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  members     GroupMember[]
+  posts       GroupPost[]
+
+  @@index([memberCount])
+  @@index([createdAt])
+}
+
+model GroupMember {
+  id       String   @id @default(cuid())
+  groupId  String
+  userId   String
+  role     String   @default("member") // owner | mod | member | banned
+  joinedAt DateTime @default(now())
+  group    Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, userId])
+  @@index([userId])
+}
+
+model GroupPost {
+  id        String       @id @default(cuid())
+  groupId   String
+  authorId  String
+  body      String
+  imageUrl  String       @default("")
+  pinned    Boolean      @default(false)
+  createdAt DateTime     @default(now())
+  group     Group        @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  author    User         @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  replies   GroupReply[]
+
+  @@index([groupId, createdAt])
+  @@index([authorId])
+}
+
+model GroupReply {
+  id        String    @id @default(cuid())
+  postId    String
+  authorId  String
+  body      String
+  createdAt DateTime  @default(now())
+  post      GroupPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([postId, createdAt])
 }

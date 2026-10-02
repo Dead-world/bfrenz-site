@@ -15,6 +15,8 @@ export default async function sitemap() {
     { url: `${SITE}/shop`, changeFrequency: 'weekly', priority: 0.5 },
     { url: `${SITE}/help`, changeFrequency: 'monthly', priority: 0.4 },
     { url: `${SITE}/surveys`, changeFrequency: 'weekly', priority: 0.6 },
+    { url: `${SITE}/groups`, changeFrequency: 'daily', priority: 0.7 },
+    { url: `${SITE}/blog`, changeFrequency: 'daily', priority: 0.6 },
     ...SURVEYS.map((sv) => ({ url: `${SITE}/surveys/${sv.slug}`, changeFrequency: 'monthly', priority: 0.4 })),
     { url: `${SITE}/terms`, changeFrequency: 'yearly', priority: 0.2 },
     { url: `${SITE}/privacy`, changeFrequency: 'yearly', priority: 0.2 },
@@ -32,8 +34,26 @@ export default async function sitemap() {
     console.error('[sitemap] member list failed:', err?.message);
   }
 
+  let groups = [];
+  let blogs = [];
+  try {
+    [groups, blogs] = await Promise.all([
+      prisma.group.findMany({ where: { owner: { bannedAt: null } }, select: { slug: true, lastPostAt: true, createdAt: true }, take: 2000 }),
+      prisma.blogPost.findMany({
+        where: { visibility: 'public', author: { bannedAt: null } },
+        select: { id: true, updatedAt: true, author: { select: { username: true } } },
+        orderBy: { createdAt: 'desc' },
+        take: 2000,
+      }),
+    ]);
+  } catch (err) {
+    console.error('[sitemap] groups/blogs failed:', err?.message);
+  }
+
   return [
     ...pages,
+    ...groups.map((g) => ({ url: `${SITE}/groups/${g.slug}`, lastModified: g.lastPostAt || g.createdAt, changeFrequency: 'daily', priority: 0.5 })),
+    ...blogs.map((b) => ({ url: `${SITE}/${b.author.username}/blog/${b.id}`, lastModified: b.updatedAt, changeFrequency: 'monthly', priority: 0.4 })),
     ...members.map((m) => ({
       url: `${SITE}/${m.username}`,
       lastModified: m.lastSeen || m.createdAt,

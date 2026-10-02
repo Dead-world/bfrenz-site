@@ -8,6 +8,7 @@ import { toggleKudos, addPostComment, deletePost, deletePostComment } from '@/ap
 import { moodLabel } from '@/lib/moods';
 import { fmtDate, timeAgo } from '@/lib/util';
 import { answeredPairs, getSurvey } from '@/lib/surveys';
+import { blogSnippet } from '@/lib/blogSnippet';
 
 function Who({ user }) {
   return (
@@ -194,6 +195,50 @@ export default function FeedItem({ item, me, back, admin }) {
           </div>
         </header>
         <div className="feed-media"><MiniSong url={u.songUrl} title={label} /></div>
+      </article>
+    );
+  }
+
+  if (item.type === 'grouppost') {
+    const g = item.gpost;
+    const href = `/groups/${g.group.slug}#gp-${g.id}`;
+    return (
+      <article className="box feed-item feed-event">
+        <header className="feed-head">
+          <Link href={`/${item.user.username}`}><Pic user={item.user} size={44} /></Link>
+          <div className="feed-head-main">
+            <div><Who user={item.user} /> posted in <Link href={`/groups/${g.group.slug}`}><b>👥 {g.group.name}</b></Link></div>
+            <When at={item.at} />
+          </div>
+        </header>
+        <PostText text={g.body.length > 400 ? g.body.slice(0, 397) + '…' : g.body} />
+        {g.imageUrl && (
+          <Link href={href} className="feed-images n1"><span className="feed-img-wrap"><img src={g.imageUrl} alt="" loading="lazy" /></span></Link>
+        )}
+        <footer className="feed-survey-foot">
+          <Link href={href} className="small">💬 {g._count.replies ? `${g._count.replies} ${g._count.replies === 1 ? 'reply' : 'replies'}` : 'Reply'} in the group &raquo;</Link>
+        </footer>
+      </article>
+    );
+  }
+
+  if (item.type === 'blog') {
+    const b = item.blog;
+    const href = `/${item.user.username}/blog/${b.id}`;
+    return (
+      <article className="box feed-item feed-event">
+        <header className="feed-head">
+          <Link href={`/${item.user.username}`}><Pic user={item.user} size={44} /></Link>
+          <div className="feed-head-main">
+            <div><Who user={item.user} /> wrote a new blog entry {b.visibility === 'frenz' && <span className="small muted">🔒</span>}</div>
+            <When at={item.at} />
+          </div>
+        </header>
+        <Link href={href} className="feed-blog">
+          <b>✍️ {b.title}</b>
+          <span className="small muted">{blogSnippet(b.body, 220)}</span>
+          <span className="small feed-blog-more">Read more{b._count.comments ? ` · ${b._count.comments} ${b._count.comments === 1 ? 'comment' : 'comments'}` : ''} &raquo;</span>
+        </Link>
       </article>
     );
   }

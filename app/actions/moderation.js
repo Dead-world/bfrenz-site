@@ -30,6 +30,16 @@ async function ownerOf(kind, id, me) {
       return (await prisma.postComment.findUnique({ where: { id }, select: { authorId: true } }))?.authorId;
     case 'survey':
       return (await prisma.surveyAnswer.findUnique({ where: { id }, select: { userId: true } }))?.userId;
+    case 'blog':
+      return (await prisma.blogPost.findUnique({ where: { id }, select: { authorId: true } }))?.authorId;
+    case 'blogcomment':
+      return (await prisma.blogComment.findUnique({ where: { id }, select: { authorId: true } }))?.authorId;
+    case 'group':
+      return (await prisma.group.findUnique({ where: { id }, select: { ownerId: true } }))?.ownerId;
+    case 'grouppost':
+      return (await prisma.groupPost.findUnique({ where: { id }, select: { authorId: true } }))?.authorId;
+    case 'groupreply':
+      return (await prisma.groupReply.findUnique({ where: { id }, select: { authorId: true } }))?.authorId;
     case 'message': {
       const m = await prisma.message.findUnique({ where: { id }, select: { senderId: true, recipientId: true } });
       return m && m.recipientId === me.id ? m.senderId : null;
@@ -176,6 +186,21 @@ async function deleteContent(kind, id) {
     case 'survey':
       await prisma.surveyAnswer.deleteMany({ where: { id } });
       break;
+    case 'blog':
+      await prisma.blogPost.deleteMany({ where: { id } });
+      break;
+    case 'blogcomment':
+      await prisma.blogComment.deleteMany({ where: { id } });
+      break;
+    case 'group':
+      await prisma.group.deleteMany({ where: { id } });
+      break;
+    case 'grouppost':
+      await prisma.groupPost.deleteMany({ where: { id } });
+      break;
+    case 'groupreply':
+      await prisma.groupReply.deleteMany({ where: { id } });
+      break;
     case 'profile':
       // "Delete" on a profile report wipes the profile's text, pic, song and CSS (not the account).
       await prisma.user.updateMany({
@@ -249,6 +274,10 @@ export async function banUser(formData) {
       prisma.post.deleteMany({ where: { authorId: userId } }),
       prisma.postComment.deleteMany({ where: { authorId: userId } }),
       prisma.surveyAnswer.deleteMany({ where: { userId } }),
+      prisma.blogPost.deleteMany({ where: { authorId: userId } }),
+      prisma.blogComment.deleteMany({ where: { authorId: userId } }),
+      prisma.groupPost.deleteMany({ where: { authorId: userId } }),
+      prisma.groupReply.deleteMany({ where: { authorId: userId } }),
     );
   }
   await prisma.$transaction(ops);
