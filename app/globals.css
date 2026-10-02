@@ -46,7 +46,7 @@ a:hover { color: #fff; }
 .wrap { max-width: 1080px; margin: 0 auto; min-height: 100vh; padding: 0 16px; }
 
 /* ---------- header ---------- */
-header {
+header.site-header {
   position: sticky;
   top: 0;
   z-index: 20;

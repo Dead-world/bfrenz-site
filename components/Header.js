@@ -111,7 +111,7 @@ export default async function Header() {
   const meInfo = me ? { name: me.displayName, username: me.username, pic: me.avatarUrl || '/no-pic.svg' } : null;
 
   return (
-    <header>
+    <header className="site-header">
       <div className="topbar">
         <Link href={me ? '/home' : '/'} className="logo" aria-label="BFRENZ home">
           <img src="/logo.png" alt="bfrenz" width={198} height={60} />
