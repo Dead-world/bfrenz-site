@@ -278,6 +278,7 @@ export async function banUser(formData) {
       prisma.blogComment.deleteMany({ where: { authorId: userId } }),
       prisma.groupPost.deleteMany({ where: { authorId: userId } }),
       prisma.groupReply.deleteMany({ where: { authorId: userId } }),
+      prisma.stampGift.deleteMany({ where: { fromId: userId } }),
     );
   }
   await prisma.$transaction(ops);

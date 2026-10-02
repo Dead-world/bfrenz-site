@@ -8,6 +8,7 @@ import { removeAboutTemplate, restoreAboutBackup } from '@/app/actions/shop';
 import { getAboutTemplate } from '@/lib/aboutTemplates';
 import NotificationToggle from '@/components/NotificationToggle';
 import PlaylistEditor from '@/components/PlaylistEditor';
+import RichTextarea from '@/components/RichTextarea';
 import { cleanPlaylist } from '@/lib/playlist';
 import { vapidPublicKey } from '@/lib/push';
 
@@ -102,7 +103,7 @@ export default async function EditPage({ searchParams }) {
                 <tr>
                   <td className="lbl">About me</td>
                   <td>
-                    <textarea name="aboutMe" rows={10} defaultValue={me.aboutMe} />
+                    <RichTextarea name="aboutMe" rows={10} maxLength={20000} defaultValue={me.aboutMe} />
                     <div className="small muted">HTML is allowed: &lt;b&gt;, &lt;font color&gt;, &lt;img&gt;, &lt;marquee&gt; and friends.</div>
                     {sp?.template && (
                       <div className="notice ok" style={{ marginTop: 8 }}>
@@ -117,7 +118,7 @@ export default async function EditPage({ searchParams }) {
                     </div>
                   </td>
                 </tr>
-                <tr><td className="lbl">Who I&apos;d like to meet</td><td><textarea name="meet" rows={5} defaultValue={me.meet} /></td></tr>
+                <tr><td className="lbl">Who I&apos;d like to meet</td><td><RichTextarea name="meet" rows={5} maxLength={10000} defaultValue={me.meet} /></td></tr>
                 <tr><td /><td><button className="btn" type="submit">Save changes</button></td></tr>
               </tbody>
             </table>

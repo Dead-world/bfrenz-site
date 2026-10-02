@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import RichTextarea from '@/components/RichTextarea';
 import { requireUser } from '@/lib/auth';
 import { getFriendIds } from '@/lib/friends';
 import { postBulletin } from '@/app/actions/social';
@@ -52,7 +53,7 @@ export default async function BulletinsPage({ searchParams }) {
           <div className="box-b stack">
             <div className="small muted">Goes out to all {friendIds.length} of your frenz.</div>
             <input type="text" name="subject" placeholder="Subject" maxLength={120} required />
-            <textarea name="body" rows={8} placeholder="What's up? (HTML welcome)" maxLength={10000} required />
+            <RichTextarea rows={8} placeholder="What's up? (HTML welcome)" maxLength={10000} required />
             <div><button className="btn" type="submit">Post</button></div>
           </div>
         </form>

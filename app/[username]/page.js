@@ -20,6 +20,7 @@ import { getAboutTemplate } from '@/lib/aboutTemplates';
 import { didBlock, isAdmin, isBlockedEither } from '@/lib/moderation';
 import { blockUser, unblockUser } from '@/app/actions/moderation';
 import ShareButtons from '@/components/ShareButtons';
+import RichTextarea from '@/components/RichTextarea';
 import { siteUrl } from '@/lib/email';
 import { after } from 'next/server';
 import { headers } from 'next/headers';
@@ -30,6 +31,9 @@ import { profileTracks } from '@/lib/playlist';
 import { latestBlogs } from '@/lib/blogs';
 import { currentChampion, myVote } from '@/lib/potw';
 import { votePotw } from '@/app/actions/potw';
+import { stampCollection } from '@/lib/stampsDb';
+import { getStamp } from '@/lib/stamps';
+import { hiddenUserIds } from '@/lib/moderation';
 
 async function loadUser(username) {
   return prisma.user.findUnique({ where: { username: String(username).toLowerCase() } });
@@ -126,7 +130,13 @@ export default async function ProfilePage({ params, searchParams }) {
   const back = `/${user.username}`;
   const interests = INTERESTS.filter(([, key]) => user[key]);
   const bdayToday = isBirthdayToday(user);
-  const [champ, vote] = await Promise.all([currentChampion().catch(() => null), me && !isMe ? myVote(me.id) : null]);
+  const [champ, vote, stamps] = await Promise.all([
+    currentChampion().catch(() => null),
+    me && !isMe ? myVote(me.id) : null,
+    blocked ? [] : (me ? hiddenUserIds(me.id) : Promise.resolve([])).then((h) => stampCollection(user.id, h)),
+  ]);
+  const stampTotal = stamps.reduce((n, i) => n + i.count, 0);
+  const justStamped = sp?.stamped ? getStamp(String(sp.stamped)) : null;
   const isChamp = champ?.userId === user.id;
   const votedHere = vote?.nomineeId === user.id;
   const tracks = profileTracks(user).map(({ url, title, artist }) => ({ url, title, artist }));
@@ -281,6 +291,7 @@ export default async function ProfilePage({ params, searchParams }) {
                     <Link href={`/signup?ref=${user.username}`}><span className="ico">+</span>Add to friends</Link>
                   )}
                   <a href="#comments"><span className="ico">💬</span>Add comment</a>
+                  <Link href={me ? `/stamps/give?to=${user.username}` : `/signup?ref=${user.username}`}><span className="ico">🎟️</span>Give a stamp</Link>
                   <Link href={`/${user.username}/photos`}><span className="ico">▣</span>View photos</Link>
                   <Link href={`/${user.username}/videos`}><span className="ico">▶</span>View videos</Link>
                   <a href="#top8"><span className="ico">★</span>View friends</a>
@@ -382,6 +393,36 @@ export default async function ProfilePage({ params, searchParams }) {
             <div className="extended-network">{user.displayName} is in your extended network</div>
           ) : null}
 
+          {justStamped && <div className="notice ok">You gave {user.displayName} the {justStamped.emoji} {justStamped.name} stamp!</div>}
+          {(stamps.length > 0 || (me && !blocked)) && (
+            <div className="box stamps-box" id="stamps">
+              <div className="box-h">
+                {user.displayName}&apos;s Stamp Collection
+                {stamps.length > 0 && <Link href={`/${user.username}/stamps`} className="right small">View all ({stampTotal})</Link>}
+              </div>
+              {stamps.length === 0 ? (
+                <div className="box-b small muted">
+                  No stamps yet.{' '}
+                  {isMe ? <Link href="/stamps">See what you can collect</Link> : <Link href={`/stamps/give?to=${user.username}`}>Be the first to give one!</Link>}
+                </div>
+              ) : (
+                <div className="profile-stamps">
+                  {stamps.slice(0, 10).map((i) => (
+                    <Link key={i.stamp.slug} href={`/${user.username}/stamps`} className="profile-stamp" title={`${i.stamp.name} (from ${i.givers.map((g) => g.displayName).slice(0, 5).join(', ')}${i.givers.length > 5 ? '…' : ''})`}>
+                      <img src={`/stamps/${i.stamp.slug}.svg`} alt={i.stamp.name} width={64} height={80} loading="lazy" />
+                      {i.count > 1 && <span className="stamp-count">×{i.count}</span>}
+                    </Link>
+                  ))}
+                </div>
+              )}
+              {me && !isMe && !blocked && (
+                <div className="box-b" style={{ paddingTop: 0 }}>
+                  <Link href={`/stamps/give?to=${user.username}`} className="btn small-btn">🎟️ Give {user.displayName} a stamp</Link>
+                </div>
+              )}
+            </div>
+          )}
+
           {(blogs.length > 0 || isMe) && (
             <div className="box blog-box">
               <div className="box-h">
@@ -464,8 +505,7 @@ export default async function ProfilePage({ params, searchParams }) {
               <form action={addComment} className="box-b" id="add-comment">
                 <input type="hidden" name="profileId" value={user.id} />
                 <input type="hidden" name="back" value={back} />
-                <textarea
-                  name="body"
+                <RichTextarea
                   rows={3}
                   maxLength={5000}
                   placeholder={`Say something to ${user.displayName}… (HTML welcome)`}
@@ -553,7 +593,7 @@ export default async function ProfilePage({ params, searchParams }) {
                             <input type="hidden" name="profileId" value={user.id} />
                             <input type="hidden" name="parentId" value={c.id} />
                             <input type="hidden" name="back" value={back} />
-                            <textarea name="body" rows={2} maxLength={5000} placeholder={`Reply to ${c.author.displayName}…`} required />
+                            <RichTextarea rows={2} maxLength={5000} placeholder={`Reply to ${c.author.displayName}…`} required />
                             <section className="actions">
                               <button className="btn small-btn" type="submit">Reply</button>
                               {c.authorId !== me.id && c.authorId !== user.id && (

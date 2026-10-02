@@ -12,6 +12,7 @@ const MESSAGES = {
   feature: ["You're featured! ⭐", 'Look for yourself at the top of Cool New People.'],
   song_boost: ['Your song is promoted! 🎵', "It's now in Featured Music on the homepage."],
   sponsor_bulletin: ['Bulletin sponsored! 📢', 'Every member will see it in their bulletins.'],
+  stamp: ['Stamp unlocked! 🎟️', 'You can give it to as many frenz as you like. Visit a profile and hit "Give a stamp".'],
   tip: ['Thank you! 🧡', 'Your tip helps keep BFRENZ free for everyone.'],
 };
 

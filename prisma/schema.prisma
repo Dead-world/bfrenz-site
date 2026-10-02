@@ -108,6 +108,8 @@ model User {
   potwVotesCast    PotwVote[]   @relation("potwVoter")
   potwVotesGot     PotwVote[]   @relation("potwNominee")
   potwWins         PotwWinner[]
+  stampsGiven      StampGift[]  @relation("stampFrom")
+  stampsGot        StampGift[]  @relation("stampTo")
   blocksMade       Block[]      @relation("blocker")
   blocksReceived   Block[]      @relation("blocked")
   reportsMade      Report[]     @relation("reporter")
@@ -518,4 +520,21 @@ model PotwWinner {
   notified  Boolean  @default(false)
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ---------------- Stamps ----------------
+// One of each stamp per giver per person (see lib/stamps.js for the catalog).
+model StampGift {
+  id        String   @id @default(cuid())
+  stampSlug String
+  fromId    String
+  toId      String
+  note      String   @default("")
+  createdAt DateTime @default(now())
+  from      User     @relation("stampFrom", fields: [fromId], references: [id], onDelete: Cascade)
+  to        User     @relation("stampTo", fields: [toId], references: [id], onDelete: Cascade)
+
+  @@unique([stampSlug, fromId, toId])
+  @@index([toId, createdAt])
+  @@index([fromId, createdAt])
 }

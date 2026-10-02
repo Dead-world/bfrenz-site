@@ -5,6 +5,7 @@ import { prisma } from '@/lib/db';
 import { saveBlog } from '@/app/actions/blogs';
 import { BLOG_TITLE_MAX } from '@/lib/blogs';
 import Notice from '@/components/Notice';
+import RichTextarea from '@/components/RichTextarea';
 
 export const metadata = { title: 'Write a blog entry | BFRENZ.com', robots: { index: false } };
 
@@ -27,7 +28,7 @@ export default async function WriteBlogPage({ searchParams }) {
           <input id="bt" name="title" maxLength={BLOG_TITLE_MAX} defaultValue={post?.title || ''} placeholder="What's this one about?" required className="blog-title-input" />
 
           <label className="blog-label" htmlFor="bb">Entry</label>
-          <textarea id="bb" name="body" rows={16} defaultValue={post?.body || ''} placeholder="Write it all out… (HTML works: <b>, <i>, <img>, <font color>, <marquee>)" required />
+          <RichTextarea id="bb" name="body" rows={16} maxLength={50000} defaultValue={post?.body || ''} placeholder="Write it all out… (HTML works: <b>, <i>, <img>, <font color>, <marquee>)" required />
           <div className="small muted">Line breaks are kept. Paste image links with &lt;img src=&quot;…&quot;&gt;.</div>
 
           <div className="blog-opts">

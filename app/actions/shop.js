@@ -8,6 +8,8 @@ import { siteUrl } from '@/lib/email';
 import { PRICES, FEATURE_DAYS, SONG_BOOST_DAYS, SPONSOR_HOURS, TAX_CODE, money } from '@/lib/pricing';
 import { getTheme } from '@/lib/themes';
 import { ABOUT_TEMPLATES, getAboutTemplate } from '@/lib/aboutTemplates';
+import { getStamp } from '@/lib/stamps';
+import { ownedStampSlugs } from '@/lib/stampsDb';
 import { canUseTheme, canUseAboutTemplate, cleanColor, isSupporter, ownedThemeSlugs, ownedAboutSlugs } from '@/lib/perks';
 import { withParam } from '@/lib/util';
 import { findSubscription, syncSubscription } from '@/lib/fulfill';
@@ -44,6 +46,11 @@ async function describe(me, kind, itemId, amountRaw) {
       if (!b || b.authorId !== me.id) return { error: 'You can only sponsor your own bulletins.' };
       return { amount: PRICES.sponsorBulletin, name: `Sponsored bulletin (${SPONSOR_HOURS} hours): ${b.subject.slice(0, 60)}` };
     }
+    case 'stamp': {
+      const st = getStamp(itemId);
+      if (!st || st.tier !== 'shop') return null;
+      return { amount: st.price, name: `BFRENZ stamp: ${st.name} (give it forever)` };
+    }
     case 'tip': {
       const amount = parseInt(amountRaw, 10);
       if (!PRICES.tips.includes(amount)) return null;
@@ -69,6 +76,7 @@ export async function startCheckout(formData) {
   if (kind === 'pro_artist' && me.artistPro) fail('/shop', 'You already have the Pro Artist badge.');
   if (kind === 'theme' && (await ownedThemeSlugs(me.id)).has(itemId)) fail('/shop', 'You already own that theme.');
   if (kind === 'about' && (await ownedAboutSlugs(me.id)).has(itemId)) fail('/shop#about', 'You already own that template.');
+  if (kind === 'stamp' && (await ownedStampSlugs(me.id)).has(itemId)) fail('/stamps', 'You already own that stamp.');
 
   const item = await describe(me, kind, itemId, formData.get('amount'));
   if (!item) fail(safeBack, 'That item is not available.');
