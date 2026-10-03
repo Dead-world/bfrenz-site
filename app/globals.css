@@ -1450,3 +1450,12 @@ label.check { display: flex; gap: 8px; align-items: center; font-size: 14px; cur
 .bar-follows { background: #b24bff !important; }
 .key-clicks { color: var(--orange); } .key-follows { color: #b24bff; margin-left: 8px; }
 @media (max-width: 640px) { .link-row { grid-template-columns: 1fr; } }
+
+/* ================= official groups ================= */
+.official-chip {
+  display: inline-block; margin-left: 8px; padding: 2px 9px; border-radius: 999px; vertical-align: middle;
+  background: var(--orange-soft); border: 1px solid rgba(255, 122, 26, 0.55); color: var(--orange-hot);
+  font-family: var(--font); font-size: 11px; font-weight: 800; letter-spacing: 0.3px; white-space: nowrap;
+}
+.group-name .official-chip { font-size: 13px; padding: 3px 11px; letter-spacing: 0; }
+.official-chip.tile-chip { margin: 0 6px 0 0; font-size: 10px; padding: 1px 7px; }

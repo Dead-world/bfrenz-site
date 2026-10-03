@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 import { requireUser } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { isAdmin, reasonLabel, reportTarget } from '@/lib/moderation';
-import { handleReport, banUser, unbanUser, giftPerk, runBotNow } from '@/app/actions/moderation';
+import { handleReport, banUser, unbanUser, giftPerk, runBotNow, createOfficialGroupsNow } from '@/app/actions/moderation';
 import { fmtDate, fmtDay } from '@/lib/util';
 import { Pic } from '@/components/Avatar';
 import Notice from '@/components/Notice';
@@ -204,6 +204,10 @@ export default async function AdminPage({ searchParams }) {
               <a href="/bfrenzbot">See its page</a>.
               <form action={runBotNow} style={{ marginTop: 10 }}>
                 <button type="submit" className="btn small-btn">Post today&apos;s bot posts now</button>
+              </form>
+              <form action={createOfficialGroupsNow} style={{ marginTop: 10 }}>
+                <button type="submit" className="btn ghost small-btn">Create missing official groups</button>{' '}
+                <span className="muted">The bot runs 20 starter groups (<a href="/groups">see them</a>). Deleted one by mistake? This brings it back.</span>
               </form>
             </div>
           </div>

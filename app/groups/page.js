@@ -4,6 +4,7 @@ import { getCurrentUser } from '@/lib/auth';
 import { GROUP_CATEGORIES } from '@/lib/groups';
 import Notice from '@/components/Notice';
 import { timeAgo } from '@/lib/util';
+import { ensureOfficialGroups } from '@/lib/officialGroups';
 
 export const metadata = {
   title: 'Groups | BFRENZ.com',
@@ -18,6 +19,7 @@ function GroupTile({ g, mine }) {
       <span className="group-tile-main">
         <b>{g.name}</b>
         <span className="small muted">
+          {g.owner?.isOfficial && <span className="official-chip tile-chip">✔ Official</span>}
           {g.category} · {g.memberCount} {g.memberCount === 1 ? 'member' : 'members'}
           {g.lastPostAt ? ` · active ${timeAgo(g.lastPostAt)}` : ''}
         </span>
@@ -40,12 +42,15 @@ export default async function GroupsPage({ searchParams }) {
     ...(cat ? { category: cat } : {}),
   };
 
-  const [mine, popular, fresh] = await Promise.all([
+  await ensureOfficialGroups();
+  const withOwner = { include: { owner: { select: { isOfficial: true } } } };
+  const [mine, popular, fresh, official] = await Promise.all([
     me
-      ? prisma.groupMember.findMany({ where: { userId: me.id, role: { not: 'banned' } }, include: { group: true }, orderBy: { joinedAt: 'desc' } })
+      ? prisma.groupMember.findMany({ where: { userId: me.id, role: { not: 'banned' } }, include: { group: withOwner }, orderBy: { joinedAt: 'desc' } })
       : [],
-    prisma.group.findMany({ where, orderBy: [{ memberCount: 'desc' }, { createdAt: 'desc' }], take: filtered ? 60 : 24 }),
-    filtered ? [] : prisma.group.findMany({ where, orderBy: { createdAt: 'desc' }, take: 8 }),
+    prisma.group.findMany({ where: filtered ? where : { ...where, owner: { bannedAt: null, isOfficial: false } }, orderBy: [{ memberCount: 'desc' }, { createdAt: 'desc' }], take: filtered ? 60 : 24, ...withOwner }),
+    filtered ? [] : prisma.group.findMany({ where: { ...where, owner: { bannedAt: null, isOfficial: false } }, orderBy: { createdAt: 'desc' }, take: 8, ...withOwner }),
+    filtered ? [] : prisma.group.findMany({ where: { owner: { isOfficial: true } }, orderBy: [{ memberCount: 'desc' }, { createdAt: 'asc' }], take: 40, ...withOwner }),
   ]);
   const joined = new Set(mine.map((m) => m.groupId));
 
@@ -79,11 +84,21 @@ export default async function GroupsPage({ searchParams }) {
         </section>
       )}
 
+      {official.length > 0 && (
+        <section className="box">
+          <div className="box-h">⭐ Official BFRENZ groups</div>
+          <div className="box-b small muted" style={{ paddingBottom: 0 }}>Ready to join. Pick a few and say hi!</div>
+          <div className="group-grid">
+            {official.map((g) => <GroupTile key={g.id} g={g} mine={joined.has(g.id)} />)}
+          </div>
+        </section>
+      )}
+
       <section className="box">
-        <div className="box-h">{filtered ? `Results (${popular.length})` : 'Popular groups'}</div>
+        <div className="box-h">{filtered ? `Results (${popular.length})` : 'Member groups'}</div>
         {popular.length === 0 ? (
           <div className="box-b small muted">
-            {filtered ? 'No groups match that.' : 'No groups yet.'}{' '}
+            {filtered ? 'No groups match that.' : 'No member groups yet.'}{' '}
             <Link href={me ? '/groups/new' : '/signup'}>Start the first one!</Link>
           </div>
         ) : (

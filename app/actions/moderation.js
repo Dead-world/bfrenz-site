@@ -340,3 +340,12 @@ export async function runBotNow() {
   const msg = res.skipped ? `Bot skipped: ${res.skipped}` : res.posted.length ? `Bot posted: ${res.posted.join(', ')}` : 'Nothing new to post today.';
   redirect(withParam('/admin?tab=growth', 'botmsg', msg));
 }
+
+/** Admin button: create any official starter groups that are missing. */
+export async function createOfficialGroupsNow() {
+  await requireAdmin();
+  const { createOfficialGroups } = await import('@/lib/officialGroups');
+  const res = await createOfficialGroups();
+  const msg = res.reason ? `Couldn't create groups: ${res.reason}` : res.created ? `Created ${res.created} official groups.` : 'All official groups already exist.';
+  redirect(withParam('/admin?tab=growth', 'botmsg', msg));
+}

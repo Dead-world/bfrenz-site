@@ -79,10 +79,14 @@ export default async function GroupPage({ params, searchParams }) {
         <img src={group.avatarUrl || '/no-pic.svg'} alt="" width={110} height={110} className="pic group-pic" />
         <div className="group-hero-main">
           <div className="small muted"><Link href={`/groups?cat=${encodeURIComponent(group.category)}`}>{group.category}</Link> · started {fmtDate(group.createdAt).split(',')[0]}</div>
-          <h1 className="bigname group-name">{group.name}</h1>
+          <h1 className="bigname group-name">{group.name}{group.owner.isOfficial && <span className="official-chip">✔ Official</span>}</h1>
           <div className="small">
-            <b>{group.memberCount}</b> {group.memberCount === 1 ? 'member' : 'members'} · run by{' '}
-            <Link href={`/${group.owner.username}`}>{group.owner.displayName}</Link>
+            <b>{group.memberCount}</b> {group.memberCount === 1 ? 'member' : 'members'} ·{' '}
+            {group.owner.isOfficial ? (
+              <>an official BFRENZ group, run by the BFRENZ team</>
+            ) : (
+              <>run by <Link href={`/${group.owner.username}`}>{group.owner.displayName}</Link></>
+            )}
           </div>
           <div className="actions" style={{ marginTop: 10 }}>
             {!me ? (
