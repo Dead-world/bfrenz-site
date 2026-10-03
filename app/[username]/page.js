@@ -91,6 +91,7 @@ export default async function ProfilePage({ params, searchParams }) {
   }
 
   const showAll = sp?.comments === 'all';
+  const replyTo = sp?.replyto ? String(sp.replyto).slice(0, 40) : '';
   const [top8, friendCount, comments, commentCount, friendship] = await Promise.all([
     getTop8(user.id, topFriendLimit(user)),
     countFriends(user.id),
@@ -672,6 +673,15 @@ export default async function ProfilePage({ params, searchParams }) {
                                   <section className="reply-body" dangerouslySetInnerHTML={{ __html: cleanHtml(r.body) }} />
                                   {me && (
                                     <section className="actions comment-actions">
+                                      {(canComment || c.authorId === me.id) && !blocked && r.authorId !== me.id && (
+                                        <Link
+                                          href={`/${user.username}?replyto=${r.id}${showAll ? '&comments=all' : ''}#reply-${c.id}`}
+                                          className="linkbtn small reply-link"
+                                          scroll={false}
+                                        >
+                                          Reply
+                                        </Link>
+                                      )}
                                       {(isMe || r.authorId === me.id) && (
                                         <form action={deleteComment}>
                                           <input type="hidden" name="id" value={r.id} />
@@ -690,12 +700,28 @@ export default async function ProfilePage({ params, searchParams }) {
                           </section>
                         )}
 
-                        {me && (canComment || c.authorId === me.id) && !blocked && (
-                          <form action={addComment} className="reply-form" id={`reply-${c.id}`}>
+                        {me && (canComment || c.authorId === me.id) && !blocked && (() => {
+                          const target = c.replies.find((r) => r.id === replyTo);
+                          return (
+                          <form action={addComment} className={`reply-form${target ? ' replying' : ''}`} id={`reply-${c.id}`}>
                             <input type="hidden" name="profileId" value={user.id} />
-                            <input type="hidden" name="parentId" value={c.id} />
+                            <input type="hidden" name="parentId" value={target ? target.id : c.id} />
                             <input type="hidden" name="back" value={back} />
-                            <RichTextarea rows={2} maxLength={5000} placeholder={`Reply to ${c.author.displayName}…`} required />
+                            {target && (
+                              <div className="small replying-to">
+                                ↩︎ Replying to <b>{target.author.displayName}</b>{' '}
+                                <Link href={`/${user.username}${showAll ? '?comments=all' : ''}#c-${target.id}`} scroll={false} className="muted">Cancel</Link>
+                              </div>
+                            )}
+                            <RichTextarea
+                              key={target ? target.id : 'thread'}
+                              rows={2}
+                              maxLength={5000}
+                              placeholder={`Reply to ${(target || c).author.displayName}…`}
+                              defaultValue={target ? `@${target.author.username} ` : ''}
+                              autoFocus={!!target}
+                              required
+                            />
                             <section className="actions">
                               <button className="btn small-btn" type="submit">Reply</button>
                               {c.authorId !== me.id && c.authorId !== user.id && (
@@ -705,7 +731,8 @@ export default async function ProfilePage({ params, searchParams }) {
                               )}
                             </section>
                           </form>
-                        )}
+                          );
+                        })()}
                       </td>
                     </tr>
                   ))}

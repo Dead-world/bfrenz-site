@@ -28,9 +28,13 @@ export async function addComment(formData) {
   if (!body) redirect(withParam(back, 'error', 'Your comment was empty.'));
 
   let parent = null;
+  let replyTo = null; // the reply being answered, when someone replies to a reply
   if (parentIdRaw) {
     parent = await prisma.comment.findUnique({ where: { id: parentIdRaw } });
-    if (parent?.parentId) parent = await prisma.comment.findUnique({ where: { id: parent.parentId } });
+    if (parent?.parentId) {
+      replyTo = parent;
+      parent = await prisma.comment.findUnique({ where: { id: parent.parentId } });
+    }
     if (!parent || parent.profileId !== profileId) redirect(withParam(back, 'error', 'That comment is gone.'));
   }
 
@@ -41,6 +45,9 @@ export async function addComment(formData) {
   if (!allowed) redirect(withParam(back, 'error', 'You have to be frenz to leave a comment.'));
   if (await isBlockedEither(me.id, profileId)) redirect(withParam(back, 'error', "You can't comment here."));
   if (parent && parent.authorId !== me.id && (await isBlockedEither(me.id, parent.authorId))) {
+    redirect(withParam(back, 'error', "You can't reply to this member."));
+  }
+  if (replyTo && replyTo.authorId !== me.id && (await isBlockedEither(me.id, replyTo.authorId))) {
     redirect(withParam(back, 'error', "You can't reply to this member."));
   }
   if (await tooFast(me)) redirect(withParam(back, 'error', 'Slow down! Too many comments in a minute.'));
@@ -59,9 +66,13 @@ export async function addComment(formData) {
       url: `/${owner.username}#c-${parent?.id || c.id}`,
     });
   }
-  if (parent && parent.authorId !== me.id && parent.authorId !== profileId) {
-    const page = await prisma.user.findUnique({ where: { id: profileId }, select: { username: true } });
-    notify(parent.authorId, { title: `↩︎ ${me.displayName} replied to your comment`, body: snippet, url: `/${page?.username || ''}#c-${parent.id}` });
+  const pageName = parent ? (await prisma.user.findUnique({ where: { id: profileId }, select: { username: true } }))?.username || '' : '';
+  if (parent && parent.authorId !== me.id && parent.authorId !== profileId && parent.authorId !== replyTo?.authorId) {
+    notify(parent.authorId, { title: `↩︎ ${me.displayName} replied to your comment`, body: snippet, url: `/${pageName}#c-${c.id}` });
+  }
+  // Replying to a reply: the person being answered hears about it too (once, even if they own the page).
+  if (replyTo && replyTo.authorId !== me.id && replyTo.authorId !== profileId) {
+    notify(replyTo.authorId, { title: `↩︎ ${me.displayName} replied to you`, body: snippet, url: `/${pageName}#c-${c.id}` });
   }
 
   // Old-school "comment back": also drop the reply on the other person's page.
@@ -72,7 +83,7 @@ export async function addComment(formData) {
     }
   }
 
-  redirect(`${back}#c-${parent?.id || c.id}`);
+  redirect(`${back.split('?')[0]}#c-${c.id}`);
 }
 
 export async function deleteComment(formData) {

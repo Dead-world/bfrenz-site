@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 /**
  * A comment box with a toolbar: ✨ glitter text, 🖼️ comment graphics and 💖 stickers.
@@ -36,6 +36,15 @@ export default function RichTextarea({ id, name = 'body', rows = 3, maxLength = 
   const ref = useRef(null);
   const [panel, setPanel] = useState('');
   const [text, setText] = useState('');
+
+  // Jump into the box with the cursor after any starting text (e.g. "@maya ") when asked to.
+  useEffect(() => {
+    if (!autoFocus || !ref.current) return;
+    const el = ref.current;
+    el.focus({ preventScroll: true });
+    el.setSelectionRange(el.value.length, el.value.length);
+    el.scrollIntoView({ block: 'center' });
+  }, [autoFocus]);
 
   function insert(snippet) {
     const el = ref.current;
