@@ -124,6 +124,12 @@ model User {
   linkClicks       LinkClick[]
   mentions         Mention[]    @relation("mentioned")
   mentionsMade     Mention[]    @relation("mentioner")
+  callsMade        VideoCall[]  @relation("callsMade")
+  callsReceived    VideoCall[]  @relation("callsReceived")
+  rtcSessions      RtcSession[]
+  liveStreams      LiveStream[]
+  liveWatches      LiveWatch[]
+  liveChats        LiveChat[]
   blocksMade       Block[]      @relation("blocker")
   blocksReceived   Block[]      @relation("blocked")
   reportsMade      Report[]     @relation("reporter")
@@ -599,4 +605,84 @@ model Mention {
 
   @@index([userId, createdAt])
   @@index([targetId])
+}
+
+// ---------------- video calls & live streams (video runs through Cloudflare Realtime) ----------------
+// A 1-on-1 video call between frenz.
+model VideoCall {
+  id            String    @id @default(cuid())
+  callerId      String
+  calleeId      String
+  status        String    @default("ringing") // ringing | active | ended | declined | missed
+  offerSdp      String    @default("") // calls are direct (phone to phone): the caller's connection details
+  answerSdp     String    @default("") // …and the answer from the person called
+  callerSession String    @default("") // (unused since calls went direct; kept so old rows still load)
+  calleeSession String    @default("")
+  callerSeen    DateTime? // each side's call screen checks in every couple of seconds
+  calleeSeen    DateTime?
+  createdAt     DateTime  @default(now())
+  answeredAt    DateTime?
+  endedAt       DateTime?
+  caller        User      @relation("callsMade", fields: [callerId], references: [id], onDelete: Cascade)
+  callee        User      @relation("callsReceived", fields: [calleeId], references: [id], onDelete: Cascade)
+
+  @@index([calleeId, status])
+  @@index([callerId, status])
+}
+
+// Every Cloudflare session we open, so a browser can only use its own.
+model RtcSession {
+  id        String   @id // Cloudflare's session id
+  userId    String
+  purpose   String // call | live | watch
+  refId     String // the call or stream it belongs to
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+model LiveStream {
+  id          String      @id @default(cuid())
+  userId      String
+  title       String      @default("")
+  source      String      @default("browser") // browser (Cloudflare) | youtube | twitch | tiktok
+  streamRef   String      @default("") // YouTube video id, Twitch channel or TikTok username
+  sessionId   String      @default("") // Cloudflare session sending the streamer's camera (browser streams)
+  status      String      @default("live") // live | ended
+  startedAt   DateTime    @default(now())
+  endedAt     DateTime?
+  lastBeat    DateTime    @default(now()) // the streamer's page checks in every few seconds
+  peakViewers Int         @default(0)
+  endedBy     String      @default("") // "" | "admin"
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  watches     LiveWatch[]
+  chats       LiveChat[]
+
+  @@index([status, startedAt])
+  @@index([userId, startedAt])
+}
+
+model LiveWatch {
+  id       String     @id @default(cuid())
+  streamId String
+  userId   String
+  lastSeen DateTime   @default(now())
+  stream   LiveStream @relation(fields: [streamId], references: [id], onDelete: Cascade)
+  user     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([streamId, userId])
+  @@index([streamId, lastSeen])
+}
+
+model LiveChat {
+  id        String     @id @default(cuid())
+  streamId  String
+  userId    String
+  body      String
+  createdAt DateTime   @default(now())
+  stream    LiveStream @relation(fields: [streamId], references: [id], onDelete: Cascade)
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([streamId, createdAt])
 }

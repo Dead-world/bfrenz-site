@@ -410,8 +410,23 @@ export default function Messenger({ me }) {
   );
 }
 
-function ChatWindow({ me, buddy, min, messages, onSend, onClose, onToggle }) {
+function ChatWindow({ me, buddy, min, messages, onSend, onClose, onToggle, onCall }) {
   const [text, setText] = useState('');
+  const [emojiOpen, setEmojiOpen] = useState(false);
+
+  function addEmoji(emoji) {
+    const el = inputRef.current;
+    const start = el?.selectionStart ?? text.length;
+    const end = el?.selectionEnd ?? text.length;
+    const next = (text.slice(0, start) + emoji + text.slice(end)).slice(0, 1000);
+    setText(next);
+    requestAnimationFrame(() => {
+      if (!el) return;
+      el.focus({ preventScroll: true });
+      const at = start + emoji.length;
+      el.setSelectionRange(at, at);
+    });
+  }
   const bodyRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -438,6 +453,18 @@ function ChatWindow({ me, buddy, min, messages, onSend, onClose, onToggle }) {
         </span>
         <span className="im-name">{buddy.name}</span>
         {min && buddy.unread > 0 && <span className="im-badge">{buddy.unread}</span>}
+        <button
+          type="button"
+          className="im-icon im-call"
+          title={`Video call ${buddy.name}`}
+          aria-label={`Video call ${buddy.name}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            window.dispatchEvent(new CustomEvent('bfrenz-call', { detail: { to: buddy.id, name: buddy.name, pic: buddy.pic } }));
+          }}
+        >
+          📹
+        </button>
         <a href={`/${buddy.username}`} className="im-icon" title="View profile" onClick={(e) => e.stopPropagation()}>
           ☺
         </a>
@@ -468,6 +495,10 @@ function ChatWindow({ me, buddy, min, messages, onSend, onClose, onToggle }) {
             })}
           </div>
           <form className="im-input" onSubmit={submit}>
+            {emojiOpen && <EmojiPicker onPick={addEmoji} onClose={() => setEmojiOpen(false)} />}
+            <button type="button" className="im-emoji-btn" aria-label="Emoji" title="Emoji" onClick={() => setEmojiOpen((o) => !o)}>
+              😊
+            </button>
             <textarea
               ref={inputRef}
               rows={2}
@@ -488,6 +519,45 @@ function ChatWindow({ me, buddy, min, messages, onSend, onClose, onToggle }) {
           </form>
         </>
       )}
+    </div>
+  );
+}
+
+const EMOJI_TABS = [
+  ['😊', ['😂', '🤣', '😊', '😍', '🥰', '😘', '😎', '🤩', '🥳', '😜', '🤪', '😏', '🙃', '😅', '😭', '🥺', '😤', '😡', '🤯', '😱', '😴', '🤔', '🙄', '😬', '🤗', '🤭', '🫠', '😇', '🤓', '💀']],
+  ['❤️', ['❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '💖', '💕', '💔', '❣️', '💯', '✨', '🔥', '⭐', '🌟', '💫', '🎉', '🎊']],
+  ['👍', ['👍', '👎', '👏', '🙌', '🙏', '🤝', '✌️', '🤘', '🤙', '👋', '💪', '👀', '🫶', '👌', '🤞', '☝️', '💅', '🙈', '🙉', '🙊']],
+  ['🎵', ['🎵', '🎶', '🎤', '🎧', '🎸', '🥁', '🎹', '🎮', '🍕', '🍔', '🍟', '🌮', '🍩', '🧋', '☕', '🍿', '⚽', '🏀', '🚗', '🌙']],
+];
+
+/** A small emoji picker: tap an emoji to add it where the cursor is. */
+function EmojiPicker({ onPick, onClose }) {
+  const [tab, setTab] = useState(0);
+  const ref = useRef(null);
+  useEffect(() => {
+    const onDoc = (e) => {
+      if (ref.current && !ref.current.contains(e.target) && !e.target.closest('.im-emoji-btn')) onClose();
+    };
+    const onKey = (e) => e.key === 'Escape' && onClose();
+    document.addEventListener('mousedown', onDoc);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDoc);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [onClose]);
+  return (
+    <div className="im-emoji-pop" ref={ref} role="dialog" aria-label="Emoji">
+      <div className="im-emoji-tabs">
+        {EMOJI_TABS.map(([icon], i) => (
+          <button key={icon} type="button" className={i === tab ? 'on' : ''} onClick={() => setTab(i)} aria-label={`Emoji group ${i + 1}`}>{icon}</button>
+        ))}
+      </div>
+      <div className="im-emoji-grid">
+        {EMOJI_TABS[tab][1].map((e) => (
+          <button key={e} type="button" onClick={() => onPick(e)} aria-label={`Add ${e}`}>{e}</button>
+        ))}
+      </div>
     </div>
   );
 }

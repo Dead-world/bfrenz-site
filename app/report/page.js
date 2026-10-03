@@ -21,6 +21,7 @@ const WHAT = {
   blogcomment: 'this comment',
   group: 'this group',
   grouppost: 'this group post',
+  live: 'this live stream',
   groupreply: 'this reply',
 };
 

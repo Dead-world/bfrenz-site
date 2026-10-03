@@ -19,6 +19,7 @@ import { hiddenUserIds } from '@/lib/moderation';
 import { Pic } from '@/components/Avatar';
 import { currentChampion } from '@/lib/potw';
 import { trendingTags, unseenMentionCount } from '@/lib/mentions';
+import { liveStreams } from '@/lib/live';
 
 export const metadata = { title: 'Feed | BFRENZ.com' };
 
@@ -30,7 +31,7 @@ export default async function HomePage({ searchParams }) {
   const beforeRaw = sp?.before ? new Date(String(sp.before)) : null;
   const before = beforeRaw && !isNaN(beforeRaw) ? beforeRaw : null;
   const weekly = weeklySurvey();
-  const [unread, pending, feed, sponsored, tookWeekly, bdays, champ, trending, mentions] = await Promise.all([
+  const [unread, pending, feed, sponsored, tookWeekly, bdays, champ, trending, mentions, live] = await Promise.all([
     prisma.message.count({ where: { recipientId: me.id, read: false, recipientDeleted: false } }),
     prisma.friendship.count({ where: { addresseeId: me.id, status: 'PENDING' } }),
     getFeed(me, before),
@@ -42,6 +43,7 @@ export default async function HomePage({ searchParams }) {
     before ? null : currentChampion().catch(() => null),
     before ? [] : trendingTags(8).catch(() => []),
     unseenMentionCount(me.id).catch(() => 0),
+    before ? [] : liveStreams(me, 'mine').catch(() => []),
   ]);
   const myBirthday = !before && isBirthdayToday(me);
 
@@ -55,6 +57,7 @@ export default async function HomePage({ searchParams }) {
           {unread > 0 && <Link href="/mail" className="btn small-btn alert-chip">&#9993; {unread} new</Link>}
           {pending > 0 && <Link href="/requests" className="btn small-btn alert-chip">&#9733; {pending} {pending === 1 ? 'request' : 'requests'}</Link>}
           {mentions > 0 && <Link href="/mentions" className="btn small-btn alert-chip">@ {mentions} {mentions === 1 ? 'mention' : 'mentions'}</Link>}
+          <Link href="/live/new" className="btn small-btn live-go-btn">● Go Live</Link>
           <Link href="/dashboard" className="btn ghost small-btn">&#9776; Dashboard</Link>
         </div>
       </div>
@@ -68,6 +71,19 @@ export default async function HomePage({ searchParams }) {
             videoMaxMb={videoMaxMb()}
             creator={!!me.creatorType}
           />
+        )}
+
+        {live.length > 0 && (
+          <div className="live-strip">
+            {live.map((l) => (
+              <Link key={l.id} href={`/live/${l.id}`} className="live-strip-item">
+                <span className="live-ring"><Pic user={l.user} size={56} /></span>
+                <span className="live-pill tiny">{l.source === 'youtube' ? '▶ LIVE' : l.source === 'twitch' ? '🟣 LIVE' : l.source === 'tiktok' ? '🎵 LIVE' : 'LIVE'}</span>
+                <span className="small live-strip-name">{l.user.displayName}</span>
+              </Link>
+            ))}
+            <Link href="/live" className="live-strip-item more"><span className="live-more">🔴</span><span className="small live-strip-name">All live</span></Link>
+          </div>
         )}
 
         {trending.length > 0 && (

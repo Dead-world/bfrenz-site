@@ -40,6 +40,8 @@ async function ownerOf(kind, id, me) {
       return (await prisma.groupPost.findUnique({ where: { id }, select: { authorId: true } }))?.authorId;
     case 'groupreply':
       return (await prisma.groupReply.findUnique({ where: { id }, select: { authorId: true } }))?.authorId;
+    case 'live':
+      return (await prisma.liveStream.findUnique({ where: { id }, select: { userId: true } }))?.userId;
     case 'message': {
       const m = await prisma.message.findUnique({ where: { id }, select: { senderId: true, recipientId: true } });
       return m && m.recipientId === me.id ? m.senderId : null;
@@ -203,6 +205,10 @@ async function deleteContent(kind, id) {
       break;
     case 'groupreply':
       await prisma.groupReply.deleteMany({ where: { id } });
+      break;
+    case 'live':
+      // "Delete" on a live stream report ends the stream for everyone.
+      await prisma.liveStream.updateMany({ where: { id, status: 'live' }, data: { status: 'ended', endedAt: new Date(), endedBy: 'admin' } });
       break;
     case 'profile':
       // "Delete" on a profile report wipes the profile's text, pic, song and CSS (not the account).

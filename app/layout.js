@@ -2,6 +2,7 @@ import './globals.css';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Messenger from '@/components/Messenger';
+import CallLayer from '@/components/CallLayer';
 import PwaRegister from '@/components/PwaRegister';
 import AppBanner from '@/components/AppBanner';
 import { getCurrentUser } from '@/lib/auth';
@@ -81,7 +82,10 @@ export default async function RootLayout({ children }) {
         <PwaRegister />
         <AppBanner />
         {me && (
-          <Messenger me={{ id: me.id, name: me.displayName, pic: me.avatarUrl || '/no-pic.svg', away: me.awayMessage || '' }} />
+          <>
+            <Messenger me={{ id: me.id, name: me.displayName, pic: me.avatarUrl || '/no-pic.svg', away: me.awayMessage || '' }} />
+            <CallLayer me={{ id: me.id }} />
+          </>
         )}
       </body>
     </html>

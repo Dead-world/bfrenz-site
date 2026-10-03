@@ -66,6 +66,7 @@ export default async function Header() {
           items: [
             { href: '/bulletins', label: 'Bulletins', icon: 'megaphone' },
             { href: '/surveys', label: 'Surveys', icon: 'survey' },
+            { href: '/live', label: 'Live now', icon: 'video' },
             { href: '/tag', label: 'Hashtags', icon: 'hash' },
             { href: '/potw', label: 'Profile of the Week', icon: 'trophy' },
             { href: '/stamps', label: 'Stamps', icon: 'ticket' },
