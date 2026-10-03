@@ -75,14 +75,6 @@ export async function addComment(formData) {
     notify(replyTo.authorId, { title: `↩︎ ${me.displayName} replied to you`, body: snippet, url: `/${pageName}#c-${c.id}` });
   }
 
-  // Old-school "comment back": also drop the reply on the other person's page.
-  if (parent && formData.get('alsoPost') === 'on' && parent.authorId !== me.id && parent.authorId !== profileId) {
-    const ok = (await areFriends(me.id, parent.authorId)) && !(await isBlockedEither(me.id, parent.authorId));
-    if (ok) {
-      await prisma.comment.create({ data: { profileId: parent.authorId, authorId: me.id, body } });
-    }
-  }
-
   redirect(`${back.split('?')[0]}#c-${c.id}`);
 }
 

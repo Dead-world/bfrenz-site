@@ -724,11 +724,6 @@ export default async function ProfilePage({ params, searchParams }) {
                             />
                             <section className="actions">
                               <button className="btn small-btn" type="submit">Reply</button>
-                              {c.authorId !== me.id && c.authorId !== user.id && (
-                                <label className="small muted">
-                                  <input type="checkbox" name="alsoPost" defaultChecked={isMe} /> also post on {c.author.displayName}&apos;s page
-                                </label>
-                              )}
                             </section>
                           </form>
                           );
