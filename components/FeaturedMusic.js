@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { prisma } from '@/lib/db';
 import { Pic } from '@/components/Avatar';
 import Badges from '@/components/Badges';
-import { songSource } from '@/lib/songEmbed';
+import MiniSong from '@/components/MiniSong';
 
 /** Songs members paid to promote. Plays only when clicked (no autoplay). */
 export default async function FeaturedMusic({ take = 5 }) {
@@ -28,32 +28,11 @@ export default async function FeaturedMusic({ take = 5 }) {
                 <Link href={`/${a.username}`}>{a.songArtist || a.displayName}</Link>
                 <Badges user={a} />
               </span>
-              <MiniPlayer url={a.songUrl} title={a.songTitle} />
+              <MiniSong url={a.songUrl} title={a.songTitle} compact />
             </div>
           </div>
         ))}
       </div>
     </div>
-  );
-}
-
-function MiniPlayer({ url, title }) {
-  const source = songSource(url);
-  if (!source) return null;
-  if (source.kind === 'audio') return <audio controls preload="none" src={source.src} />;
-  if (source.kind === 'embed') {
-    return (
-      <iframe
-        className="song-embed fm-embed"
-        src={source.src}
-        title={title || `${source.provider} player`}
-        height={Math.min(source.height, 166)}
-        loading="lazy"
-        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-      />
-    );
-  }
-  return (
-    <a className="small" href={source.href} target="_blank" rel="noopener noreferrer">&#9654; Listen on {source.provider}</a>
   );
 }
