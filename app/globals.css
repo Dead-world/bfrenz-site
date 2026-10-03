@@ -1559,3 +1559,4 @@ label.check { display: flex; gap: 8px; align-items: center; font-size: 14px; cur
   .layout-btns { gap: 3px; }
   .layout-btns button { width: 30px; height: 30px; }
 }
+.layout-theme-note { background: var(--orange-soft); border-color: rgba(255, 122, 26, 0.45); color: var(--text); font-weight: 500; }

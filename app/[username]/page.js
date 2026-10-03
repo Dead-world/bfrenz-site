@@ -1,6 +1,6 @@
 import { Fragment } from 'react';
 import Link from 'next/link';
-import { normalizeLayout } from '@/lib/profileLayout';
+import { normalizeLayout, isDefaultLayout, CUSTOM_LAYOUT_CSS } from '@/lib/profileLayout';
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
@@ -188,6 +188,7 @@ export default async function ProfilePage({ params, searchParams }) {
 
   // The member's own box order (Edit Profile > Layout). Hidden boxes aren't drawn at all.
   const layout = normalizeLayout(user.profileLayout);
+  const customLayout = !!user.profileLayout && !isDefaultLayout(layout);
   const hiddenBoxes = new Set(layout.hidden);
   const shown = (id) => !hiddenBoxes.has(id);
   const box = {
@@ -717,8 +718,9 @@ export default async function ProfilePage({ params, searchParams }) {
   };
 
   return (
-    <div className={`profile-page${isSupporter(user) ? ' is-supporter' : ''}`}>
+    <div className={`profile-page${isSupporter(user) ? ' is-supporter' : ''}${customLayout ? ' custom-layout' : ''}`}>
       {themeCss && <style dangerouslySetInnerHTML={{ __html: themeCss }} />}
+      {customLayout && <style dangerouslySetInnerHTML={{ __html: CUSTOM_LAYOUT_CSS }} />}
       {aboutTpl && <style dangerouslySetInnerHTML={{ __html: aboutTpl.css }} />}
       {user.customCss && <style dangerouslySetInnerHTML={{ __html: cleanCss(user.customCss) }} />}
       {previewing && (

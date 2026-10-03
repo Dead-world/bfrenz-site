@@ -14,6 +14,8 @@ import { saveCreatorSettings } from '@/app/actions/creators';
 import { cleanPlaylist } from '@/lib/playlist';
 import { vapidPublicKey } from '@/lib/push';
 import LayoutEditor from '@/components/LayoutEditor';
+import { getTheme } from '@/lib/themes';
+import { themeHasOwnLayout, normalizeLayout, isDefaultLayout } from '@/lib/profileLayout';
 
 export const metadata = { title: 'Edit Profile | BFRENZ.com' };
 
@@ -291,6 +293,19 @@ export default async function EditPage({ searchParams }) {
               Drag boxes to put them in any order, or move them to the other column. On a phone, use the arrows.
               Tap 👁 to hide a box. On phones your page shows the left column first, then the right.
             </p>
+            {(() => {
+              const t = me.theme ? getTheme(me.theme) : null;
+              if (!t || !themeHasOwnLayout(t.css)) return null;
+              const custom = !!me.profileLayout && !isDefaultLayout(normalizeLayout(me.profileLayout));
+              return (
+                <div className="notice layout-theme-note">
+                  🎨 Your <b>{t.name}</b> theme has its own special layout.{' '}
+                  {custom
+                    ? <>You saved your own layout, so your page uses it (two columns, still in {t.name} colors). Press <b>Reset to default</b> and save to get the theme&apos;s layout back.</>
+                    : <>Saving a layout here switches your page to two columns in your order. It keeps {t.name}&apos;s colors and effects.</>}
+                </div>
+              );
+            })()}
             <LayoutEditor initial={me.profileLayout} username={me.username} />
           </div>
         </div>
