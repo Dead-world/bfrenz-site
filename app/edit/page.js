@@ -11,6 +11,7 @@ import PlaylistEditor from '@/components/PlaylistEditor';
 import RichTextarea from '@/components/RichTextarea';
 import { CREATOR_TYPES, MAX_LINKS, cleanLinks } from '@/lib/creators';
 import { saveCreatorSettings } from '@/app/actions/creators';
+import { SUPPORT_KINDS, SUPPORT_NOTE_MAX, handleFor } from '@/lib/support';
 import { cleanPlaylist } from '@/lib/playlist';
 import { vapidPublicKey } from '@/lib/push';
 import LayoutEditor from '@/components/LayoutEditor';
@@ -275,6 +276,26 @@ export default async function EditPage({ searchParams }) {
                 })}
               </tbody>
             </table>
+            <div className="support-settings" id="support">
+              <div className="blog-label" style={{ marginTop: 24 }}>💸 Get paid by fans <span className="small muted">(optional)</span></div>
+              <div className="small muted" style={{ marginBottom: 10 }}>
+                Add the apps you already use and a <b>Support me</b> box shows on your page. Fans pay you directly in that app:
+                <b> BFRENZ never touches the money and takes no cut.</b> Just type your username.
+              </div>
+              <div className="support-grid">
+                {SUPPORT_KINDS.map((k) => (
+                  <label key={k.kind} className="support-field">
+                    <span className="support-field-name">{k.emoji} {k.label}</span>
+                    <span className="support-input">
+                      <span className="support-prefix">{k.prefix}</span>
+                      <input type="text" name={`support_${k.kind}`} defaultValue={handleFor(me, k.kind)} placeholder={k.placeholder} maxLength={120} autoComplete="off" />
+                    </span>
+                  </label>
+                ))}
+              </div>
+              <label className="blog-label" htmlFor="supportNote" style={{ marginTop: 12 }}>Message above the buttons <span className="small muted">(optional)</span></label>
+              <input id="supportNote" type="text" name="supportNote" defaultValue={me.supportNote || ''} maxLength={SUPPORT_NOTE_MAX} placeholder="Every tip helps me make more music 🧡" style={{ width: '100%' }} />
+            </div>
             <div className="actions" style={{ marginTop: 14 }}>
               <button className="btn" type="submit">Save</button>
               {me.creatorType && <Link href="/creator/stats" className="btn ghost small-btn">📊 My stats</Link>}

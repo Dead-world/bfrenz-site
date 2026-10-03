@@ -1571,3 +1571,31 @@ label.check { display: flex; gap: 8px; align-items: center; font-size: 14px; cur
 .reply-btn:hover { color: var(--orange-hot); }
 .feed-reply-form { margin: 4px 0 8px 40px; padding-left: 10px; border-left: 2px solid var(--orange); }
 .feed-reply-form .pic { border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+
+/* ================= Support me (tips go straight to the creator) ================= */
+.support-note { font-weight: 600; margin-bottom: 10px; }
+.support-btns { display: grid; gap: 8px; }
+.support-btn {
+  display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 14px;
+  background: var(--surface-2); border: 1px solid var(--line); color: var(--text); transition: transform 0.12s, border-color 0.15s;
+}
+.support-btn:hover { transform: translateY(-1px); border-color: var(--orange); color: var(--text); }
+.support-ico { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; font-size: 20px; flex-shrink: 0; background: rgba(255, 255, 255, 0.06); }
+.support-txt { display: grid; line-height: 1.25; min-width: 0; }
+.support-txt small { color: var(--text-dim); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sb-cashapp .support-ico { background: #00d632; }
+.sb-venmo .support-ico { background: #3d95ce; }
+.sb-paypal .support-ico { background: #003087; }
+.sb-kofi .support-ico { background: #ff5e5b; }
+.sb-patreon .support-ico { background: #f96854; }
+.sb-bmac .support-ico { background: #ffdd00; }
+.support-fine { margin-top: 10px; text-align: center; }
+.support-jump { padding: 4px 12px; font-size: 12px; }
+.support-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; }
+.support-field { display: grid; gap: 4px; }
+.support-field-name { font-size: 13px; font-weight: 700; }
+.support-input { display: flex; align-items: center; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface-2); overflow: hidden; }
+.support-input:focus-within { border-color: var(--orange); }
+.support-prefix { padding: 0 2px 0 10px; color: var(--text-dim); font-size: 13px; white-space: nowrap; }
+.support-input input { flex: 1; min-width: 0; border: 0 !important; background: transparent !important; box-shadow: none !important; padding-left: 2px; }
+@media (max-width: 640px) { .support-grid { grid-template-columns: 1fr; } }

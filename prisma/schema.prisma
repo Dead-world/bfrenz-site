@@ -68,6 +68,8 @@ model User {
   isOfficial         Boolean   @default(false) // the site's own labeled bot account (BFRENZ Bot)
   creatorType        String    @default("") // creator mode: youtuber, streamer, ... ("" = regular member)
   creatorLinks       Json      @default("[]") // "My Links" buttons: [{ url, label }]
+  supportLinks       Json      @default("[]") // "Support me" buttons: [{ kind, handle }] (Cash App, Venmo, PayPal…)
+  supportNote        String    @default("") // a line above the support buttons
   profileLayout      Json? // box order on the profile: { left: [], right: [], hidden: [] } (null = default)
   nameEffect         String    @default("") // name effect showing on their name (lib/nameEffects.js)
   nameEffectsOwned   String[]  @default([]) // name effects they bought

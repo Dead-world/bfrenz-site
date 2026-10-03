@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { supportButtons } from '@/lib/support';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/db';
 import { requireUser } from '@/lib/auth';
@@ -88,6 +89,22 @@ export default async function CreatorStatsPage() {
                 </tbody>
               </table>
             )}
+          </div>
+          <div className="box">
+            <div className="box-h">💸 Support button taps <span className="right small muted">30 days</span></div>
+            {supportButtons(me).length === 0 ? (
+              <div className="box-b small muted">No tip buttons yet. <Link href="/edit?tab=creator#support">Add Cash App, Venmo, PayPal…</Link> and fans can support you from your page.</div>
+            ) : (
+              <table className="list growth-table">
+                <thead><tr><th>App</th><th>Taps</th></tr></thead>
+                <tbody>
+                  {supportButtons(me).map((b) => (
+                    <tr key={b.kind}><td>{b.emoji} {b.label}</td><td>{clicks.find((c) => c.label === `💸 ${b.label}`)?._count._all || 0}</td></tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+            <div className="box-b small muted" style={{ paddingTop: 6 }}>Taps show interest; the actual tips arrive in each app.</div>
           </div>
         </div>
         <div className="col-right">

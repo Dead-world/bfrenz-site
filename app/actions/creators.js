@@ -1,6 +1,7 @@
 'use server';
 
 import { redirect } from 'next/navigation';
+import { SUPPORT_KINDS, SUPPORT_NOTE_MAX, cleanSupport } from '@/lib/support';
 import { prisma } from '@/lib/db';
 import { requireUser } from '@/lib/auth';
 import { safeBack, str, withParam } from '@/lib/util';
@@ -46,11 +47,18 @@ export async function saveCreatorSettings(formData) {
   for (let i = 0; i < MAX_LINKS; i++) rows.push({ url: formData.get(`url${i}`), label: formData.get(`label${i}`) });
   const bad = rows.find((r) => String(r.url || '').trim() && !/^https?:\/\//i.test(String(r.url).trim()));
   if (bad) redirect(withParam('/edit?tab=creator', 'error', 'Links must start with http:// or https://'));
+  const support = cleanSupport(Object.fromEntries(SUPPORT_KINDS.map((k) => [k.kind, str(formData, `support_${k.kind}`, 120)])));
+  if (support.bad.length) {
+    redirect(withParam('/edit?tab=creator', 'error', `That doesn't look like a ${support.bad.join(' / ')} name. Just type your username, like the example.`));
+  }
+  const supportNote = str(formData, 'supportNote', SUPPORT_NOTE_MAX);
   await prisma.user.update({
     where: { id: me.id },
     data: {
       creatorType,
       creatorLinks: cleanLinks(rows),
+      supportLinks: support.list,
+      supportNote,
       ...(creatorType && (me.isArtist || ['artist', 'dj'].includes(creatorType)) ? { isArtist: true } : {}),
     },
   });

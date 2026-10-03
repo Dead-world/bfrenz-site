@@ -1,5 +1,6 @@
 import { Fragment } from 'react';
 import Link from 'next/link';
+import { supportButtons } from '@/lib/support';
 import { normalizeLayout, isDefaultLayout, CUSTOM_LAYOUT_CSS } from '@/lib/profileLayout';
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/db';
@@ -188,6 +189,7 @@ export default async function ProfilePage({ params, searchParams }) {
 
 
   // The member's own box order (Edit Profile > Layout). Hidden boxes aren't drawn at all.
+  const tips = supportButtons(user);
   const layout = normalizeLayout(user.profileLayout);
   const customLayout = !!user.profileLayout && !isDefaultLayout(layout);
   const hiddenBoxes = new Set(layout.hidden);
@@ -213,6 +215,7 @@ export default async function ProfilePage({ params, searchParams }) {
                     </form>
                   )}
                   {!me && <Link href={`/signup?ref=${user.username}`} className="btn small-btn">+ Follow</Link>}
+                  {!isMe && tips.length > 0 && !blocked && <a href="#support" className="btn small-btn ghost support-jump">💸 Support</a>}
                   {isMe && <Link href="/creator/stats" className="small">📊 My stats</Link>}
                 </div>
               )}
@@ -291,6 +294,36 @@ export default async function ProfilePage({ params, searchParams }) {
                     <span className="my-link-go">↗</span>
                   </a>
                 ))}
+              </div>
+            </div>
+          )}
+      </>
+    ),
+    support: (
+      <>
+          {tips.length > 0 && !blocked && (
+            <div className="box support-box" id="support">
+              <div className="box-h">💸 Support {user.displayName}</div>
+              <div className="box-b">
+                {user.supportNote && <div className="support-note">{user.supportNote}</div>}
+                <div className="support-btns">
+                  {tips.map((t) => (
+                    <a key={t.kind} href={`/tip/${user.username}/${t.kind}`} target="_blank" rel="nofollow noopener noreferrer" className={`support-btn sb-${t.kind}`}>
+                      <span className="support-ico">{t.emoji}</span>
+                      <span className="support-txt"><b>{t.label}</b><small>{t.text}</small></span>
+                    </a>
+                  ))}
+                </div>
+                <div className="small muted support-fine">Goes straight to {user.displayName}. BFRENZ never takes a cut.</div>
+              </div>
+            </div>
+          )}
+          {tips.length === 0 && isMe && creator && (
+            <div className="box support-box">
+              <div className="box-h">💸 Get paid by fans</div>
+              <div className="box-b small">
+                Add your Cash App, Venmo, PayPal, Ko-fi or Patreon and fans can tip you right from your page. You keep 100%.{' '}
+                <Link href="/edit?tab=creator#support">Add tip buttons &raquo;</Link>
               </div>
             </div>
           )}
