@@ -1,4 +1,6 @@
+import { Fragment } from 'react';
 import Link from 'next/link';
+import { normalizeLayout } from '@/lib/profileLayout';
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
@@ -183,32 +185,14 @@ export default async function ProfilePage({ params, searchParams }) {
   }
   const aboutHtml = previewAbout ? previewAbout.html : user.aboutMe;
 
-  return (
-    <div className={`profile-page${isSupporter(user) ? ' is-supporter' : ''}`}>
-      {themeCss && <style dangerouslySetInnerHTML={{ __html: themeCss }} />}
-      {aboutTpl && <style dangerouslySetInnerHTML={{ __html: aboutTpl.css }} />}
-      {user.customCss && <style dangerouslySetInnerHTML={{ __html: cleanCss(user.customCss) }} />}
-      {previewing && (
-        <div className="notice ok">
-          Previewing the <b>{previewing.name}</b> theme (only you can see this).{' '}
-          <Link href="/shop">Back to the shop</Link>
-        </div>
-      )}
-      {previewAbout && (
-        <div className="notice ok">
-          Previewing the <b>{previewAbout.name}</b> About Me template with sample text (only you can see this).{' '}
-          <Link href="/shop#about">Back to the shop</Link>
-        </div>
-      )}
-      <Notice sp={sp} />
-      {sp?.requested && <div className="notice ok">Friend request sent!</div>}
-      {sp?.blocked && <div className="notice ok">Blocked. They can&apos;t message you, comment, or add you.</div>}
-      {sp?.unblocked && <div className="notice ok">Unblocked.</div>}
-      {user.bannedAt && <div className="notice error">This member is banned. Only admins can see this page.</div>}
 
-      <div className="cols">
-        {/* ---------------- left column ---------------- */}
-        <div className="col-left profile-left">
+  // The member's own box order (Edit Profile > Layout). Hidden boxes aren't drawn at all.
+  const layout = normalizeLayout(user.profileLayout);
+  const hiddenBoxes = new Set(layout.hidden);
+  const shown = (id) => !hiddenBoxes.has(id);
+  const box = {
+    profile: (
+      <>
           <div className="box profile-card">
             <div className="box-b">
               <h1 className="bigname profile-name">
@@ -290,7 +274,10 @@ export default async function ProfilePage({ params, searchParams }) {
               {user.showCounter && <HitCounter value={user.profileViews} look={counterStyle(user)} />}
             </div>
           </div>
-
+      </>
+    ),
+    links: (
+      <>
           {links.length > 0 && !blocked && (
             <div className="box links-box">
               <div className="box-h">{isMe ? 'My Links' : `${user.displayName}'s Links`}</div>
@@ -305,9 +292,15 @@ export default async function ProfilePage({ params, searchParams }) {
               </div>
             </div>
           )}
-
+      </>
+    ),
+    song: (
+      <>
           {tracks.length > 0 && <SongPlayer tracks={tracks} />}
-
+      </>
+    ),
+    video: (
+      <>
           {profileVideo && (
             <div className="box video-box">
               <div className="box-h">
@@ -318,7 +311,10 @@ export default async function ProfilePage({ params, searchParams }) {
               <div className="box-b small"><b>{profileVideo.title}</b></div>
             </div>
           )}
-
+      </>
+    ),
+    contact: (
+      <>
           <div className="box orange contact-box">
             <div className="box-h orange">Contacting {user.displayName}</div>
             <div className="contact-grid">
@@ -394,7 +390,10 @@ export default async function ProfilePage({ params, searchParams }) {
               </div>
             )}
           </div>
-
+      </>
+    ),
+    share: (
+      <>
           {isMe && (
             <div className="box share-box">
               <div className="box-h">Share my profile</div>
@@ -406,7 +405,10 @@ export default async function ProfilePage({ params, searchParams }) {
               </div>
             </div>
           )}
-
+      </>
+    ),
+    url: (
+      <>
           <div className="box url-box">
             <b>{user.displayName}&apos;s URL:</b>
             <br />
@@ -414,7 +416,10 @@ export default async function ProfilePage({ params, searchParams }) {
               {SITE_DOMAIN}/{user.username}
             </Link>
           </div>
-
+      </>
+    ),
+    groups: (
+      <>
           {groups.length > 0 && (
             <div className="box groups-box">
               <div className="box-h">
@@ -436,7 +441,10 @@ export default async function ProfilePage({ params, searchParams }) {
               </ul>
             </div>
           )}
-
+      </>
+    ),
+    interests: (
+      <>
           {interests.length > 0 && (
             <div className="box interests-box">
               <div className="box-h">{user.displayName}&apos;s Interests</div>
@@ -452,17 +460,10 @@ export default async function ProfilePage({ params, searchParams }) {
               </table>
             </div>
           )}
-        </div>
-
-        {/* ---------------- right column ---------------- */}
-        <div className="col-right profile-right">
-          {isFriend ? (
-            <div className="extended-network">You and {user.displayName} are frenz!</div>
-          ) : !isMe ? (
-            <div className="extended-network">{user.displayName} is in your extended network</div>
-          ) : null}
-
-          {justStamped && <div className="notice ok">You gave {user.displayName} the {justStamped.emoji} {justStamped.name} stamp!</div>}
+      </>
+    ),
+    stamps: (
+      <>
           {(stamps.length > 0 || (me && !blocked)) && (
             <div className="box stamps-box" id="stamps">
               <div className="box-h">
@@ -491,7 +492,10 @@ export default async function ProfilePage({ params, searchParams }) {
               )}
             </div>
           )}
-
+      </>
+    ),
+    posts: (
+      <>
           {publicPosts.length > 0 && (
             <div className="box">
               <div className="box-h">{user.displayName}&apos;s Latest Posts</div>
@@ -507,7 +511,10 @@ export default async function ProfilePage({ params, searchParams }) {
               </ul>
             </div>
           )}
-
+      </>
+    ),
+    blog: (
+      <>
           {(blogs.length > 0 || isMe) && (
             <div className="box blog-box">
               <div className="box-h">
@@ -533,7 +540,10 @@ export default async function ProfilePage({ params, searchParams }) {
               </div>
             </div>
           )}
-
+      </>
+    ),
+    blurbs: (
+      <>
           <div className="box blurbs">
             <div className="box-h">{user.displayName}&apos;s Blurbs</div>
             <div className="box-b">
@@ -552,7 +562,10 @@ export default async function ProfilePage({ params, searchParams }) {
               )}
             </div>
           </div>
-
+      </>
+    ),
+    top8: (
+      <>
           <div className="box top8-box" id="top8">
             <div className="box-h">{user.displayName}&apos;s Friend Space</div>
             <div className="friend-count">
@@ -572,7 +585,10 @@ export default async function ProfilePage({ params, searchParams }) {
               <Link href={`/${user.username}/friends`}>View all of {user.displayName}&apos;s friends</Link>
             </div>
           </div>
-
+      </>
+    ),
+    comments: (
+      <>
           <div className="box comments-box" id="comments">
             <div className="box-h">{user.displayName}&apos;s Friends Comments</div>
             <div className="small muted" style={{ padding: '12px 16px 0' }}>
@@ -696,6 +712,49 @@ export default async function ProfilePage({ params, searchParams }) {
               </table>
             )}
           </div>
+      </>
+    ),
+  };
+
+  return (
+    <div className={`profile-page${isSupporter(user) ? ' is-supporter' : ''}`}>
+      {themeCss && <style dangerouslySetInnerHTML={{ __html: themeCss }} />}
+      {aboutTpl && <style dangerouslySetInnerHTML={{ __html: aboutTpl.css }} />}
+      {user.customCss && <style dangerouslySetInnerHTML={{ __html: cleanCss(user.customCss) }} />}
+      {previewing && (
+        <div className="notice ok">
+          Previewing the <b>{previewing.name}</b> theme (only you can see this).{' '}
+          <Link href="/shop">Back to the shop</Link>
+        </div>
+      )}
+      {previewAbout && (
+        <div className="notice ok">
+          Previewing the <b>{previewAbout.name}</b> About Me template with sample text (only you can see this).{' '}
+          <Link href="/shop#about">Back to the shop</Link>
+        </div>
+      )}
+      <Notice sp={sp} />
+      {sp?.requested && <div className="notice ok">Friend request sent!</div>}
+      {sp?.blocked && <div className="notice ok">Blocked. They can&apos;t message you, comment, or add you.</div>}
+      {sp?.unblocked && <div className="notice ok">Unblocked.</div>}
+      {user.bannedAt && <div className="notice error">This member is banned. Only admins can see this page.</div>}
+
+      <div className="cols">
+        {/* ---------------- left column ---------------- */}
+        <div className="col-left profile-left">
+          {layout.left.filter(shown).map((id) => <Fragment key={id}>{box[id]}</Fragment>)}
+        </div>
+
+        {/* ---------------- right column ---------------- */}
+        <div className="col-right profile-right">
+          {isFriend ? (
+            <div className="extended-network">You and {user.displayName} are frenz!</div>
+          ) : !isMe ? (
+            <div className="extended-network">{user.displayName} is in your extended network</div>
+          ) : null}
+
+          {justStamped && <div className="notice ok">You gave {user.displayName} the {justStamped.emoji} {justStamped.name} stamp!</div>}
+          {layout.right.filter(shown).map((id) => <Fragment key={id}>{box[id]}</Fragment>)}
         </div>
       </div>
     </div>

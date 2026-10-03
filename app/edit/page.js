@@ -13,6 +13,7 @@ import { CREATOR_TYPES, MAX_LINKS, cleanLinks } from '@/lib/creators';
 import { saveCreatorSettings } from '@/app/actions/creators';
 import { cleanPlaylist } from '@/lib/playlist';
 import { vapidPublicKey } from '@/lib/push';
+import LayoutEditor from '@/components/LayoutEditor';
 
 export const metadata = { title: 'Edit Profile | BFRENZ.com' };
 
@@ -21,6 +22,7 @@ const TABS = [
   ['interests', 'Interests'],
   ['pic', 'Profile pic'],
   ['song', 'Music / playlist'],
+  ['layout', '🧩 Layout'],
   ['creator', '🎥 Creator'],
   ['css', 'Customize (CSS)'],
   ['notify', 'Notifications'],
@@ -277,6 +279,21 @@ export default async function EditPage({ searchParams }) {
             </div>
           </div>
         </form>
+      )}
+
+      {tab === 'layout' && (
+        <div className="box">
+          <div className="box-h">Arrange your page</div>
+          <div className="box-b">
+            {sp?.saved === '1' && <div className="notice ok">Layout saved! <Link href={`/${me.username}`}>See your page</Link></div>}
+            {sp?.saved === 'reset' && <div className="notice ok">Back to the default layout.</div>}
+            <p className="small muted" style={{ marginTop: 0 }}>
+              Drag boxes to put them in any order, or move them to the other column. On a phone, use the arrows.
+              Tap 👁 to hide a box. On phones your page shows the left column first, then the right.
+            </p>
+            <LayoutEditor initial={me.profileLayout} username={me.username} />
+          </div>
+        </div>
       )}
 
       {tab === 'notify' && (
