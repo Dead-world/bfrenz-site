@@ -3,6 +3,7 @@ import { Pic } from '@/components/Avatar';
 import Badges, { Name } from '@/components/Badges';
 import PostText from '@/components/PostText';
 import MentionInput from '@/components/MentionInput';
+import { ReplyButton, ThreadReplyForm } from '@/components/CommentReply';
 import MiniSong from '@/components/MiniSong';
 import VideoPlayer from '@/components/VideoPlayer';
 import { toggleKudos, addPostComment, deletePost, deletePostComment } from '@/app/actions/posts';
@@ -25,12 +26,39 @@ function When({ at, href }) {
   return <span className="feed-when">{href ? <Link href={href}>{label}</Link> : label}</span>;
 }
 
+/** One comment (or reply) under a post. */
+function FeedComment({ c, thread, me, mine, admin, back, small = false }) {
+  return (
+    <div className={`feed-comment${small ? ' is-reply' : ''}`} id={`pc-${c.id}`}>
+      <Link href={`/${c.author.username}`}><Pic user={c.author} size={small ? 24 : 30} /></Link>
+      <div className="feed-comment-main">
+        <Who user={c.author} /> <PostText text={c.body} className="post-text inline" />
+        <div className="feed-comment-meta small">
+          <When at={c.createdAt} />
+          {c.authorId !== me.id && <ReplyButton thread={thread} target={c.id} username={c.author.username} />}
+          {(c.authorId === me.id || mine || admin) && (
+            <form action={deletePostComment} className="inline">
+              <input type="hidden" name="id" value={c.id} />
+              <input type="hidden" name="back" value={back} />
+              <button type="submit" className="linkbtn small muted">Delete</button>
+            </form>
+          )}
+          {c.authorId !== me.id && (
+            <Link className="muted" href={`/report?kind=postcomment&id=${c.id}&back=${encodeURIComponent(back)}`}>Report</Link>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /** One status post with its kudos, comments and comment box. */
 export function PostCard({ post, me, back, admin = false, allComments = false }) {
   const mine = post.authorId === me.id;
   const gave = post.kudos.length > 0;
   const comments = allComments ? post.comments : [...post.comments].reverse();
-  const hidden = post._count.comments - comments.length;
+  const shown = comments.reduce((n, c) => n + 1 + (c.replies?.length || 0), 0);
+  const hidden = post._count.comments - shown;
   return (
     <article className="box feed-item feed-post" id={`post-${post.id}`}>
       <header className="feed-head">
@@ -87,24 +115,14 @@ export function PostCard({ post, me, back, admin = false, allComments = false })
           <Link href={`/post/${post.id}`} className="small">View all {post._count.comments} comments</Link>
         )}
         {comments.map((c) => (
-          <div key={c.id} className="feed-comment">
-            <Link href={`/${c.author.username}`}><Pic user={c.author} size={30} /></Link>
-            <div className="feed-comment-main">
-              <Who user={c.author} /> <PostText text={c.body} className="post-text inline" />
-              <div className="feed-comment-meta small">
-                <When at={c.createdAt} />
-                {(c.authorId === me.id || mine || admin) && (
-                  <form action={deletePostComment} className="inline">
-                    <input type="hidden" name="id" value={c.id} />
-                    <input type="hidden" name="back" value={back} />
-                    <button type="submit" className="linkbtn small muted">Delete</button>
-                  </form>
-                )}
-                {c.authorId !== me.id && (
-                  <Link className="muted" href={`/report?kind=postcomment&id=${c.id}&back=${encodeURIComponent(back)}`}>Report</Link>
-                )}
+          <div key={c.id} className="feed-thread">
+            <FeedComment c={c} thread={c.id} me={me} mine={mine} admin={admin} back={back} />
+            {c.replies?.length > 0 && (
+              <div className="feed-replies">
+                {c.replies.map((r) => <FeedComment key={r.id} c={r} thread={c.id} me={me} mine={mine} admin={admin} back={back} small />)}
               </div>
-            </div>
+            )}
+            <ThreadReplyForm postId={post.id} thread={c.id} back={back} pic={me.avatarUrl} myName={me.displayName} />
           </div>
         ))}
         <form action={addPostComment} className="feed-comment-form" id={`c-${post.id}`}>

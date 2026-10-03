@@ -1563,3 +1563,11 @@ label.check { display: flex; gap: 8px; align-items: center; font-size: 14px; cur
 .reply-form.replying { display: block; border-left: 3px solid var(--orange); padding-left: 10px; }
 .replying-to { margin-bottom: 6px; }
 .replying-to .muted { margin-left: 6px; }
+
+/* ================= replies under feed comments ================= */
+.feed-replies { margin: 2px 0 4px 40px; padding-left: 10px; border-left: 2px solid var(--line); display: grid; gap: 2px; }
+.feed-comment.is-reply .post-text { font-size: 13px; }
+.reply-btn { color: var(--text-dim); font-weight: 600; }
+.reply-btn:hover { color: var(--orange-hot); }
+.feed-reply-form { margin: 4px 0 8px 40px; padding-left: 10px; border-left: 2px solid var(--orange); }
+.feed-reply-form .pic { border-radius: 50%; object-fit: cover; flex-shrink: 0; }

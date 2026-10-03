@@ -354,11 +354,15 @@ model PostComment {
   authorId  String
   body      String
   createdAt DateTime @default(now())
+  parentId  String? // set on replies; always points at the top-level comment
 
-  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
-  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  post    Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author  User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parent  PostComment?  @relation("postCommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies PostComment[] @relation("postCommentReplies")
 
   @@index([postId, createdAt])
+  @@index([parentId, createdAt])
 }
 
 // A ★ "kudos" on a post (one per person per post).

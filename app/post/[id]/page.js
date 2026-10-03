@@ -17,7 +17,7 @@ export default async function PostPage({ params, searchParams }) {
   const inc = postInclude(me.id);
   const post = await prisma.post.findUnique({
     where: { id },
-    include: { ...inc, comments: { orderBy: { createdAt: 'asc' }, take: 300, include: inc.comments.include } },
+    include: { ...inc, comments: { where: { parentId: null }, orderBy: { createdAt: 'asc' }, take: 300, include: { ...inc.comments.include, replies: { ...inc.comments.include.replies, take: 200 } } } },
   });
   if (!post) notFound();
   const author = await prisma.user.findUnique({ where: { id: post.authorId }, select: { bannedAt: true } });

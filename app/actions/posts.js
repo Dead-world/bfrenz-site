@@ -9,7 +9,7 @@ import { youtubeId } from '@/lib/video';
 import { songSource } from '@/lib/songEmbed';
 import { MOODS } from '@/lib/moods';
 import { canSeePost } from '@/lib/feed';
-import { isAdmin } from '@/lib/moderation';
+import { isAdmin, isBlockedEither } from '@/lib/moderation';
 import { notify } from '@/lib/push';
 import { sendMentions } from '@/lib/mentions';
 import { after } from 'next/server';
@@ -107,16 +107,43 @@ export async function addPostComment(formData) {
   const body = String(formData.get('body') || '').replace(/\r/g, '').trim().slice(0, 1000);
   if (!post) redirect(withParam(to, 'error', 'That post is gone.'));
   if (!body) redirect(`${to}#post-${post.id}`);
+
+  // Replies always hang off the top-level comment; replying to a reply also alerts that person.
+  let parent = null;
+  let replyTo = null;
+  const parentId = str(formData, 'parentId', 40);
+  if (parentId) {
+    parent = await prisma.postComment.findUnique({ where: { id: parentId } });
+    if (parent?.parentId) {
+      replyTo = parent;
+      parent = await prisma.postComment.findUnique({ where: { id: parent.parentId } });
+    }
+    if (!parent || parent.postId !== post.id) redirect(withParam(to, 'error', 'That comment is gone.'));
+    for (const who of [parent.authorId, replyTo?.authorId]) {
+      if (who && who !== me.id && (await isBlockedEither(me.id, who))) redirect(withParam(to, 'error', "You can't reply to this member."));
+    }
+  }
+
   const recent = await prisma.postComment.count({
     where: { authorId: me.id, createdAt: { gte: new Date(Date.now() - 60 * 1000) } },
   });
   if (recent >= 15) redirect(withParam(to, 'error', 'Slow down! Too many comments in a minute.'));
-  const comment = await prisma.postComment.create({ data: { postId: post.id, authorId: me.id, body } });
-  if (body.includes('@')) after(() => sendMentions(me, body, { kind: 'comment', targetId: comment.id, url: `/post/${post.id}`, post }));
-  if (post.authorId !== me.id) {
-    notify(post.authorId, { title: `💬 ${me.displayName} commented on your post`, body: body.slice(0, 110), url: `/post/${post.id}` });
+  const comment = await prisma.postComment.create({ data: { postId: post.id, authorId: me.id, body, parentId: parent?.id || null } });
+
+  const url = `/post/${post.id}#pc-${comment.id}`;
+  const told = new Set([me.id]);
+  const tell = (id, title) => {
+    if (!id || told.has(id)) return;
+    told.add(id);
+    notify(id, { title, body: body.slice(0, 110), url });
+  };
+  if (replyTo) tell(replyTo.authorId, `↩︎ ${me.displayName} replied to you`);
+  if (parent) tell(parent.authorId, `↩︎ ${me.displayName} replied to your comment`);
+  tell(post.authorId, parent ? `💬 ${me.displayName} replied on your post` : `💬 ${me.displayName} commented on your post`);
+  if (body.includes('@')) {
+    after(() => sendMentions(me, body, { kind: 'comment', targetId: comment.id, url, post, skip: [...told] }));
   }
-  redirect(`${to}#post-${post.id}`);
+  redirect(`${to}#pc-${comment.id}`);
 }
 
 export async function deletePostComment(formData) {
