@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { getCurrentUser } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { isAdmin } from '@/lib/moderation';
+import { unseenMentionCount } from '@/lib/mentions';
 import Icon from '@/components/Icon';
 import NavBar from '@/components/NavBar';
 import AccountMenu from '@/components/AccountMenu';
@@ -19,11 +20,13 @@ export default async function Header() {
   let unread = 0;
   let pending = 0;
   let reports = 0;
+  let mentions = 0;
   if (me) {
-    [unread, pending, reports] = await Promise.all([
+    [unread, pending, reports, mentions] = await Promise.all([
       prisma.message.count({ where: { recipientId: me.id, read: false, recipientDeleted: false } }),
       prisma.friendship.count({ where: { addresseeId: me.id, status: 'PENDING' } }),
       admin ? prisma.report.count({ where: { status: 'OPEN' } }) : 0,
+      unseenMentionCount(me.id).catch(() => 0),
     ]);
   }
 
@@ -63,6 +66,7 @@ export default async function Header() {
           items: [
             { href: '/bulletins', label: 'Bulletins', icon: 'megaphone' },
             { href: '/surveys', label: 'Surveys', icon: 'survey' },
+            { href: '/tag', label: 'Hashtags', icon: 'hash' },
             { href: '/potw', label: 'Profile of the Week', icon: 'trophy' },
             { href: '/stamps', label: 'Stamps', icon: 'ticket' },
             { href: '/browse', label: 'Browse people', icon: 'search' },
@@ -100,6 +104,7 @@ export default async function Header() {
   const account = me
     ? [
         { href: `/${u}`, label: 'View my profile', icon: 'user' },
+        { href: '/mentions', label: 'Mentions', icon: 'at', count: mentions },
         { href: '/edit', label: 'Edit profile', icon: 'pen' },
         { href: '/edit?tab=creator', label: me.creatorType ? 'Creator settings' : 'Turn on creator mode', icon: 'video' },
         { href: '/edit?tab=notify', label: 'Notifications', icon: 'bell' },
@@ -131,6 +136,10 @@ export default async function Header() {
                 <Icon name="userplus" size={20} />
                 {pending > 0 && <span className="top-badge">{pending > 9 ? '9+' : pending}</span>}
               </Link>
+              <Link href="/mentions" className="top-icon" title="Mentions" aria-label={`Mentions${mentions ? `, ${mentions} new` : ''}`}>
+                <Icon name="bell" size={20} />
+                {mentions > 0 && <span className="top-badge">{mentions > 9 ? '9+' : mentions}</span>}
+              </Link>
               {admin && reports > 0 && (
                 <Link href="/admin" className="top-icon" title="Open reports" aria-label={`${reports} open reports`}>
                   <Icon name="shield" size={20} />
@@ -145,7 +154,7 @@ export default async function Header() {
               <Link href="/signup" className="btn small-btn">Join free</Link>
             </span>
           )}
-          <MobileMenu me={meInfo} primary={primary} groups={groups} account={account} alerts={unread + pending} />
+          <MobileMenu me={meInfo} primary={primary} groups={groups} account={account} alerts={unread + pending + mentions} />
         </div>
       </div>
       <NavBar primary={primary} groups={groups} />

@@ -119,6 +119,8 @@ model User {
   following        Follow[]     @relation("follower")
   followers        Follow[]     @relation("following")
   linkClicks       LinkClick[]
+  mentions         Mention[]    @relation("mentioned")
+  mentionsMade     Mention[]    @relation("mentioner")
   blocksMade       Block[]      @relation("blocker")
   blocksReceived   Block[]      @relation("blocked")
   reportsMade      Report[]     @relation("reporter")
@@ -572,4 +574,22 @@ model LinkClick {
   owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 
   @@index([ownerId, createdAt])
+}
+
+// Someone @mentioned a member in a post, comment or group wall post.
+model Mention {
+  id        String   @id @default(cuid())
+  userId    String // who was mentioned
+  fromId    String // who mentioned them
+  kind      String // post | comment | grouppost | groupreply
+  targetId  String // the post (or group post) it's in
+  url       String
+  snippet   String   @default("")
+  seen      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation("mentioned", fields: [userId], references: [id], onDelete: Cascade)
+  from      User     @relation("mentioner", fields: [fromId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([targetId])
 }

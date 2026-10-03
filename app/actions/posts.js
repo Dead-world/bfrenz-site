@@ -11,6 +11,8 @@ import { MOODS } from '@/lib/moods';
 import { canSeePost } from '@/lib/feed';
 import { isAdmin } from '@/lib/moderation';
 import { notify } from '@/lib/push';
+import { sendMentions } from '@/lib/mentions';
+import { after } from 'next/server';
 
 const BLOB = /^https:\/\/[a-z0-9-]+\.public\.blob\.vercel-storage\.com\//i;
 const MAX_IMAGES = 4;
@@ -57,9 +59,10 @@ export async function createPost(formData) {
 
   // Creators can post publicly (followers and everyone see it); everyone else posts to frenz.
   const visibility = me.creatorType && formData.get('visibility') === 'public' ? 'public' : 'frenz';
-  await prisma.post.create({
+  const post = await prisma.post.create({
     data: { authorId: me.id, body, mood, imageUrls, videoUrl, youtubeId: yt, songUrl, visibility },
   });
+  if (body.includes('@')) after(() => sendMentions(me, body, { kind: 'post', targetId: post.id, url: `/post/${post.id}`, post }));
   // Posting a mood also updates the Mood line on your profile.
   if (mood) await prisma.user.update({ where: { id: me.id }, data: { mood } });
   revalidatePath('/home');
@@ -108,7 +111,8 @@ export async function addPostComment(formData) {
     where: { authorId: me.id, createdAt: { gte: new Date(Date.now() - 60 * 1000) } },
   });
   if (recent >= 15) redirect(withParam(to, 'error', 'Slow down! Too many comments in a minute.'));
-  await prisma.postComment.create({ data: { postId: post.id, authorId: me.id, body } });
+  const comment = await prisma.postComment.create({ data: { postId: post.id, authorId: me.id, body } });
+  if (body.includes('@')) after(() => sendMentions(me, body, { kind: 'comment', targetId: comment.id, url: `/post/${post.id}`, post }));
   if (post.authorId !== me.id) {
     notify(post.authorId, { title: `💬 ${me.displayName} commented on your post`, body: body.slice(0, 110), url: `/post/${post.id}` });
   }

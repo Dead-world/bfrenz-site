@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Pic } from '@/components/Avatar';
 import Badges, { Name } from '@/components/Badges';
 import PostText from '@/components/PostText';
+import MentionInput from '@/components/MentionInput';
 import MiniSong from '@/components/MiniSong';
 import VideoPlayer from '@/components/VideoPlayer';
 import { toggleKudos, addPostComment, deletePost, deletePostComment } from '@/app/actions/posts';
@@ -110,7 +111,7 @@ export function PostCard({ post, me, back, admin = false, allComments = false })
           <input type="hidden" name="id" value={post.id} />
           <input type="hidden" name="back" value={back} />
           <Pic user={{ avatarUrl: me.avatarUrl, displayName: me.displayName }} size={30} />
-          <input type="text" name="body" maxLength={1000} placeholder="Write a comment…" autoComplete="off" required />
+          <MentionInput type="text" name="body" maxLength={1000} placeholder="Write a comment… (@ to tag)" required />
           <button type="submit" className="btn small-btn">Send</button>
         </form>
       </section>

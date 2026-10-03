@@ -10,6 +10,7 @@ import {
 import { Pic } from '@/components/Avatar';
 import Badges, { Name } from '@/components/Badges';
 import PostText from '@/components/PostText';
+import MentionInput from '@/components/MentionInput';
 import UploadField from '@/components/UploadField';
 import ShareButtons from '@/components/ShareButtons';
 import Notice from '@/components/Notice';
@@ -153,7 +154,7 @@ export default async function GroupPage({ params, searchParams }) {
             <form action={postToGroup} className="box group-composer">
               <input type="hidden" name="groupId" value={group.id} />
               <div className="box-b">
-                <textarea name="body" rows={3} maxLength={GROUP_POST_MAX} placeholder={`Post something to ${group.name}…`} />
+                <MentionInput as="textarea" name="body" rows={3} maxLength={GROUP_POST_MAX} placeholder={`Post something to ${group.name}… (@ to tag, # for hashtags)`} />
                 <details className="group-photo">
                   <summary className="small">📷 Add a photo</summary>
                   <UploadField name="imageUrl" kind="image" accept="image/*" />
@@ -232,7 +233,7 @@ export default async function GroupPage({ params, searchParams }) {
                     <form action={replyToGroupPost} className="feed-comment-form">
                       <input type="hidden" name="postId" value={p.id} />
                       <Pic user={me} size={30} />
-                      <input type="text" name="body" maxLength={GROUP_REPLY_MAX} placeholder="Reply…" autoComplete="off" required />
+                      <MentionInput type="text" name="body" maxLength={GROUP_REPLY_MAX} placeholder="Reply…" required />
                       <button type="submit" className="btn small-btn">Send</button>
                     </form>
                   )}

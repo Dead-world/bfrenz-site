@@ -6,6 +6,8 @@ import { requireUser } from '@/lib/auth';
 import { cleanUrl, safeBack, str, withParam } from '@/lib/util';
 import { isAdmin } from '@/lib/moderation';
 import { notify } from '@/lib/push';
+import { sendMentions } from '@/lib/mentions';
+import { after } from 'next/server';
 import {
   GROUP_CATEGORIES, GROUP_DESC_MAX, GROUP_NAME_MAX, GROUP_POST_MAX, GROUP_REPLY_MAX, GROUPS_PER_OWNER,
   canModerate, freeSlug, isMember, membershipOf,
@@ -139,6 +141,7 @@ export async function postToGroup(formData) {
 
   const post = await prisma.groupPost.create({ data: { groupId: group.id, authorId: me.id, body, imageUrl } });
   await prisma.group.update({ where: { id: group.id }, data: { lastPostAt: new Date() } });
+  if (body.includes('@')) after(() => sendMentions(me, body, { kind: 'grouppost', targetId: post.id, url: `/groups/${group.slug}#gp-${post.id}`, groupId: group.id }));
   redirect(`${back}#gp-${post.id}`);
 }
 
@@ -157,7 +160,8 @@ export async function replyToGroupPost(formData) {
   });
   if (recent >= 10) redirect(withParam(back, 'error', 'Slow down! Too many replies in a minute.'));
 
-  await prisma.groupReply.create({ data: { postId: id, authorId: me.id, body } });
+  const reply = await prisma.groupReply.create({ data: { postId: id, authorId: me.id, body } });
+  if (body.includes('@')) after(() => sendMentions(me, body, { kind: 'groupreply', targetId: reply.id, url: `/groups/${post.group.slug}#gp-${id}`, groupId: post.groupId }));
   if (post.authorId !== me.id) {
     notify(post.authorId, {
       title: `💬 ${me.displayName} replied in ${post.group.name}`,

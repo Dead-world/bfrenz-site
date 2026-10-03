@@ -18,6 +18,7 @@ import { birthdaysToday, isBirthdayToday } from '@/lib/birthdays';
 import { hiddenUserIds } from '@/lib/moderation';
 import { Pic } from '@/components/Avatar';
 import { currentChampion } from '@/lib/potw';
+import { trendingTags, unseenMentionCount } from '@/lib/mentions';
 
 export const metadata = { title: 'Feed | BFRENZ.com' };
 
@@ -29,7 +30,7 @@ export default async function HomePage({ searchParams }) {
   const beforeRaw = sp?.before ? new Date(String(sp.before)) : null;
   const before = beforeRaw && !isNaN(beforeRaw) ? beforeRaw : null;
   const weekly = weeklySurvey();
-  const [unread, pending, feed, sponsored, tookWeekly, bdays, champ] = await Promise.all([
+  const [unread, pending, feed, sponsored, tookWeekly, bdays, champ, trending, mentions] = await Promise.all([
     prisma.message.count({ where: { recipientId: me.id, read: false, recipientDeleted: false } }),
     prisma.friendship.count({ where: { addresseeId: me.id, status: 'PENDING' } }),
     getFeed(me, before),
@@ -39,6 +40,8 @@ export default async function HomePage({ searchParams }) {
       ? []
       : hiddenUserIds(me.id).then((hidden) => birthdaysToday(friendIds.filter((id) => !hidden.includes(id)))),
     before ? null : currentChampion().catch(() => null),
+    before ? [] : trendingTags(8).catch(() => []),
+    unseenMentionCount(me.id).catch(() => 0),
   ]);
   const myBirthday = !before && isBirthdayToday(me);
 
@@ -51,6 +54,7 @@ export default async function HomePage({ searchParams }) {
         <div className="actions">
           {unread > 0 && <Link href="/mail" className="btn small-btn alert-chip">&#9993; {unread} new</Link>}
           {pending > 0 && <Link href="/requests" className="btn small-btn alert-chip">&#9733; {pending} {pending === 1 ? 'request' : 'requests'}</Link>}
+          {mentions > 0 && <Link href="/mentions" className="btn small-btn alert-chip">@ {mentions} {mentions === 1 ? 'mention' : 'mentions'}</Link>}
           <Link href="/dashboard" className="btn ghost small-btn">&#9776; Dashboard</Link>
         </div>
       </div>
@@ -64,6 +68,13 @@ export default async function HomePage({ searchParams }) {
             videoMaxMb={videoMaxMb()}
             creator={!!me.creatorType}
           />
+        )}
+
+        {trending.length > 0 && (
+          <div className="trending-strip">
+            <span className="small muted">🔥 Trending</span>
+            {trending.map((t) => <Link key={t.tag} href={`/tag/${t.tag}`} className="tag-chip">#{t.tag}</Link>)}
+          </div>
         )}
 
         {champ && (

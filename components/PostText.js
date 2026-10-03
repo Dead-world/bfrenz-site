@@ -1,5 +1,18 @@
-/** Plain text with clickable links and line breaks kept. Never renders HTML. */
+import { tokenize } from '@/lib/tags';
+
+/**
+ * Plain text with clickable links, @mentions and #hashtags, and line breaks kept. Never renders HTML.
+ * (Plain <a> tags, so it works in server and client components alike.)
+ */
 const URL_RE = /(https?:\/\/[^\s<>"']+[^\s<>"'.,;:!?)\]])/g;
+
+function Rich({ text, k }) {
+  return tokenize(text).map((p, i) => {
+    if (p.t === 'mention') return <a key={`${k}-${i}`} href={`/${p.v.toLowerCase()}`} className="mention">@{p.v}</a>;
+    if (p.t === 'tag') return <a key={`${k}-${i}`} href={`/tag/${p.v.toLowerCase()}`} className="hashtag">#{p.v}</a>;
+    return p.v;
+  });
+}
 
 export default function PostText({ text, className = 'post-text' }) {
   if (!text) return null;
@@ -12,7 +25,7 @@ export default function PostText({ text, className = 'post-text' }) {
             {part.length > 60 ? part.slice(0, 57) + '…' : part}
           </a>
         ) : (
-          part
+          <Rich key={i} text={part} k={i} />
         ),
       )}
     </div>

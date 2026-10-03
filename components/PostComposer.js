@@ -4,6 +4,7 @@ import { useRef, useState } from 'react';
 import { upload } from '@vercel/blob/client';
 import { createPost } from '@/app/actions/posts';
 import { MOODS } from '@/lib/moods';
+import MentionInput from '@/components/MentionInput';
 
 const MAX_IMAGES = 4;
 
@@ -89,11 +90,12 @@ export default function PostComposer({ me, back = '/home', videoMaxMb = 100, cre
       <input type="hidden" name="back" value={back} />
       <div className="composer-top">
         <img src={me.pic} alt="" width={44} height={44} className="composer-pic" />
-        <textarea
+        <MentionInput
+          as="textarea"
           name="body"
           rows={body.length > 80 ? 4 : 2}
           maxLength={2000}
-          placeholder={`What's on your mind, ${me.name}?`}
+          placeholder={`What's on your mind, ${me.name}? Tag frenz with @ and add #hashtags`}
           value={body}
           onChange={(e) => setBody(e.target.value)}
         />
