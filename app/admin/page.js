@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 import { requireUser } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { isAdmin, reasonLabel, reportTarget } from '@/lib/moderation';
-import { handleReport, banUser, unbanUser, giftPerk, runBotNow, createOfficialGroupsNow } from '@/app/actions/moderation';
+import { handleReport, banUser, unbanUser, giftPerk, runBotNow, createOfficialGroupsNow, cleanupCopiedReplies } from '@/app/actions/moderation';
 import { fmtDate, fmtDay } from '@/lib/util';
 import { Pic } from '@/components/Avatar';
 import Notice from '@/components/Notice';
@@ -195,6 +195,29 @@ export default async function AdminPage({ searchParams }) {
 
       {growth && (
         <>
+          <div className="box" id="cleanup">
+            <div className="box-h">🧹 Clean up copied replies</div>
+            <div className="box-b small">
+              {sp?.cleanmsg && <div className="notice ok">{String(sp.cleanmsg)}</div>}
+              The old &quot;also post on their page&quot; reply option copied replies onto people&apos;s own pages. This finds those
+              copies and removes them. The real replies, in the threads where they were written, stay.
+              {sp?.cleanfound ? (
+                <form action={cleanupCopiedReplies} style={{ marginTop: 10 }} className="actions">
+                  <input type="hidden" name="confirm" value="yes" />
+                  <span>
+                    Found <b>{Number(sp.cleanfound)}</b> copied {Number(sp.cleanfound) === 1 ? 'reply' : 'replies'}
+                    {Number(sp.cleanunder) > 0 ? <> ({Number(sp.cleanunder)} {Number(sp.cleanunder) === 1 ? 'reply was' : 'replies were'} written under them and will go too)</> : null}.
+                  </span>
+                  <button type="submit" className="btn small-btn">Delete them</button>
+                  <a href="/admin?tab=growth" className="small">Cancel</a>
+                </form>
+              ) : (
+                <form action={cleanupCopiedReplies} style={{ marginTop: 10 }}>
+                  <button type="submit" className="btn ghost small-btn">Find copied replies</button>
+                </form>
+              )}
+            </div>
+          </div>
           <div className="box">
             <div className="box-h">🤖 BFRENZ Bot</div>
             <div className="box-b small">

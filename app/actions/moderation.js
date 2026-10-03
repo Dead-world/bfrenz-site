@@ -349,3 +349,18 @@ export async function createOfficialGroupsNow() {
   const msg = res.reason ? `Couldn't create groups: ${res.reason}` : res.created ? `Created ${res.created} official groups.` : 'All official groups already exist.';
   redirect(withParam('/admin?tab=growth', 'botmsg', msg));
 }
+
+/** Admin button: find (preview) or delete the copies made by the old "also post on their page" reply option. */
+export async function cleanupCopiedReplies(formData) {
+  await requireAdmin();
+  const { findCopiedReplies, deleteCopiedReplies } = await import('@/lib/commentCleanup');
+  let msg;
+  if (formData.get('confirm') === 'yes') {
+    const r = await deleteCopiedReplies();
+    msg = r.deleted ? `Deleted ${r.deleted} copied ${r.deleted === 1 ? 'reply' : 'replies'}${r.underneath ? ` (and ${r.underneath} ${r.underneath === 1 ? 'reply' : 'replies'} under them)` : ''}. Every page is up to date.` : 'No copied replies found. Every page is already up to date.';
+    redirect(withParam('/admin?tab=growth', 'cleanmsg', msg));
+  }
+  const r = await findCopiedReplies();
+  if (!r.ids.length) redirect(withParam('/admin?tab=growth', 'cleanmsg', 'No copied replies found. Every page is already up to date.'));
+  redirect(`/admin?tab=growth&cleanfound=${r.ids.length}&cleanunder=${r.underneath}#cleanup`);
+}
