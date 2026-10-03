@@ -1517,7 +1517,15 @@ label.check { display: flex; gap: 8px; align-items: center; font-size: 14px; cur
 .layout-col-h .muted { font-weight: 400; }
 .layout-item {
   display: flex; align-items: center; gap: 10px; padding: 9px 10px; margin-bottom: 6px; border-radius: 11px;
-  background: var(--surface); border: 1px solid var(--line); cursor: grab; user-select: none; transition: opacity 0.15s, border-color 0.15s;
+  background: var(--surface); border: 1px solid var(--line); cursor: grab; user-select: none; -webkit-user-select: none; transition: opacity 0.15s, border-color 0.15s;
+}
+.layout-grip { touch-action: none; cursor: grab; padding: 6px 4px; margin: -6px 0; border-radius: 6px; }
+.layout-grip:hover { background: var(--surface-2); color: var(--orange-hot); }
+.layout-col.drop-target { border-color: var(--orange); background: var(--orange-soft); }
+.layout-ghost {
+  position: fixed; z-index: 2000; pointer-events: none; transform: translate(-30%, -120%);
+  padding: 8px 14px; border-radius: 10px; background: var(--orange); color: #0b0b0c; font-weight: 800; font-size: 13px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6); white-space: nowrap;
 }
 .layout-item:hover { border-color: rgba(255, 122, 26, 0.6); }
 .layout-item.dragging { opacity: 0.35; }
@@ -1547,7 +1555,7 @@ label.check { display: flex; gap: 8px; align-items: center; font-size: 14px; cur
 @media (max-width: 480px) {
   .layout-col { padding: 8px; }
   .layout-item { gap: 7px; padding: 8px; }
-  .layout-grip { display: none; }
+  .layout-grip { font-size: 16px; padding: 10px 6px; }
   .layout-btns { gap: 3px; }
   .layout-btns button { width: 30px; height: 30px; }
 }
