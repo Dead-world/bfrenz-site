@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { after } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { canIm } from '@/lib/im';
@@ -57,7 +56,7 @@ export async function POST(request) {
     if (await busy(me.id)) return fail('You’re already on a call.', 409);
     if (await busy(to)) return fail('They’re on another call right now.', 409);
     const call = await prisma.videoCall.create({ data: { callerId: me.id, calleeId: to, callerSeen: new Date() } });
-    after(() => notify(to, { title: `📹 ${me.displayName} is video calling you`, body: 'Open BFRENZ to answer.', url: '/home', tag: `call-${call.id}` }));
+    notify(to, { title: `📹 ${me.displayName} is video calling you`, body: 'Tap to answer on BFRENZ.', url: '/home', tag: `call-${call.id}`, urgency: 'high', ttl: 45 });
     return NextResponse.json({ call: callView(await loadCall(call.id), me.id) });
   }
 
@@ -87,7 +86,7 @@ export async function POST(request) {
       const status = call.status === 'ringing' ? 'missed' : 'ended';
       await prisma.videoCall.update({ where: { id: call.id }, data: { status, endedAt: new Date() } });
       if (status === 'missed' && !amCallee) {
-        after(() => notify(call.calleeId, { title: `📹 Missed video call from ${me.displayName}`, body: 'Call them back from the IM window.', url: '/home', tag: `call-${call.id}` }));
+        notify(call.calleeId, { title: `📹 Missed video call from ${me.displayName}`, body: 'Call them back from the IM window.', url: '/home', tag: `call-${call.id}`, urgency: 'high' });
       }
     }
   } else {
