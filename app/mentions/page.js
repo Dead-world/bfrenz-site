@@ -9,7 +9,7 @@ import { timeAgo } from '@/lib/util';
 export const metadata = { title: 'Mentions | BFRENZ.com', robots: { index: false } };
 
 const WHERE = { post: 'in a post', comment: 'in a comment', grouppost: 'in a group', groupreply: 'in a group reply' };
-const FROM = { select: { id: true, username: true, displayName: true, avatarUrl: true, nameColor: true, nameEffect: true, nameEffectsOwned: true, lifetimeSupporter: true, isOfficial: true, supporterUntil: true, bonusSupporterUntil: true, artistPro: true, isArtist: true } };
+const FROM = { select: { id: true, username: true, displayName: true, avatarUrl: true, picFrame: true, nameColor: true, nameEffect: true, nameEffectsOwned: true, lifetimeSupporter: true, isOfficial: true, supporterUntil: true, bonusSupporterUntil: true, artistPro: true, isArtist: true } };
 
 /** Drops mentions whose post or comment has since been deleted. */
 async function stillThere(list) {

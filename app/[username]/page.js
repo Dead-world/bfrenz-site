@@ -2,6 +2,8 @@ import { Fragment } from 'react';
 import { attachCommentLikes, attachPostReactions } from '@/lib/reactions';
 import CommentLike from '@/components/CommentLike';
 import GiftButton from '@/components/GiftButton';
+import ProfileEffects from '@/components/ProfileEffects';
+import { designCss } from '@/lib/design';
 import { giftsReceived, giftTotals } from '@/lib/giftsDb';
 import EditCommentForm, { EditCommentButton } from '@/components/EditComment';
 import Link from 'next/link';
@@ -808,7 +810,9 @@ export default async function ProfilePage({ params, searchParams }) {
       {themeCss && <style dangerouslySetInnerHTML={{ __html: themeCss }} />}
       {customLayout && <style dangerouslySetInnerHTML={{ __html: CUSTOM_LAYOUT_CSS }} />}
       {aboutTpl && <style dangerouslySetInnerHTML={{ __html: aboutTpl.css }} />}
+      {user.design && !previewing && <style dangerouslySetInnerHTML={{ __html: designCss(user.design) }} />}
       {user.customCss && <style dangerouslySetInnerHTML={{ __html: cleanCss(user.customCss) }} />}
+      {(user.cursorFx || user.fallFx) && <ProfileEffects cursor={user.cursorFx} fall={user.fallFx} />}
       {previewing && (
         <div className="notice ok">
           Previewing the <b>{previewing.name}</b> theme (only you can see this).{' '}

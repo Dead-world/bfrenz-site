@@ -17,6 +17,38 @@ import { vapidPublicKey } from '@/lib/push';
 import LayoutEditor from '@/components/LayoutEditor';
 import { getTheme } from '@/lib/themes';
 import { themeHasOwnLayout, normalizeLayout, isDefaultLayout } from '@/lib/profileLayout';
+import DesignPanel from '@/components/DesignPanel';
+import { applyCosmetic } from '@/app/actions/cosmetics';
+import { CURSORS, FALLS, FRAMES, ownsCosmetic } from '@/lib/cosmetics';
+import { cleanDesign } from '@/lib/design';
+
+/** One row of frames / cursor trails / falling effects: preview, price or "owned", and a button. */
+function ExtrasGrid({ me, kind, list, current, preview }) {
+  return (
+    <div className="extras-grid">
+      {list.map((c) => {
+        const owned = ownsCosmetic(me, kind, c.slug);
+        const on = current === c.slug;
+        return (
+          <form key={c.slug} action={applyCosmetic} className={`extra${on ? ' on' : ''}`}>
+            <input type="hidden" name="kind" value={kind} />
+            <input type="hidden" name="slug" value={on ? '' : c.slug} />
+            <span className="extra-prev">{preview(c)}</span>
+            <b>{c.name}</b>
+            <span className="small muted">{c.coins === 0 ? 'Free' : owned ? '✓ Yours' : `🪙 ${c.coins}`}</span>
+            {owned || on || me.coins >= c.coins ? (
+              <button type="submit" className={`btn small-btn${on ? ' ghost' : ''}`}>
+                {on ? 'Take off' : owned ? 'Use' : `Get · 🪙 ${c.coins}`}
+              </button>
+            ) : (
+              <Link href="/coins" className="btn ghost small-btn">Get coins</Link>
+            )}
+          </form>
+        );
+      })}
+    </div>
+  );
+}
 
 export const metadata = { title: 'Edit Profile | BFRENZ.com' };
 
@@ -27,6 +59,7 @@ const TABS = [
   ['song', 'Music / playlist'],
   ['layout', '🧩 Layout'],
   ['creator', '🎥 Creator'],
+  ['design', '🎨 Design'],
   ['css', 'Customize (CSS)'],
   ['notify', 'Notifications'],
 ];
@@ -332,6 +365,44 @@ export default async function EditPage({ searchParams }) {
         </div>
       )}
 
+      {tab === 'design' && sp?.bought && <div className="notice ok">🎉 {String(sp.bought).slice(0, 40)} is yours, and it&apos;s on your profile now!</div>}
+      {tab === 'design' && (
+        <>
+          <div className="box" id="colors">
+            <div className="box-h">🎨 Design my profile</div>
+            <div className="box-b">
+              <DesignPanel saved={cleanDesign(me.design)} name={me.displayName} pic={me.avatarUrl || '/no-pic.svg'} />
+            </div>
+          </div>
+
+          <div className="box" id="frame">
+            <div className="box-h">🖼️ Picture frame</div>
+            <div className="box-b">
+              <p className="small muted" style={{ marginTop: 0 }}>Shows around your picture everywhere: your profile, posts, comments and Top 8s.</p>
+              <ExtrasGrid me={me} kind="frame" list={FRAMES} current={me.picFrame} preview={(c) => <Pic user={{ avatarUrl: me.avatarUrl, displayName: '', picFrame: c.slug }} size={56} />} />
+            </div>
+          </div>
+
+          <div className="box" id="cursor">
+            <div className="box-h">✨ Cursor trail</div>
+            <div className="box-b">
+              <p className="small muted" style={{ marginTop: 0 }}>Little sparkles follow the mouse when people visit your profile on a computer.</p>
+              <ExtrasGrid me={me} kind="cursor" list={CURSORS} current={me.cursorFx} preview={(c) => <span className="extra-emoji">{c.emoji}</span>} />
+            </div>
+          </div>
+
+          <div className="box" id="fall">
+            <div className="box-h">❄️ Falling effect</div>
+            <div className="box-b">
+              <p className="small muted" style={{ marginTop: 0 }}>Gently falls down your profile page, on phones and computers. Visitors can switch it off.</p>
+              <ExtrasGrid me={me} kind="fall" list={FALLS} current={me.fallFx} preview={(c) => <span className="extra-emoji">{c.emoji}</span>} />
+            </div>
+          </div>
+          <p className="small muted" style={{ textAlign: 'center' }}>
+            You have <b>🪙 {me.coins.toLocaleString('en-US')}</b> coins. <Link href="/coins">Get more</Link> · <Link href={`/${me.username}`}>View my profile &raquo;</Link>
+          </p>
+        </>
+      )}
       {tab === 'notify' && (
         <div className="box">
           <div className="box-h">Notifications</div>

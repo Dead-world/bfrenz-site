@@ -64,6 +64,11 @@ model User {
   featuredUntil      DateTime? // paid "Featured" spot in Cool New People
   songBoostUntil     DateTime? // paid spot in Featured Music
   coins              Int       @default(0) // BFRENZ coins for sending gifts
+  picFrame           String    @default("") // frame around their picture (lib/cosmetics.js)
+  cursorFx           String    @default("") // cursor trail on their profile
+  fallFx             String    @default("") // falling effect on their profile
+  cosmetics          String[]  @default([]) // ones they own, e.g. "frame:fire", "cursor:hearts", "fall:snow"
+  design             Json? // "Design my profile" colors, font and corners (lib/design.js)
   bonusSupporterUntil DateTime? // free Supporter time earned from invites or gifted by a friend
   lifetimeSupporter  Boolean   @default(false) // bought Lifetime Supporter (never expires)
   isOfficial         Boolean   @default(false) // the site's own labeled bot account (BFRENZ Bot)

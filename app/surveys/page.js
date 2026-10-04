@@ -27,7 +27,7 @@ export default async function SurveysPage({ searchParams }) {
           where: { userId: { in: people.filter((id) => id !== me.id) }, user: { bannedAt: null } },
           orderBy: { createdAt: 'desc' },
           take: 12,
-          include: { user: { select: { id: true, username: true, displayName: true, avatarUrl: true, nameColor: true, nameEffect: true, nameEffectsOwned: true, lifetimeSupporter: true, isOfficial: true, supporterUntil: true, bonusSupporterUntil: true } } },
+          include: { user: { select: { id: true, username: true, displayName: true, avatarUrl: true, picFrame: true, nameColor: true, nameEffect: true, nameEffectsOwned: true, lifetimeSupporter: true, isOfficial: true, supporterUntil: true, bonusSupporterUntil: true } } },
         }),
       ])
     : [[], []];
