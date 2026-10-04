@@ -71,6 +71,20 @@ async function describe(me, kind, itemId, amountRaw) {
       if (!st || st.tier !== 'shop') return null;
       return { amount: st.price, name: `BFRENZ stamp: ${st.name} (give it forever)` };
     }
+    case 'post_boost': {
+      const [postId, daysRaw] = String(itemId).split(':');
+      const amount = PRICES.postBoost[Number(daysRaw)];
+      if (!amount) return null;
+      const post = await prisma.post.findUnique({ where: { id: postId }, select: { authorId: true, body: true } });
+      if (!post || post.authorId !== me.id) return { error: 'You can only boost your own posts.' };
+      const label = (post.body || 'photo / video / song').replace(/\s+/g, ' ').slice(0, 50);
+      return { amount, name: `Boost a post for ${daysRaw} ${daysRaw === '1' ? 'day' : 'days'}: "${label}"` };
+    }
+    case 'coins': {
+      const pack = PRICES.coinPacks.find((p) => String(p.coins) === String(itemId));
+      if (!pack) return null;
+      return { amount: pack.cents, name: `${pack.coins.toLocaleString('en-US')} BFRENZ coins` };
+    }
     case 'tip': {
       const amount = parseInt(amountRaw, 10);
       if (!PRICES.tips.includes(amount)) return null;

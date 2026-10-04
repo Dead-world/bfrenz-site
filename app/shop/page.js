@@ -331,6 +331,18 @@ export default async function ShopPage({ searchParams }) {
             <p className="small muted">Send one of your bulletins to <b>every</b> member (not just friends) for {SPONSOR_HOURS} hours, labeled &ldquo;Sponsored&rdquo;.</p>
             <Link href="/bulletins" className="btn ghost small-btn">Pick a bulletin · {money(PRICES.sponsorBulletin)}</Link>
           </div>
+          <div className="boost">
+            <div className="boost-ico">🚀</div>
+            <b>Boost a Post</b>
+            <p className="small muted">Put any of your posts near the top of <b>everyone&apos;s</b> feed as &ldquo;Promoted&rdquo;. Hit 🚀 Boost on your post to start.</p>
+            <Link href={me ? `/${me.username}` : '/login'} className="btn ghost small-btn">From {money(PRICES.postBoost[1])} / day</Link>
+          </div>
+          <div className="boost">
+            <div className="boost-ico">🪙</div>
+            <b>Coins &amp; Gifts</b>
+            <p className="small muted">Send 🌹 🔥 👑 💎 gifts on posts, profiles and live streams.{me ? <> You have <b>🪙 {me.coins}</b>.</> : ''}</p>
+            <Link href="/coins" className="btn ghost small-btn">Get coins · from {money(PRICES.coinPacks[0].cents)}</Link>
+          </div>
         </div>
       </div>
 

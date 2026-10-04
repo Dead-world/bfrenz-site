@@ -1,6 +1,8 @@
 import { Fragment } from 'react';
 import { attachCommentLikes, attachPostReactions } from '@/lib/reactions';
 import CommentLike from '@/components/CommentLike';
+import GiftButton from '@/components/GiftButton';
+import { giftsReceived, giftTotals } from '@/lib/giftsDb';
 import EditCommentForm, { EditCommentButton } from '@/components/EditComment';
 import Link from 'next/link';
 import { supportButtons } from '@/lib/support';
@@ -116,8 +118,12 @@ export default async function ProfilePage({ params, searchParams }) {
     prisma.comment.count({ where: { profileId: user.id, parentId: null, author: { bannedAt: null } } }),
     me && !isMe ? getFriendship(me.id, user.id) : null,
   ]);
-  // Likes on the comment wall (members only).
-  if (me && comments.length) await attachCommentLikes([[comments, 'c']], me.id);
+  // Likes on the comment wall (members only), and the gifts this member has been given.
+  const [, received, profileGifts] = await Promise.all([
+    me && comments.length ? attachCommentLikes([[comments, 'c']], me.id) : null,
+    giftsReceived(user.id).catch(() => []),
+    giftTotals([`u-${user.id}`]).catch(() => new Map()),
+  ]);
 
   const [profileVideo, status, blogs, groups] = await Promise.all([
     prisma.video.findFirst({ where: { userId: user.id, onProfile: true } }),
@@ -397,7 +403,12 @@ export default async function ProfilePage({ params, searchParams }) {
                   )}
                   <a href="#comments"><span className="ico">💬</span>Add comment</a>
                   <Link href={me ? `/stamps/give?to=${user.username}` : `/signup?ref=${user.username}`}><span className="ico">🎟️</span>Give a stamp</Link>
-                  <Link href={me ? `/gift?to=${user.username}` : `/signup?ref=${user.username}`}><span className="ico">🎁</span>Gift Supporter</Link>
+                  {me ? (
+                    <GiftButton k={`u-${user.id}`} totals={profileGifts.get(`u-${user.id}`)} coins={me.coins} look="contact" label="Send a gift" />
+                  ) : (
+                    <Link href={`/signup?ref=${user.username}`}><span className="ico">🎁</span>Send a gift</Link>
+                  )}
+                  <Link href={me ? `/gift?to=${user.username}` : `/signup?ref=${user.username}`}><span className="ico">⭐</span>Gift Supporter</Link>
                   <Link href={`/${user.username}/photos`}><span className="ico">▣</span>View photos</Link>
                   <Link href={`/${user.username}/videos`}><span className="ico">▶</span>View videos</Link>
                   <a href="#top8"><span className="ico">★</span>View friends</a>
@@ -405,6 +416,14 @@ export default async function ProfilePage({ params, searchParams }) {
                 )
               )}
             </div>
+            {received.length > 0 && (
+              <div className="gifts-received" title="Gifts from frenz">
+                <span className="small muted">🎁 Gifts</span>
+                {received.slice(0, 7).map((g) => (
+                  <span key={g.slug || g.name} className="gift-pill" title={`${g.n} × ${g.name}`}>{g.emoji}{g.n > 1 && <b>×{g.n}</b>}</span>
+                ))}
+              </div>
+            )}
             {me && !isMe && !blocked && (
               <div className="potw-vote">
                 {votedHere ? (

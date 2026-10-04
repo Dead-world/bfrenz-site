@@ -5,6 +5,7 @@ import { requireUser } from '@/lib/auth';
 import { notify } from '@/lib/push';
 import { resolveTarget } from '@/lib/feedTargets';
 import { EMOJIS, loadReactions } from '@/lib/reactions';
+import { GIFT_ONLY_KINDS, keyKind } from '@/lib/feedKeys';
 
 /**
  * Like (1) or dislike (-1) any feed item. Pressing the same one again takes it back;
@@ -15,6 +16,7 @@ export async function react(key, value) {
   key = String(key || '');
   value = Number(value);
   if (value !== 1 && value !== -1) return null;
+  if (GIFT_ONLY_KINDS.includes(keyKind(key))) return null;
   const t = await resolveTarget(me, key);
   if (!t) return null;
 
@@ -42,6 +44,7 @@ export async function reactEmoji(key, emoji) {
   key = String(key || '');
   emoji = String(emoji || '');
   if (!EMOJIS.includes(emoji)) return null;
+  if (GIFT_ONLY_KINDS.includes(keyKind(key))) return null;
   const t = await resolveTarget(me, key);
   if (!t) return null;
 

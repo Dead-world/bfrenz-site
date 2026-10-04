@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { giftTotals } from '@/lib/giftsDb';
 import { notFound } from 'next/navigation';
 import { requireUser } from '@/lib/auth';
 import { loadStream } from '@/lib/live';
@@ -37,6 +38,7 @@ export default async function WatchPage({ params }) {
       page: streamPageUrl(s.source, s.streamRef),
     };
   }
+  const gifts = (await giftTotals([`l-${s.id}`]).catch(() => new Map())).get(`l-${s.id}`) || null;
   return (
     <div>
       <div className="live-head">
@@ -47,7 +49,7 @@ export default async function WatchPage({ params }) {
         </div>
         <Link href="/live" className="btn ghost small-btn" style={{ marginLeft: 'auto' }}>More live</Link>
       </div>
-      <LiveViewer streamId={s.id} streamer={{ name: s.user.displayName, username: s.user.username }} admin={admin} link={link} />
+      <LiveViewer streamId={s.id} streamer={{ name: s.user.displayName, username: s.user.username }} admin={admin} link={link} coins={me.coins} gifts={gifts} mine={s.userId === me.id} />
     </div>
   );
 }

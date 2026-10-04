@@ -3,12 +3,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { stopStream, subscribeWithRetry } from '@/lib/rtcClient';
 import LiveChatBox, { mergeChats } from '@/components/LiveChatBox';
+import GiftButton from '@/components/GiftButton';
 
 /**
  * Watching someone's stream: video, viewer count, chat.
  * `link` is set for YouTube/Twitch/TikTok streams: { source, label, emoji, embed, page }.
  */
-export default function LiveViewer({ streamId, streamer, admin, link }) {
+export default function LiveViewer({ streamId, streamer, admin, link, coins, gifts, mine = false }) {
   const [status, setStatus] = useState('loading'); // loading | starting | live | ended
   const [viewers, setViewers] = useState(0);
   const [chats, setChats] = useState([]);
@@ -115,6 +116,11 @@ export default function LiveViewer({ streamId, streamer, admin, link }) {
         <div className="box-h">💬 Live chat</div>
         <div className="box-b">
           <LiveChatBox streamId={streamId} chats={chats} disabled={status === 'ended'} onSent={(c) => setChats((l) => mergeChats(l, [c]))} />
+          {status !== 'ended' && !mine && (
+            <div className="live-gift-row">
+              <GiftButton k={`l-${streamId}`} totals={gifts} coins={coins} look="live" label={`Gift ${streamer.name}`} />
+            </div>
+          )}
           <div className="small live-tools">
             <a href={`/report?kind=live&id=${streamId}&back=${encodeURIComponent(`/live/${streamId}`)}`} className="muted">Report stream</a>
             {admin && status !== 'ended' && <button type="button" className="linkbtn small" onClick={endAsAdmin}>🛡️ End stream (admin)</button>}

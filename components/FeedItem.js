@@ -11,6 +11,7 @@ import LikeBar from '@/components/LikeBar';
 import ShareButton from '@/components/ShareButton';
 import EditPost, { EditPostButton } from '@/components/EditPost';
 import CommentLike from '@/components/CommentLike';
+import GiftButton from '@/components/GiftButton';
 import EditCommentForm, { EditCommentButton } from '@/components/EditComment';
 import { addItemComment, deleteItemComment } from '@/app/actions/itemComments';
 import { addBlogComment, deleteBlogComment } from '@/app/actions/blogs';
@@ -70,13 +71,14 @@ function FeedComment({ c, thread, me, mine, admin, back, small = false, del = de
 }
 
 /** One status post with its likes, comments and comment box. */
-export function PostCard({ post, me, back, admin = false, allComments = false }) {
+export function PostCard({ post, me, back, admin = false, allComments = false, promoted = false }) {
   const mine = post.authorId === me.id;
   const comments = allComments ? post.comments : [...post.comments].reverse();
   const shown = comments.reduce((n, c) => n + 1 + (c.replies?.length || 0), 0);
   const hidden = post._count.comments - shown;
   return (
-    <article className="box feed-item feed-post" id={`post-${post.id}`}>
+    <article className={`box feed-item feed-post${promoted ? ' is-promoted' : ''}`} id={`post-${post.id}`}>
+      {promoted && <div className="promoted-tag">📣 Promoted</div>}
       <header className="feed-head">
         <Link href={`/${post.author.username}`}><Pic user={post.author} size={44} /></Link>
         <div className="feed-head-main">
@@ -92,6 +94,7 @@ export function PostCard({ post, me, back, admin = false, allComments = false })
         </div>
         {(mine || admin) && (
           <span className="post-owner-links">
+            {mine && <Link href={`/boost/${post.id}`} className="linkbtn small boost-link" title="Boost this post">🚀 Boost</Link>}
             {mine && <EditPostButton id={post.id} />}
             <form action={deletePost}>
               <input type="hidden" name="id" value={post.id} />
@@ -126,6 +129,7 @@ export function PostCard({ post, me, back, admin = false, allComments = false })
       <footer className="feed-actions">
         <LikeBar k={`p-${post.id}`} rx={post.rx} />
         <a href={`#c-${post.id}`} className="linkbtn small">💬 Comment{post._count.comments ? ` · ${post._count.comments}` : ''}</a>
+        <GiftButton k={`p-${post.id}`} totals={post.gifts} coins={me.coins} mine={mine} />
         <ShareButton path={`/post/${post.id}`} title={`${post.author.displayName} on BFRENZ`} text={post.body} />
         {!mine && (
           <Link className="small muted feed-report" href={`/report?kind=post&id=${post.id}&back=${encodeURIComponent(back)}`}>Report</Link>
@@ -268,6 +272,7 @@ function FeedBottom({ item, me, back, admin }) {
       <footer className="feed-actions">
         <LikeBar k={item.id} rx={item.rx} />
         {thread && <a href={`#c-${item.id}`} className="linkbtn small">💬 Comment{count ? ` · ${count}` : ''}</a>}
+        {item.type !== 'frenz' && <GiftButton k={item.id} totals={item.gifts} coins={me.coins} mine={ownersOf(item).includes(me.id)} />}
         {share && <ShareButton {...share} />}
       </footer>
       {thread}
@@ -276,7 +281,7 @@ function FeedBottom({ item, me, back, admin }) {
 }
 
 export default function FeedItem({ item, me, back, admin }) {
-  if (item.type === 'post') return <PostCard post={item.post} me={me} back={back} admin={admin} />;
+  if (item.type === 'post') return <PostCard post={item.post} me={me} back={back} admin={admin} promoted={!!item.promoted} />;
 
   if (item.type === 'bulletin') {
     const b = item.bulletin;

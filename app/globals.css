@@ -1866,3 +1866,77 @@ header.site-header { padding-top: env(safe-area-inset-top); }
 .said:has(> .comment-edit-form) > .comment-html,
 .reply-main:has(> .comment-edit-form) > .reply-body { display: none; }
 .feed-comment-main:has(> .comment-edit-form) { flex: 1; }
+
+/* ================= boosted posts ================= */
+.promoted-tag { padding: 8px 16px 0; font-size: 12px; font-weight: 800; letter-spacing: .6px; color: var(--orange-hot, #ff7a1a); text-transform: uppercase; }
+.feed-post.is-promoted { border-color: rgba(255, 122, 26, 0.45); }
+.boost-link { color: var(--orange-hot, #ff7a1a); font-weight: 700; }
+.boost-page { max-width: 640px; margin: 0 auto; }
+.boost-preview { margin: 0 0 12px; padding: 12px 14px; border-left: 4px solid var(--orange, #ff7a1a); background: var(--surface-2); border-radius: 10px; white-space: pre-wrap; }
+.boost-status { display: grid; gap: 4px; padding: 12px 14px; border-radius: 12px; background: var(--surface-2); margin: 12px 0; }
+.boost-status.on { background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.35); }
+.boost-note { padding: 10px 12px; border-radius: 10px; background: rgba(255, 122, 26, 0.1); }
+.boost-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 14px 0; }
+.boost-option { position: relative; display: grid; justify-items: center; gap: 6px; padding: 22px 8px 14px; border-radius: 16px; border: 1px solid var(--line); background: var(--surface-2); text-align: center; }
+.boost-option.pick { border-color: var(--orange, #ff7a1a); box-shadow: 0 0 0 1px var(--orange, #ff7a1a) inset; }
+.boost-option b { font-size: 18px; }
+.boost-price { font-size: 24px; font-weight: 800; }
+.boost-tag { position: absolute; top: -10px; padding: 3px 10px; border-radius: 999px; background: var(--orange, #ff7a1a); color: #000; font-size: 11px; font-weight: 800; white-space: nowrap; }
+@media (max-width: 460px) { .boost-options { grid-template-columns: 1fr; } .boost-option { grid-template-columns: 1fr auto; justify-items: start; text-align: left; align-items: center; padding: 18px 14px 12px; } .boost-option .inline { grid-column: 1 / -1; } .boost-option .inline .btn { width: 100%; } }
+
+/* ================= coins & gifts ================= */
+.gift-wrap { display: inline-flex; align-items: center; gap: 4px; }
+.gift-sum { display: inline-flex; align-items: center; gap: 3px; padding: 3px 9px; border-radius: 999px; background: rgba(255, 196, 0, 0.12); border: 1px solid rgba(255, 196, 0, 0.35); font-size: 13px; font-weight: 800; }
+.gift-btn { font-weight: 700; }
+.gift-contact-btn { display: flex; align-items: center; width: 100%; text-align: left; font: inherit; color: inherit; }
+.gift-contact .gift-sum { display: none; }
+.gift-pop {
+  position: fixed; z-index: 1200; width: 292px; max-width: calc(100vw - 16px); padding: 10px; border-radius: 16px;
+  background: var(--surface, #1a1a1d); border: 1px solid var(--line); box-shadow: 0 14px 40px rgba(0, 0, 0, 0.6);
+}
+.gift-pop-head { display: flex; align-items: center; justify-content: space-between; padding: 2px 4px 8px; }
+.gift-bal { font-weight: 800; color: #ffd24a; }
+.gift-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.gift-opt { display: grid; justify-items: center; gap: 2px; padding: 8px 2px; border-radius: 12px; border: 1px solid transparent; background: var(--surface-2); color: var(--text); font: inherit; cursor: pointer; }
+.gift-opt:hover { border-color: var(--orange, #ff7a1a); }
+.gift-opt.poor { opacity: 0.45; }
+.gx-emoji { font-size: 28px; line-height: 1.1; }
+.gift-name { font-size: 11px; font-weight: 700; white-space: nowrap; }
+.gift-cost { font-size: 11px; color: #ffd24a; font-weight: 700; }
+.gift-get { display: block; text-align: center; margin-top: 8px; }
+.gift-more { display: block; text-align: center; margin-top: 10px; }
+.gift-err { margin-top: 8px; text-align: center; color: #ff8a8a; }
+.gift-burst { position: fixed; left: 50%; top: 55%; z-index: 4000; font-size: 110px; pointer-events: none; transform: translate(-50%, -50%); animation: gift-up 1.8s ease-out forwards; filter: drop-shadow(0 10px 30px rgba(255, 122, 26, 0.6)); }
+@keyframes gift-up {
+  0% { transform: translate(-50%, -20%) scale(0.3); opacity: 0; }
+  20% { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
+  35% { transform: translate(-50%, -50%) scale(1); }
+  100% { transform: translate(-50%, -160%) scale(0.9); opacity: 0; }
+}
+.gifts-received { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 10px 16px; border-top: 1px solid var(--line); }
+.gift-pill { display: inline-flex; align-items: center; gap: 2px; padding: 2px 8px; border-radius: 999px; background: rgba(255, 196, 0, 0.12); font-size: 16px; }
+.gift-pill b { font-size: 12px; }
+.live-gift-row { display: flex; justify-content: center; padding: 10px 0 4px; }
+.live-gift-row .gift-btn { padding: 10px 18px; border-radius: 999px; background: linear-gradient(135deg, #ff7a1a, #ff3d7f); color: #fff; font-size: 15px; }
+.coins-page { max-width: 760px; margin: 0 auto; }
+.coins-hero { text-align: center; padding: 22px 18px 6px; }
+.coins-bal { font-size: 22px; } .coins-bal b { font-size: 46px; color: #ffd24a; } .coins-bal span { color: var(--text-dim); }
+.coin-packs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px 10px; padding: 20px 16px 16px; }
+.coin-pack { position: relative; display: grid; justify-items: center; gap: 10px; padding: 22px 8px 14px; border-radius: 16px; border: 1px solid var(--line); background: var(--surface-2); }
+.coin-pack.best { border-color: #ffd24a; box-shadow: 0 0 0 1px #ffd24a inset; }
+.coin-amt { font-size: 20px; font-weight: 800; }
+.coin-tag { position: absolute; top: -10px; padding: 3px 10px; border-radius: 999px; background: #ffd24a; color: #000; font-size: 11px; font-weight: 800; white-space: nowrap; }
+.gift-catalog { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; padding: 16px; }
+.gift-cat { display: grid; justify-items: center; gap: 2px; text-align: center; }
+.coin-hist-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.coin-hist { list-style: none; margin: 0; padding: 6px 12px; display: grid; gap: 8px; }
+.coin-hist li { display: flex; align-items: center; gap: 10px; }
+.coin-hist-emoji { font-size: 22px; }
+.coins-fine { text-align: center; margin: 16px auto 30px; max-width: 560px; }
+@media (max-width: 640px) {
+  .coin-packs { grid-template-columns: 1fr 1fr; }
+  .gift-catalog { grid-template-columns: repeat(4, 1fr); }
+  .coin-hist-cols { grid-template-columns: 1fr; }
+}
+.contact-grid > .gift-contact { padding: 0; }
+.contact-grid .gift-contact-btn { padding: inherit; gap: 10px; padding: 10px 12px; min-height: 100%; background: none; border: 0; cursor: pointer; }

@@ -17,6 +17,8 @@ const MESSAGES = {
   name_effect: ['Name effect unlocked! ✨', 'It is already on your name. Change it anytime in the shop.'],
   stamp: ['Stamp unlocked! 🎟️', 'You can give it to as many frenz as you like. Visit a profile and hit "Give a stamp".'],
   tip: ['Thank you! 🧡', 'Your tip helps keep BFRENZ free for everyone.'],
+  post_boost: ['Your post is boosted! 🚀', 'It now shows as Promoted near the top of everyone\'s feed. Check its views from the 🚀 Boost button on the post.'],
+  coins: ['Coins added! 🪙', 'Send gifts from the 🎁 button on posts, profiles and live streams.'],
 };
 
 export default async function SuccessPage({ searchParams }) {

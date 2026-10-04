@@ -63,6 +63,7 @@ model User {
   supporterUntil     DateTime? // Supporter perks active while this is in the future
   featuredUntil      DateTime? // paid "Featured" spot in Cool New People
   songBoostUntil     DateTime? // paid spot in Featured Music
+  coins              Int       @default(0) // BFRENZ coins for sending gifts
   bonusSupporterUntil DateTime? // free Supporter time earned from invites or gifted by a friend
   lifetimeSupporter  Boolean   @default(false) // bought Lifetime Supporter (never expires)
   isOfficial         Boolean   @default(false) // the site's own labeled bot account (BFRENZ Bot)
@@ -108,6 +109,8 @@ model User {
   emojiReactions   EmojiReaction[]
   itemComments     ItemComment[]
   alerts           Alert[]
+  giftsSent        Gift[]           @relation("giftFrom")
+  giftsReceived    Gift[]           @relation("giftTo")
   pushSubs         PushSubscription[]
   visitsReceived   ProfileVisit[] @relation("visited")
   visitsMade       ProfileVisit[] @relation("visitor")
@@ -353,6 +356,8 @@ model Post {
   songUrl    String   @default("")
   createdAt  DateTime @default(now())
   editedAt   DateTime? // set when the author edits the post
+  boostUntil DateTime? // paid "Promoted" spot near the top of everyone's feed
+  boostViews Int       @default(0) // times it was shown as Promoted
 
   author   User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
   comments PostComment[]
@@ -360,6 +365,7 @@ model Post {
 
   @@index([authorId, createdAt])
   @@index([createdAt])
+  @@index([boostUntil])
 }
 
 model PostComment {
@@ -760,4 +766,23 @@ model Alert {
 
   @@index([userId, createdAt])
   @@index([userId, seen])
+}
+
+// A virtual gift (bought with coins) sent to a member, on a post, feed item, comment,
+// their profile (u-<user>) or their live stream (l-<stream>). Same keys as Reaction.
+model Gift {
+  id        String   @id @default(cuid())
+  fromId    String
+  toId      String
+  key       String
+  gift      String // slug from lib/gifts.js
+  coins     Int
+  createdAt DateTime @default(now())
+
+  from User @relation("giftFrom", fields: [fromId], references: [id], onDelete: Cascade)
+  to   User @relation("giftTo", fields: [toId], references: [id], onDelete: Cascade)
+
+  @@index([key])
+  @@index([toId, createdAt])
+  @@index([fromId, createdAt])
 }

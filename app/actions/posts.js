@@ -91,7 +91,9 @@ export async function editPost(formData) {
   if (!body && !imageUrls.length && !videoUrl && !youtube && !songUrl && !mood) {
     redirect(withParam(`${to.split('#')[0]}`, 'error', 'A post can’t be empty. Delete it instead?'));
   }
-  const visibility = me.creatorType && formData.get('visibility') === 'public' ? 'public' : 'frenz';
+  // Creators choose; a post that's currently boosted stays public until the boost ends.
+  const boosted = post.boostUntil && new Date(post.boostUntil) > new Date();
+  const visibility = boosted || (me.creatorType && formData.get('visibility') === 'public') ? 'public' : 'frenz';
 
   const changed =
     body !== post.body || mood !== post.mood || visibility !== post.visibility || imageUrls.length !== post.imageUrls.length ||

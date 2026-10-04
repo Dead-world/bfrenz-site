@@ -81,6 +81,7 @@ export default async function Header() {
           title: 'Extras',
           items: [
             { href: '/shop', label: 'Shop', icon: 'bag' },
+            { href: '/coins', label: `Coins & gifts${me.coins ? ` · 🪙 ${me.coins}` : ''}`, icon: 'gift' },
             { href: '/invite', label: 'Invite frenz', icon: 'gift' },
             { href: '/app', label: 'Get the app', icon: 'phone' },
             { href: '/help', label: 'Help', icon: 'help' },

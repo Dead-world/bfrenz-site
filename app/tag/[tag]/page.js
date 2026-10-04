@@ -3,6 +3,7 @@ import { notFound, redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
 import { postInclude } from '@/lib/feed';
 import { attachCommentLikes, attachPostReactions } from '@/lib/reactions';
+import { giftTotals } from '@/lib/giftsDb';
 import { isAdmin } from '@/lib/moderation';
 import { cleanTag } from '@/lib/tags';
 import { postsWithTag, trendingTags, groupPostsWithTag } from '@/lib/mentions';
@@ -33,7 +34,8 @@ export default async function TagPage({ params, searchParams }) {
     trendingTags(10),
     before ? [] : groupPostsWithTag(me, tag, 8),
   ]);
-  await Promise.all([attachPostReactions(posts, me.id), attachCommentLikes(posts.map((p) => [p.comments, 'pc']), me.id)]);
+  const [, , gifts] = await Promise.all([attachPostReactions(posts, me.id), attachCommentLikes(posts.map((p) => [p.comments, 'pc']), me.id), giftTotals(posts.map((p) => `p-${p.id}`))]);
+  for (const p of posts) p.gifts = gifts.get(`p-${p.id}`) || null;
   const admin = isAdmin(me);
   const back = `/tag/${tag}`;
 

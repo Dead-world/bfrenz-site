@@ -272,6 +272,7 @@ export async function banUser(formData) {
       },
     }),
     prisma.bulletin.updateMany({ where: { authorId: userId }, data: { sponsoredUntil: null } }),
+    prisma.post.updateMany({ where: { authorId: userId, boostUntil: { not: null } }, data: { boostUntil: null } }),
     prisma.report.updateMany({
       where: { targetUserId: userId, status: 'OPEN' },
       data: { status: 'RESOLVED', resolvedAt: new Date(), resolvedBy: me.username, note: 'Member banned' },
