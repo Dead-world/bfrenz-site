@@ -16,6 +16,13 @@ export default function LikeBar({ k, rx }) {
   const [, start] = useTransition();
   const wrap = useRef(null);
 
+  // When the page reloads its data (after commenting, etc.), show the fresh counts.
+  const fresh = JSON.stringify(rx || null);
+  useEffect(() => {
+    if (rx) setS({ ...EMPTY, ...rx, emo: { ...(rx.emo || {}) } });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fresh]);
+
   useEffect(() => {
     if (!picking) return;
     const close = (e) => { if (!wrap.current?.contains(e.target)) setPicking(false); };
