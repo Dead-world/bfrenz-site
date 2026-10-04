@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState, useTransition } from 'react';
+import { createPortal } from 'react-dom';
+import { popPos } from '@/lib/popPos';
 import { react, reactEmoji } from '@/app/actions/reactions';
 import { EMOJIS } from '@/lib/feedKeys';
 
@@ -13,6 +15,9 @@ const EMPTY = { up: 0, down: 0, mine: 0, emo: {}, myEmo: null };
 export default function LikeBar({ k, rx }) {
   const [s, setS] = useState({ ...EMPTY, ...rx, emo: { ...(rx?.emo || {}) } });
   const [picking, setPicking] = useState(false);
+  const [pos, setPos] = useState(null);
+  const addBtn = useRef(null);
+  const pop = useRef(null);
   const [, start] = useTransition();
   const wrap = useRef(null);
 
@@ -25,11 +30,19 @@ export default function LikeBar({ k, rx }) {
 
   useEffect(() => {
     if (!picking) return;
-    const close = (e) => { if (!wrap.current?.contains(e.target)) setPicking(false); };
+    const close = (e) => { if (!wrap.current?.contains(e.target) && !pop.current?.contains(e.target)) setPicking(false); };
     const esc = (e) => { if (e.key === 'Escape') setPicking(false); };
+    const away = () => setPicking(false);
     document.addEventListener('pointerdown', close);
     document.addEventListener('keydown', esc);
-    return () => { document.removeEventListener('pointerdown', close); document.removeEventListener('keydown', esc); };
+    window.addEventListener('scroll', away, { passive: true });
+    window.addEventListener('resize', away);
+    return () => {
+      document.removeEventListener('pointerdown', close);
+      document.removeEventListener('keydown', esc);
+      window.removeEventListener('scroll', away);
+      window.removeEventListener('resize', away);
+    };
   }, [picking]);
 
   function send(guess, call) {
@@ -84,17 +97,28 @@ export default function LikeBar({ k, rx }) {
         </button>
       ))}
       <span className="emo-add-wrap">
-        <button type="button" className={`like-btn emo-add${picking ? ' on' : ''}`} onClick={() => setPicking((p) => !p)} aria-expanded={picking} title="React with an emoji">
+        <button
+          type="button"
+          ref={addBtn}
+          className={`like-btn emo-add${picking ? ' on' : ''}`}
+          onClick={() => {
+            setPos(popPos(addBtn.current, { height: 110, align: 'left' }));
+            setPicking((p) => !p);
+          }}
+          aria-expanded={picking}
+          title="React with an emoji"
+        >
           {s.myEmo && !chips.length ? s.myEmo : '😀'}<span className="emo-plus">+</span>
         </button>
-        {picking && (
-          <span className="emo-pop" role="menu">
+        {picking && pos && createPortal(
+          <span className="emo-pop" role="menu" ref={pop} style={pos}>
             {EMOJIS.map((e) => (
               <button key={e} type="button" role="menuitem" className={s.myEmo === e ? 'on' : ''} onClick={() => pick(e)} aria-label={`React ${e}`}>
                 {e}
               </button>
             ))}
-          </span>
+          </span>,
+          document.body,
         )}
       </span>
     </span>

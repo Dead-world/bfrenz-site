@@ -8,6 +8,7 @@ import MiniSong from '@/components/MiniSong';
 import VideoPlayer from '@/components/VideoPlayer';
 import { addPostComment, deletePost, deletePostComment } from '@/app/actions/posts';
 import LikeBar from '@/components/LikeBar';
+import ShareButton from '@/components/ShareButton';
 import { addItemComment, deleteItemComment } from '@/app/actions/itemComments';
 import { addBlogComment, deleteBlogComment } from '@/app/actions/blogs';
 import { replyToGroupPost, deleteGroupReply } from '@/app/actions/groups';
@@ -107,6 +108,7 @@ export function PostCard({ post, me, back, admin = false, allComments = false })
       <footer className="feed-actions">
         <LikeBar k={`p-${post.id}`} rx={post.rx} />
         <a href={`#c-${post.id}`} className="linkbtn small">💬 Comment{post._count.comments ? ` · ${post._count.comments}` : ''}</a>
+        <ShareButton path={`/post/${post.id}`} title={`${post.author.displayName} on BFRENZ`} text={post.body} />
         {!mine && (
           <Link className="small muted feed-report" href={`/report?kind=post&id=${post.id}&back=${encodeURIComponent(back)}`}>Report</Link>
         )}
@@ -177,9 +179,26 @@ export function ItemThread({ k, cm, me, back, admin, owners, all = false }) {
   );
 }
 
+/** Where a feed item lives, for the Share button (null = nothing worth sharing). */
+function shareOf(item) {
+  const u = item.user?.username;
+  const who = item.user?.displayName;
+  switch (item.type) {
+    case 'bulletin': return { path: `/bulletins/${item.bulletin.id}`, title: `📢 ${item.bulletin.subject}`, text: `A bulletin from ${item.bulletin.author.displayName} on BFRENZ` };
+    case 'photos': return { path: `/${u}/photos${item.albumId ? `/${item.albumId}` : ''}`, title: `📸 ${who}'s photos on BFRENZ` };
+    case 'video': return { path: `/${u}/videos#v-${item.video.id}`, title: `🎬 ${item.video.title}`, text: `A video from ${who} on BFRENZ` };
+    case 'song': return { path: `/${u}`, title: `🎵 ${[item.user.songTitle, item.user.songArtist].filter(Boolean).join(' – ') || 'Profile song'}`, text: `${who}'s profile song on BFRENZ` };
+    case 'blog': return { path: `/${u}/blog/${item.blog.id}`, title: `✍️ ${item.blog.title}`, text: `A blog by ${who} on BFRENZ` };
+    case 'grouppost': return { path: `/groups/${item.gpost.group.slug}#gp-${item.gpost.id}`, title: `👥 ${item.gpost.group.name} on BFRENZ`, text: item.gpost.body };
+    case 'survey': return { path: `/surveys/${item.answer.surveySlug}/${u}`, title: `📝 ${who}'s survey answers on BFRENZ` };
+    default: return null;
+  }
+}
+
 /** Likes, emoji reactions and comments under any feed item that isn't a status post. */
 function FeedBottom({ item, me, back, admin }) {
   const kind = keyKind(item.id);
+  const share = shareOf(item);
   let count = 0;
   let thread = null;
   if (ITEM_COMMENT_KINDS.includes(kind)) {
@@ -231,6 +250,7 @@ function FeedBottom({ item, me, back, admin }) {
       <footer className="feed-actions">
         <LikeBar k={item.id} rx={item.rx} />
         {thread && <a href={`#c-${item.id}`} className="linkbtn small">💬 Comment{count ? ` · ${count}` : ''}</a>}
+        {share && <ShareButton {...share} />}
       </footer>
       {thread}
     </>

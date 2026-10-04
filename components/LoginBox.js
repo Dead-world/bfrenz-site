@@ -1,12 +1,13 @@
 import Link from 'next/link';
 import { login } from '@/app/actions/auth';
 
-export default function LoginBox() {
+export default function LoginBox({ next = '' }) {
   return (
     <div className="box orange login-box">
       <div className="box-h orange">Member login</div>
       <div className="box-b">
         <form action={login}>
+          {next && <input type="hidden" name="next" value={next} />}
           <label htmlFor="who">Email or username</label>
           <input id="who" type="text" name="who" required autoComplete="username" />
           <label htmlFor="pw">Password</label>

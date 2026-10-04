@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/db';
 import { createSession } from '@/lib/auth';
-import { str, validateUsername, withParam } from '@/lib/util';
+import { safeBack, str, validateUsername, withParam } from '@/lib/util';
 import { cookies } from 'next/headers';
 import { HEARD_FROM, cleanSrc } from '@/lib/sources';
 import { after } from 'next/server';
@@ -89,13 +89,16 @@ export async function signup(formData) {
 export async function login(formData) {
   const who = str(formData, 'who', 200).toLowerCase();
   const password = String(formData.get('password') || '');
-  if (!who || !password) fail('/login', 'Enter your email or username and password.');
+  // After logging in, go back to the page they were trying to see (e.g. a shared post).
+  const next = safeBack(formData.get('next'), '/home');
+  const here = next === '/home' ? '/login' : `/login?next=${encodeURIComponent(next)}`;
+  if (!who || !password) fail(here, 'Enter your email or username and password.');
 
   const user = await prisma.user.findFirst({ where: { OR: [{ email: who }, { username: who }] } });
   const ok = user ? await bcrypt.compare(password, user.passwordHash) : false;
-  if (!user || !ok) fail('/login', 'Wrong email/username or password.');
-  if (user.bannedAt) fail('/login', 'This account has been suspended for breaking the BFRENZ Terms.');
+  if (!user || !ok) fail(here, 'Wrong email/username or password.');
+  if (user.bannedAt) fail(here, 'This account has been suspended for breaking the BFRENZ Terms.');
 
   await createSession(user.id, user.sessionVersion ?? 0);
-  redirect('/home');
+  redirect(next);
 }
