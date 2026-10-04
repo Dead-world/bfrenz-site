@@ -37,6 +37,7 @@ export async function POST(request) {
       body: body.length > 120 ? body.slice(0, 119) + '…' : body,
       url: '/home',
       tag: `im-${me.id}`,
+      inApp: false, // the messenger already shows it on the site
     });
   }
   return NextResponse.json({ message: publicMessage(m) });

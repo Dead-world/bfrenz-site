@@ -1783,3 +1783,30 @@ header.site-header { padding-top: env(safe-area-inset-top); }
   body:has(.bnav) .im-list:not(.open) { display: none; }
   body:has(.bnav) .im-list.open, body:has(.bnav) .im-win { border-radius: 14px; border-bottom: 1px solid var(--line); }
 }
+
+/* ================= live notifications ================= */
+.toasts { position: fixed; left: 50%; top: calc(72px + env(safe-area-inset-top)); transform: translateX(-50%); z-index: 2500; width: min(420px, calc(100vw - 24px)); display: grid; gap: 8px; pointer-events: none; }
+.toast {
+  pointer-events: auto; display: flex; align-items: stretch; border-radius: 16px; overflow: hidden;
+  background: rgba(24, 24, 28, 0.97); border: 1px solid var(--line); border-left: 4px solid var(--orange, #ff7a1a);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.6); animation: toast-in 0.25s ease-out;
+}
+@keyframes toast-in { from { transform: translateY(-14px); opacity: 0; } }
+.toast-main { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 12px 6px 12px 14px; background: none; border: 0; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.toast-emoji { font-size: 24px; flex-shrink: 0; }
+.toast-text { display: grid; min-width: 0; line-height: 1.3; }
+.toast-text b { font-size: 14px; }
+.toast-text span { font-size: 13px; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.toast-x { width: 40px; background: none; border: 0; color: var(--text-dim); font-size: 14px; cursor: pointer; }
+.alerts-page { max-width: 680px; margin: 0 auto; }
+.alerts-day-h { font-size: 12px; font-weight: 800; letter-spacing: 1.2px; text-transform: uppercase; color: var(--text-dim); margin: 16px 4px 8px; }
+.alerts-list { padding: 4px; }
+.alert-row { display: flex; align-items: center; gap: 14px; padding: 12px; border-radius: 12px; color: var(--text); }
+.alert-row + .alert-row { border-top: 1px solid var(--line); }
+.alert-row:hover { background: var(--surface-2); }
+.alert-row.new { background: rgba(255, 122, 26, 0.08); }
+.alert-emoji { width: 44px; height: 44px; border-radius: 50%; background: var(--surface-2); display: grid; place-items: center; font-size: 22px; flex-shrink: 0; }
+.alert-text { display: grid; gap: 2px; min-width: 0; flex: 1; }
+.alert-text b { font-weight: 600; }
+.alert-text .muted { overflow: hidden; text-overflow: ellipsis; }
+.alert-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--orange, #ff7a1a); flex-shrink: 0; }

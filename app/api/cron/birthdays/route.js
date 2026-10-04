@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { birthdayKeys, localDate } from '@/lib/birthdays';
 import { imBuddyIds } from '@/lib/im';
-import { pushConfigured, sendPushNow } from '@/lib/push';
+import { notifyNow } from '@/lib/push';
 import { currentChampion } from '@/lib/potw';
 import { runDailyBot } from '@/lib/houseBot';
 
@@ -27,8 +27,6 @@ export async function GET(req) {
     console.error('[cron] bot failed:', err?.message);
   }
 
-  if (!pushConfigured()) return NextResponse.json({ skipped: 'push not set up', bot });
-
   // Profile of the Week: crown last week's winner (once) and tell them.
   let potw = null;
   try {
@@ -36,7 +34,7 @@ export async function GET(req) {
     if (champ && !champ.notified) {
       const claimed = await prisma.potwWinner.updateMany({ where: { id: champ.id, notified: false }, data: { notified: true } });
       if (claimed.count) {
-        await sendPushNow(champ.userId, {
+        await notifyNow(champ.userId, {
           title: "🏆 You're BFRENZ Profile of the Week!",
           body: `You won with ${champ.votes} ${champ.votes === 1 ? 'vote' : 'votes'}. Your page is featured on everyone's Feed all week.`,
           url: `/${champ.user.username}`,
@@ -69,7 +67,7 @@ export async function GET(req) {
     });
     if (!claimed.count) continue;
 
-    await sendPushNow(p.id, {
+    await notifyNow(p.id, {
       title: `🎉 Happy birthday, ${p.displayName}!`,
       body: 'From everyone at BFRENZ. Your frenz just got the memo 🎂',
       url: `/${p.username}`,
@@ -79,7 +77,7 @@ export async function GET(req) {
     const frenz = await imBuddyIds(p.id); // accepted frenz, minus blocks
     const results = await Promise.allSettled(
       frenz.map((id) =>
-        sendPushNow(id, {
+        notifyNow(id, {
           title: `🎂 It's ${p.displayName}'s birthday!`,
           body: 'Leave them a birthday comment 🎉',
           url: `/${p.username}?bday=1#add-comment`,

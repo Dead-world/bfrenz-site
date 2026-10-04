@@ -56,7 +56,7 @@ export async function POST(request) {
     if (await busy(me.id)) return fail('You’re already on a call.', 409);
     if (await busy(to)) return fail('They’re on another call right now.', 409);
     const call = await prisma.videoCall.create({ data: { callerId: me.id, calleeId: to, callerSeen: new Date() } });
-    notify(to, { title: `📹 ${me.displayName} is video calling you`, body: 'Tap to answer on BFRENZ.', url: '/home', tag: `call-${call.id}`, urgency: 'high', ttl: 45 });
+    notify(to, { title: `📹 ${me.displayName} is video calling you`, body: 'Tap to answer on BFRENZ.', url: '/home', tag: `call-${call.id}`, urgency: 'high', ttl: 45, inApp: false });
     return NextResponse.json({ call: callView(await loadCall(call.id), me.id) });
   }
 

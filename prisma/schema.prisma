@@ -107,6 +107,7 @@ model User {
   reactions        Reaction[]
   emojiReactions   EmojiReaction[]
   itemComments     ItemComment[]
+  alerts           Alert[]
   pushSubs         PushSubscription[]
   visitsReceived   ProfileVisit[] @relation("visited")
   visitsMade       ProfileVisit[] @relation("visitor")
@@ -735,4 +736,22 @@ model ItemComment {
   replies ItemComment[] @relation("itemCommentReplies")
 
   @@index([key, createdAt])
+}
+
+// In-site notifications (the 🔔 list). Everything that goes out as a phone notification is saved here too.
+// Alerts with the same tag (e.g. likes on one post) collapse into one row while unread.
+model Alert {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  body      String   @default("")
+  url       String   @default("/home")
+  tag       String?
+  seen      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, seen])
 }

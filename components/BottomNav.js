@@ -5,14 +5,15 @@ import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import Icon from '@/components/Icon';
+import AlertBadge from '@/components/AlertBadge';
 
 const badge = (n) => (n > 0 ? <i className="bnav-badge">{n > 9 ? '9+' : n}</i> : null);
 
 /**
  * Phone tab bar, pinned to the bottom like Facebook's: Feed, Frenz, Chat (the IM buddy list),
- * Alerts and Menu (the full menu panel). Only shows on phone-sized screens, for members.
+ * Alerts (the 🔔 notifications list) and Menu (the full menu panel). Only shows on phone-sized screens, for members.
  */
-export default function BottomNav({ username, pending = 0, mentions = 0, mail = 0 }) {
+export default function BottomNav({ username, pending = 0, alerts = 0, mail = 0 }) {
   const pathname = usePathname() || '/';
   const [mounted, setMounted] = useState(false);
   const [im, setIm] = useState({ unread: 0, open: false });
@@ -43,8 +44,8 @@ export default function BottomNav({ username, pending = 0, mentions = 0, mail = 
         <span className="bnav-ico"><Icon name="chat" size={23} />{badge(im.unread)}</span>
         <span>Chat</span>
       </button>
-      <Link href="/mentions" className={`bnav-tab${here('/mentions') ? ' on' : ''}`}>
-        <span className="bnav-ico"><Icon name="bell" size={23} />{badge(mentions)}</span>
+      <Link href="/notifications" className={`bnav-tab${here('/notifications') || here('/mentions') ? ' on' : ''}`}>
+        <span className="bnav-ico"><Icon name="bell" size={23} /><AlertBadge initial={alerts} className="bnav-badge" /></span>
         <span>Alerts</span>
       </Link>
       <button type="button" className="bnav-tab" onClick={() => window.dispatchEvent(new Event('bfrenz-menu'))}>

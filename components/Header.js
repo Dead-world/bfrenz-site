@@ -8,6 +8,7 @@ import NavBar from '@/components/NavBar';
 import AccountMenu from '@/components/AccountMenu';
 import MobileMenu from '@/components/MobileMenu';
 import BottomNav from '@/components/BottomNav';
+import AlertBadge from '@/components/AlertBadge';
 
 /**
  * Site header. One description of the menu feeds three places:
@@ -22,12 +23,14 @@ export default async function Header() {
   let pending = 0;
   let reports = 0;
   let mentions = 0;
+  let alerts = 0;
   if (me) {
-    [unread, pending, reports, mentions] = await Promise.all([
+    [unread, pending, reports, mentions, alerts] = await Promise.all([
       prisma.message.count({ where: { recipientId: me.id, read: false, recipientDeleted: false } }),
       prisma.friendship.count({ where: { addresseeId: me.id, status: 'PENDING' } }),
       admin ? prisma.report.count({ where: { status: 'OPEN' } }) : 0,
       unseenMentionCount(me.id).catch(() => 0),
+      prisma.alert.count({ where: { userId: me.id, seen: false } }).catch(() => 0),
     ]);
   }
 
@@ -106,6 +109,7 @@ export default async function Header() {
   const account = me
     ? [
         { href: `/${u}`, label: 'View my profile', icon: 'user' },
+        { href: '/notifications', label: 'Notifications', icon: 'bell', count: alerts },
         { href: '/mentions', label: 'Mentions', icon: 'at', count: mentions },
         { href: '/edit', label: 'Edit profile', icon: 'pen' },
         { href: '/edit?tab=creator', label: me.creatorType ? 'Creator settings' : 'Turn on creator mode', icon: 'video' },
@@ -138,9 +142,9 @@ export default async function Header() {
                 <Icon name="userplus" size={20} />
                 {pending > 0 && <span className="top-badge">{pending > 9 ? '9+' : pending}</span>}
               </Link>
-              <Link href="/mentions" className="top-icon" title="Mentions" aria-label={`Mentions${mentions ? `, ${mentions} new` : ''}`}>
+              <Link href="/notifications" className="top-icon" title="Notifications" aria-label="Notifications">
                 <Icon name="bell" size={20} />
-                {mentions > 0 && <span className="top-badge">{mentions > 9 ? '9+' : mentions}</span>}
+                <AlertBadge initial={alerts} />
               </Link>
               {admin && reports > 0 && (
                 <Link href="/admin" className="top-icon" title="Open reports" aria-label={`${reports} open reports`}>
@@ -157,7 +161,7 @@ export default async function Header() {
             </span>
           )}
           <MobileMenu me={meInfo} primary={primary} groups={groups} account={account} alerts={unread + pending + mentions} />
-          {me && <BottomNav username={u} pending={pending} mentions={mentions} mail={unread} />}
+          {me && <BottomNav username={u} pending={pending} alerts={alerts} mail={unread} />}
         </div>
       </div>
       <NavBar primary={primary} groups={groups} />

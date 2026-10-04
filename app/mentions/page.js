@@ -14,13 +14,14 @@ const FROM = { select: { id: true, username: true, displayName: true, avatarUrl:
 /** Drops mentions whose post or comment has since been deleted. */
 async function stillThere(list) {
   const ids = (k) => list.filter((m) => m.kind === k).map((m) => m.targetId);
-  const [posts, comments, gposts, greplies] = await Promise.all([
+  const [posts, comments, itemComments, gposts, greplies] = await Promise.all([
     prisma.post.findMany({ where: { id: { in: ids('post') } }, select: { id: true } }),
     prisma.postComment.findMany({ where: { id: { in: ids('comment') } }, select: { id: true } }),
+    prisma.itemComment.findMany({ where: { id: { in: ids('comment') } }, select: { id: true } }),
     prisma.groupPost.findMany({ where: { id: { in: ids('grouppost') } }, select: { id: true } }),
     prisma.groupReply.findMany({ where: { id: { in: ids('groupreply') } }, select: { id: true } }),
   ]);
-  const ok = new Set([...posts, ...comments, ...gposts, ...greplies].map((r) => r.id));
+  const ok = new Set([...posts, ...comments, ...itemComments, ...gposts, ...greplies].map((r) => r.id));
   return list.filter((m) => ok.has(m.targetId));
 }
 
