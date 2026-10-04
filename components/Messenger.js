@@ -127,6 +127,16 @@ export default function Messenger({ me }) {
     setReady(true);
     return () => mq.removeEventListener?.('change', onMq);
   }, []);
+  // The phone bottom bar's "Chat" tab opens and closes the buddy list, and shows the unread count.
+  useEffect(() => {
+    const toggle = () => setListOpen((o) => !o);
+    window.addEventListener('bfrenz-im-toggle', toggle);
+    return () => window.removeEventListener('bfrenz-im-toggle', toggle);
+  }, []);
+  useEffect(() => {
+    window.__bfrenzIm = { unread, open: listOpen };
+    window.dispatchEvent(new CustomEvent('bfrenz-im-state', { detail: { unread, open: listOpen } }));
+  }, [unread, listOpen]);
   // Effects must return nothing (or a cleanup function), so these use full blocks.
   useEffect(() => {
     if (ready) save('im.listOpen', listOpen);

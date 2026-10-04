@@ -7,6 +7,7 @@ import Icon from '@/components/Icon';
 import NavBar from '@/components/NavBar';
 import AccountMenu from '@/components/AccountMenu';
 import MobileMenu from '@/components/MobileMenu';
+import BottomNav from '@/components/BottomNav';
 
 /**
  * Site header. One description of the menu feeds three places:
@@ -156,6 +157,7 @@ export default async function Header() {
             </span>
           )}
           <MobileMenu me={meInfo} primary={primary} groups={groups} account={account} alerts={unread + pending + mentions} />
+          {me && <BottomNav username={u} pending={pending} mentions={mentions} mail={unread} />}
         </div>
       </div>
       <NavBar primary={primary} groups={groups} />

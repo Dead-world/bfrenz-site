@@ -16,6 +16,12 @@ export default function MobileMenu({ me, primary, groups, account = [], alerts =
   const pathname = usePathname() || '/';
 
   useEffect(() => setOpen(false), [pathname]);
+  // The phone bottom bar's "Menu" tab opens this same panel.
+  useEffect(() => {
+    const toggle = () => setOpen((o) => !o);
+    window.addEventListener('bfrenz-menu', toggle);
+    return () => window.removeEventListener('bfrenz-menu', toggle);
+  }, []);
   useEffect(() => {
     if (!open) return undefined;
     const onKey = (e) => e.key === 'Escape' && setOpen(false);
