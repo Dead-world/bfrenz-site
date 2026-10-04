@@ -150,7 +150,8 @@ export async function replyToGroupPost(formData) {
   const id = str(formData, 'postId', 40);
   const post = await prisma.groupPost.findUnique({ where: { id }, include: { group: true } });
   if (!post) redirect('/groups');
-  const back = `/groups/${post.group.slug}`;
+  // Replies can come from the group page or straight from the news feed.
+  const back = safeBack(formData.get('back'), `/groups/${post.group.slug}`);
   if (!isMember(await membershipOf(post.groupId, me.id))) redirect(withParam(back, 'error', 'Join the group to reply.'));
   const body = str(formData, 'body', GROUP_REPLY_MAX);
   if (!body) redirect(`${back}#gp-${id}`);

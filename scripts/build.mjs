@@ -41,4 +41,5 @@ const run = (cmd) => execSync(cmd, { stdio: 'inherit', env });
 
 run('npx prisma generate');
 run('npx prisma db push --skip-generate');
+run('node scripts/kudos-to-likes.mjs');
 run('npx next build');

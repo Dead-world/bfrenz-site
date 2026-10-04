@@ -326,7 +326,7 @@ export default async function AdminPage({ searchParams }) {
                         <input type="hidden" name="action" value="remove" />
                         <input type="hidden" name="back" value={back} />
                         <button className="btn small-btn" type="submit">
-                          {r.kind === 'profile' ? 'Clear profile' : r.kind === 'postcomment' ? 'Remove comment' : `Remove ${r.kind}`}
+                          {r.kind === 'profile' ? 'Clear profile' : r.kind === 'postcomment' || r.kind === 'itemcomment' ? 'Remove comment' : `Remove ${r.kind}`}
                         </button>
                       </form>
                     )}

@@ -28,6 +28,8 @@ async function ownerOf(kind, id, me) {
       return (await prisma.post.findUnique({ where: { id }, select: { authorId: true } }))?.authorId;
     case 'postcomment':
       return (await prisma.postComment.findUnique({ where: { id }, select: { authorId: true } }))?.authorId;
+    case 'itemcomment':
+      return (await prisma.itemComment.findUnique({ where: { id }, select: { authorId: true } }))?.authorId;
     case 'survey':
       return (await prisma.surveyAnswer.findUnique({ where: { id }, select: { userId: true } }))?.userId;
     case 'blog':
@@ -187,6 +189,9 @@ async function deleteContent(kind, id) {
       break;
     case 'postcomment':
       await prisma.postComment.deleteMany({ where: { id } });
+      break;
+    case 'itemcomment':
+      await prisma.itemComment.deleteMany({ where: { id } });
       break;
     case 'survey':
       await prisma.surveyAnswer.deleteMany({ where: { id } });

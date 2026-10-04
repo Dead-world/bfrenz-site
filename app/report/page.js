@@ -16,6 +16,7 @@ const WHAT = {
   video: 'this video',
   post: 'this post',
   postcomment: 'this comment',
+  itemcomment: 'this comment',
   survey: 'these survey answers',
   blog: 'this blog entry',
   blogcomment: 'this comment',

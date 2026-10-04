@@ -1,4 +1,5 @@
 import { Fragment } from 'react';
+import { attachPostReactions } from '@/lib/reactions';
 import Link from 'next/link';
 import { supportButtons } from '@/lib/support';
 import { normalizeLayout, isDefaultLayout, CUSTOM_LAYOUT_CSS } from '@/lib/profileLayout';
@@ -154,10 +155,11 @@ export default async function ProfilePage({ params, searchParams }) {
           where: { authorId: user.id, visibility: 'public' },
           orderBy: { createdAt: 'desc' },
           take: 3,
-          select: { id: true, body: true, imageUrls: true, videoUrl: true, youtubeId: true, songUrl: true, createdAt: true, _count: { select: { kudos: true, comments: true } } },
+          select: { id: true, body: true, imageUrls: true, videoUrl: true, youtubeId: true, songUrl: true, createdAt: true, _count: { select: { comments: true } } },
         }),
       ])
     : [0, false, []];
+  if (publicPosts.length) await attachPostReactions(publicPosts, me?.id);
   // Recent Supporter gifts (shown while the gifted time could still be running).
   const giftedBy = isSupporter(user)
     ? await prisma.purchase.findMany({
@@ -540,7 +542,7 @@ export default async function ProfilePage({ params, searchParams }) {
                     <Link href={me ? `/post/${p.id}` : `/signup?ref=${user.username}`}>
                       {p.body ? (p.body.length > 140 ? p.body.slice(0, 137) + '…' : p.body) : p.imageUrls.length ? '📷 Photo' : p.videoUrl || p.youtubeId ? '🎬 Video' : p.songUrl ? '🎵 Song' : 'Post'}
                     </Link>
-                    <span className="small muted"> · {timeAgo(p.createdAt)} · ★ {p._count.kudos} · 💬 {p._count.comments}</span>
+                    <span className="small muted"> · {timeAgo(p.createdAt)} · 👍 {p.rx?.up || 0} · 💬 {p._count.comments}</span>
                   </li>
                 ))}
               </ul>

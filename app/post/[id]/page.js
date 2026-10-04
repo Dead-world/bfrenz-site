@@ -5,6 +5,7 @@ import { prisma } from '@/lib/db';
 import { canSeePost, postInclude } from '@/lib/feed';
 import { isAdmin } from '@/lib/moderation';
 import { PostCard } from '@/components/FeedItem';
+import { attachPostReactions } from '@/lib/reactions';
 import Notice from '@/components/Notice';
 
 export const metadata = { title: 'Post | BFRENZ.com', robots: { index: false } };
@@ -22,6 +23,7 @@ export default async function PostPage({ params, searchParams }) {
   if (!post) notFound();
   const author = await prisma.user.findUnique({ where: { id: post.authorId }, select: { bannedAt: true } });
   if ((author?.bannedAt && !admin) || !(await canSeePost(me, post, admin))) notFound();
+  await attachPostReactions([post], me.id);
 
   return (
     <div style={{ maxWidth: 680, margin: '0 auto' }}>

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { attachPostReactions } from '@/lib/reactions';
 import { supportButtons } from '@/lib/support';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/db';
@@ -25,7 +26,7 @@ export default async function CreatorStatsPage() {
     prisma.profileVisit.count({ where: { profileId: me.id, at: { gte: since30 } } }),
     prisma.post.findMany({
       where: { authorId: me.id, createdAt: { gte: since30 } },
-      select: { id: true, body: true, visibility: true, createdAt: true, _count: { select: { kudos: true, comments: true } } },
+      select: { id: true, body: true, visibility: true, createdAt: true, _count: { select: { comments: true } } },
       orderBy: { createdAt: 'desc' },
       take: 100,
     }),
@@ -36,7 +37,8 @@ export default async function CreatorStatsPage() {
   for (const c of recentClicks) { const d = days.find((x) => x.key === dayKey(c.createdAt)); if (d) d.clicks++; }
   for (const f of recentFollows) { const d = days.find((x) => x.key === dayKey(f.createdAt)); if (d) d.follows++; }
   const max = Math.max(1, ...days.map((d) => d.clicks + d.follows));
-  const top = [...posts].sort((a, b) => b._count.kudos + b._count.comments - (a._count.kudos + a._count.comments)).slice(0, 5);
+  await attachPostReactions(posts, me.id);
+  const top = [...posts].sort((a, b) => b.rx.up + b._count.comments - (a.rx.up + a._count.comments)).slice(0, 5);
   const lab = creatorLabel(me.creatorType);
   const links = displayLinks(me);
 
@@ -114,12 +116,12 @@ export default async function CreatorStatsPage() {
               <div className="box-b small muted">No posts in the last 30 days. <Link href="/home">Post something</Link>, and make it 🌍 Public so all your followers see it.</div>
             ) : (
               <table className="list growth-table">
-                <thead><tr><th>Post</th><th>★</th><th>💬</th></tr></thead>
+                <thead><tr><th>Post</th><th>👍</th><th>👎</th><th>💬</th></tr></thead>
                 <tbody>
                   {top.map((p) => (
                     <tr key={p.id}>
                       <td><Link href={`/post/${p.id}`}>{p.visibility === 'public' ? '🌍 ' : '👥 '}{(p.body || 'Photo / video / song').slice(0, 70)}</Link></td>
-                      <td>{p._count.kudos}</td><td>{p._count.comments}</td>
+                      <td>{p.rx.up}</td><td>{p.rx.down}</td><td>{p._count.comments}</td>
                     </tr>
                   ))}
                 </tbody>

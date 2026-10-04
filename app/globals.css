@@ -906,12 +906,22 @@ body { padding-bottom: 56px; }
 .feed-audio { width: 100%; }
 .feed-embed { border-radius: 10px; }
 .feed-actions { display: flex; gap: 8px; align-items: center; padding: 6px 12px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
-.kudos-btn {
+.like-bar { display: inline-flex; flex-wrap: wrap; gap: 2px; align-items: center; position: relative; }
+.emo-chip { background: var(--surface-2); border: 1px solid transparent; color: var(--text); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; padding: 3px 9px; border-radius: 999px; }
+.emo-chip.on { border-color: #ff7a1a; background: rgba(255,122,26,.14); }
+.emo-add { font-size: 15px; }
+.emo-plus { font-size: 11px; margin-left: 1px; vertical-align: top; opacity: .8; }
+.emo-pop { position: absolute; left: 0; bottom: calc(100% + 6px); z-index: 30; display: grid; grid-template-columns: repeat(6, 40px); gap: 2px; padding: 6px; border-radius: 14px; background: var(--surface, #1a1a1d); border: 1px solid var(--line); box-shadow: 0 10px 30px rgba(0,0,0,.5); }
+.emo-pop button { width: 40px; height: 40px; border: 0; border-radius: 10px; background: none; font-size: 24px; cursor: pointer; line-height: 1; }
+.emo-pop button:hover, .emo-pop button.on { background: rgba(255,122,26,.18); }
+.like-btn {
   background: none; border: 0; color: var(--text-dim); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
-  padding: 6px 10px; border-radius: 8px;
+  padding: 6px 10px; border-radius: 8px; white-space: nowrap;
 }
-.kudos-btn:hover { background: var(--surface-2); color: var(--text); }
-.kudos-btn.on { color: #ffcc33; }
+.like-btn:hover { background: var(--surface-2); color: var(--text); }
+.like-btn.on { color: #ff9a45; background: rgba(255,122,26,.12); }
+.like-btn.dislike.on { color: #8fb4ff; background: rgba(120,160,255,.12); }
+.feed-actions { flex-wrap: wrap; }
 .feed-actions .linkbtn { padding: 6px 10px; border-radius: 8px; font-weight: 700; }
 .feed-actions .linkbtn:hover { background: var(--surface-2); }
 .feed-report { margin-left: auto; }

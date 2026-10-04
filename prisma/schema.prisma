@@ -104,6 +104,9 @@ model User {
   posts            Post[]
   postComments     PostComment[]
   kudos            Kudos[]
+  reactions        Reaction[]
+  emojiReactions   EmojiReaction[]
+  itemComments     ItemComment[]
   pushSubs         PushSubscription[]
   visitsReceived   ProfileVisit[] @relation("visited")
   visitsMade       ProfileVisit[] @relation("visitor")
@@ -685,4 +688,51 @@ model LiveChat {
   user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([streamId, createdAt])
+}
+
+// A like (+1) or dislike (-1) on anything in the news feed. `key` names the item the same way
+// the feed does: p-<post>, b-<bulletin>, ph-<photo>, v-<video>, s-<user>-<time> (profile song),
+// f-<friendship>, sv-<survey answer>, bl-<blog post>, gp-<group post>. One per person per item.
+model Reaction {
+  id        String   @id @default(cuid())
+  key       String
+  userId    String
+  value     Int
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([key, userId])
+  @@index([key])
+}
+
+// An emoji reaction (one per person per item) on anything in the news feed. Same keys as Reaction.
+model EmojiReaction {
+  id        String   @id @default(cuid())
+  key       String
+  userId    String
+  emoji     String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([key, userId])
+  @@index([key])
+}
+
+// A comment on a news-feed item that has no comments of its own (bulletins, photos, videos,
+// profile songs, survey answers, new frenz). Same keys as Reaction. Replies are one level deep.
+model ItemComment {
+  id        String   @id @default(cuid())
+  key       String
+  authorId  String
+  body      String
+  parentId  String?
+  createdAt DateTime @default(now())
+
+  author  User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parent  ItemComment?  @relation("itemCommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies ItemComment[] @relation("itemCommentReplies")
+
+  @@index([key, createdAt])
 }

@@ -18,7 +18,7 @@ export function ReplyButton({ thread, target, username }) {
 }
 
 /** The reply box at the bottom of a comment thread. Hidden until someone presses Reply. */
-export function ThreadReplyForm({ postId, thread, back, pic, myName }) {
+export function ThreadReplyForm({ postId, thread, back, pic, myName, action = addPostComment }) {
   const [open, setOpen] = useState(null); // { target, username }
   const box = useRef(null);
 
@@ -42,7 +42,7 @@ export function ThreadReplyForm({ postId, thread, back, pic, myName }) {
 
   if (!open) return null;
   return (
-    <form action={addPostComment} className="feed-comment-form feed-reply-form" ref={box}>
+    <form action={action} className="feed-comment-form feed-reply-form" ref={box}>
       <input type="hidden" name="id" value={postId} />
       <input type="hidden" name="parentId" value={open.target} />
       <input type="hidden" name="back" value={back} />
