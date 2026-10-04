@@ -1827,3 +1827,25 @@ header.site-header { padding-top: env(safe-area-inset-top); }
 .public-post-cta { text-align: center; padding: 22px 18px; }
 .public-post-cta h2 { font-family: var(--display); margin: 0 0 6px; }
 .public-post-cta .actions { justify-content: center; margin-top: 12px; }
+
+/* ================= editing posts ================= */
+.post-owner-links { display: inline-flex; align-items: center; gap: 4px; align-self: flex-start; }
+.post-owner-links form { margin: 0; display: inline-flex; }
+.post-owner-links .linkbtn { padding: 4px 6px; line-height: 1.2; margin: 0; }
+.post-edit-form { display: grid; gap: 10px; padding: 4px 16px 12px; }
+.post-edit-form textarea { width: 100%; min-height: 90px; font: inherit; font-size: 16px; line-height: 1.4; }
+/* While editing, hide the post's own text, mood line and media (the editor shows what's on it). */
+.feed-post:has(.post-edit-form) > .post-text,
+.feed-post:has(.post-edit-form) > .feed-images,
+.feed-post:has(.post-edit-form) > .feed-media { display: none; }
+.post-edit-media { display: grid; gap: 6px; }
+.post-edit-thumbs { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.post-edit-thumb { position: relative; width: 72px; height: 72px; border-radius: 10px; overflow: hidden; cursor: pointer; }
+.post-edit-thumb img { width: 100%; height: 100%; object-fit: cover; transition: opacity .15s; }
+.post-edit-thumb input { position: absolute; top: 4px; left: 4px; width: 18px; height: 18px; z-index: 1; accent-color: #ff7a1a; }
+.post-edit-thumb:has(input:not(:checked)) img { opacity: .25; }
+.post-edit-chip { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 999px; background: var(--surface-2); font-size: 14px; font-weight: 600; cursor: pointer; }
+.post-edit-chip input { accent-color: #ff7a1a; }
+.post-edit-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.post-edit-row select { padding: 8px 10px; border-radius: 10px; }
+.post-edit-btns { margin-left: auto; display: inline-flex; gap: 8px; }

@@ -69,6 +69,45 @@ export async function createPost(formData) {
   redirect(withParam(to, 'posted', '1'));
 }
 
+/**
+ * The author edits their post: text, mood, who sees it, and taking off photos / video / song.
+ * (New photos aren't added here; that stays in the composer.)
+ */
+export async function editPost(formData) {
+  const me = await requireUser();
+  const to = back(formData);
+  const id = str(formData, 'id', 40);
+  const post = await prisma.post.findUnique({ where: { id } });
+  if (!post || post.authorId !== me.id) redirect(withParam(to, 'error', 'You can only edit your own posts.'));
+
+  const body = String(formData.get('body') || '').replace(/\r/g, '').trim().slice(0, 2000);
+  const moodRaw = str(formData, 'mood', 30);
+  const mood = MOODS.some(([, m]) => m === moodRaw) ? moodRaw : '';
+  const keep = new Set(formData.getAll('keepImage').map(String));
+  const imageUrls = post.imageUrls.filter((u) => keep.has(u));
+  const videoUrl = formData.get('keepVideo') ? post.videoUrl : '';
+  const youtube = formData.get('keepVideo') ? post.youtubeId : '';
+  const songUrl = formData.get('keepSong') ? post.songUrl : '';
+  if (!body && !imageUrls.length && !videoUrl && !youtube && !songUrl && !mood) {
+    redirect(withParam(`${to.split('#')[0]}`, 'error', 'A post can’t be empty. Delete it instead?'));
+  }
+  const visibility = me.creatorType && formData.get('visibility') === 'public' ? 'public' : 'frenz';
+
+  const changed =
+    body !== post.body || mood !== post.mood || visibility !== post.visibility || imageUrls.length !== post.imageUrls.length ||
+    videoUrl !== post.videoUrl || youtube !== post.youtubeId || songUrl !== post.songUrl;
+  if (changed) {
+    const saved = await prisma.post.update({
+      where: { id },
+      data: { body, mood, imageUrls, videoUrl, youtubeId: youtube, songUrl, visibility, editedAt: new Date() },
+    });
+    // Anyone newly @mentioned gets told (people already told aren't told twice).
+    if (body.includes('@')) after(() => sendMentions(me, body, { kind: 'post', targetId: id, url: `/post/${id}`, post: saved }));
+    revalidatePath('/home');
+  }
+  redirect(`${to.split('#')[0]}#post-${id}`);
+}
+
 export async function deletePost(formData) {
   const me = await requireUser();
   const id = str(formData, 'id', 40);

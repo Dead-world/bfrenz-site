@@ -351,6 +351,7 @@ model Post {
   visibility String @default("frenz") // frenz | public (creators can post publicly)
   songUrl    String   @default("")
   createdAt  DateTime @default(now())
+  editedAt   DateTime? // set when the author edits the post
 
   author   User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
   comments PostComment[]

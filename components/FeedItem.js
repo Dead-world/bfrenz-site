@@ -9,6 +9,7 @@ import VideoPlayer from '@/components/VideoPlayer';
 import { addPostComment, deletePost, deletePostComment } from '@/app/actions/posts';
 import LikeBar from '@/components/LikeBar';
 import ShareButton from '@/components/ShareButton';
+import EditPost, { EditPostButton } from '@/components/EditPost';
 import { addItemComment, deleteItemComment } from '@/app/actions/itemComments';
 import { addBlogComment, deleteBlogComment } from '@/app/actions/blogs';
 import { replyToGroupPost, deleteGroupReply } from '@/app/actions/groups';
@@ -79,18 +80,29 @@ export function PostCard({ post, me, back, admin = false, allComments = false })
           </div>
           <span>
             <When at={post.createdAt} href={`/post/${post.id}`} />
+            {post.editedAt && <span className="small muted" title={`Edited ${new Date(post.editedAt).toLocaleString('en-US')}`}> · Edited</span>}
             {post.visibility === 'public' && <span className="small muted" title="Public post: anyone on BFRENZ can see it"> · 🌍</span>}
           </span>
         </div>
         {(mine || admin) && (
-          <form action={deletePost}>
-            <input type="hidden" name="id" value={post.id} />
-            <input type="hidden" name="back" value={back} />
-            <button type="submit" className="linkbtn small muted" title="Delete post">Delete</button>
-          </form>
+          <span className="post-owner-links">
+            {mine && <EditPostButton id={post.id} />}
+            <form action={deletePost}>
+              <input type="hidden" name="id" value={post.id} />
+              <input type="hidden" name="back" value={back} />
+              <button type="submit" className="linkbtn small muted" title="Delete post">Delete</button>
+            </form>
+          </span>
         )}
       </header>
 
+      {mine && (
+        <EditPost
+          post={{ id: post.id, body: post.body, mood: post.mood, visibility: post.visibility, imageUrls: post.imageUrls, videoUrl: post.videoUrl, youtubeId: post.youtubeId, songUrl: post.songUrl }}
+          back={back}
+          canPublic={!!me.creatorType}
+        />
+      )}
       <PostText text={post.body} />
 
       {post.imageUrls.length > 0 && (
