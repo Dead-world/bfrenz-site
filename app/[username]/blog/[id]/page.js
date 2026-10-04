@@ -1,4 +1,7 @@
 import Link from 'next/link';
+import { attachCommentLikes } from '@/lib/reactions';
+import CommentLike from '@/components/CommentLike';
+import EditCommentForm, { EditCommentButton } from '@/components/EditComment';
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
@@ -59,6 +62,7 @@ export default async function BlogEntryPage({ params, searchParams }) {
     take: 300,
     include: { author: true },
   });
+  if (me && comments.length) await attachCommentLikes([[comments, 'bc']], me.id);
   const back = `/${post.author.username}/blog/${post.id}`;
   const u = post.author;
 
@@ -114,11 +118,14 @@ export default async function BlogEntryPage({ params, searchParams }) {
                   <div className="small">
                     <Link href={`/${c.author.username}`}><b><Name user={c.author} /></b></Link>
                     <Badges user={c.author} />
-                    <span className="muted"> · {fmtDate(c.createdAt)}</span>
+                    <span className="muted"> · {fmtDate(c.createdAt)}{c.editedAt ? ' · edited' : ''}</span>
                   </div>
                   <PostText text={c.body} />
+                  {me && c.authorId === me.id && <EditCommentForm kind="bc" id={c.id} body={c.body} back={back} max={3000} />}
                   {me && (
                     <div className="small actions">
+                      <CommentLike k={`bc-${c.id}`} rx={c.rx} />
+                      {c.authorId === me.id && <EditCommentButton kind="bc" id={c.id} />}
                       {(c.authorId === me.id || isMe || admin) && (
                         <form action={deleteBlogComment}>
                           <input type="hidden" name="id" value={c.id} />

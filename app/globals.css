@@ -1849,3 +1849,20 @@ header.site-header { padding-top: env(safe-area-inset-top); }
 .post-edit-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .post-edit-row select { padding: 8px 10px; border-radius: 10px; }
 .post-edit-btns { margin-left: auto; display: inline-flex; gap: 8px; }
+
+/* likes on comments and replies */
+.comment-like { font-weight: 700; color: var(--text-dim); }
+.feed-comment-meta form, .comment-actions form { display: inline-flex; margin: 0; vertical-align: middle; }
+.feed-comment-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; }
+.comment-like.on { color: var(--orange-hot, #ff7a1a); }
+
+/* ================= editing comments ================= */
+.comment-edit-form { display: grid; gap: 8px; margin: 6px 0 4px; }
+.comment-edit-form textarea { width: 100%; font: inherit; font-size: 16px; line-height: 1.4; }
+.comment-edit-btns { display: flex; justify-content: flex-end; gap: 8px; }
+/* While editing, the editor takes the comment's place. */
+.feed-comment-main:has(> .comment-edit-form) > .post-text,
+.blog-comment-main:has(> .comment-edit-form) > .post-text,
+.said:has(> .comment-edit-form) > .comment-html,
+.reply-main:has(> .comment-edit-form) > .reply-body { display: none; }
+.feed-comment-main:has(> .comment-edit-form) { flex: 1; }

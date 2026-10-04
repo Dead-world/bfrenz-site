@@ -1,4 +1,7 @@
 import Link from 'next/link';
+import { attachCommentLikes } from '@/lib/reactions';
+import CommentLike from '@/components/CommentLike';
+import EditCommentForm, { EditCommentButton } from '@/components/EditComment';
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
@@ -68,6 +71,7 @@ export default async function GroupPage({ params, searchParams }) {
   ]);
   const more = posts.length > PAGE;
   const list = [...pinned, ...posts.slice(0, PAGE)];
+  if (me) await attachCommentLikes(list.map((p) => [p.replies, 'gr']), me.id);
   const back = `/groups/${group.slug}`;
 
   return (
@@ -209,13 +213,17 @@ export default async function GroupPage({ params, searchParams }) {
                 )}
                 <section className="feed-comments">
                   {p.replies.map((r) => (
-                    <div key={r.id} className="feed-comment">
+                    <div key={r.id} className="feed-comment" id={`gr-${r.id}`}>
                       <Link href={`/${r.author.username}`}><Pic user={r.author} size={30} /></Link>
                       <div className="feed-comment-main">
                         <Link href={`/${r.author.username}`} className="feed-who"><b><Name user={r.author} /></b></Link>{' '}
                         <PostText text={r.body} className="post-text inline" />
+                        {me && r.authorId === me.id && <EditCommentForm kind="gr" id={r.id} body={r.body} back={back} max={1000} />}
                         <div className="feed-comment-meta small">
                           <span className="feed-when">{timeAgo(r.createdAt)}</span>
+                          {r.editedAt && <span className="muted">· Edited</span>}
+                          {me && <CommentLike k={`gr-${r.id}`} rx={r.rx} />}
+                          {me && r.authorId === me.id && <EditCommentButton kind="gr" id={r.id} />}
                           {me && (r.authorId === me.id || mod) && (
                             <form action={deleteGroupReply} className="inline">
                               <input type="hidden" name="id" value={r.id} />

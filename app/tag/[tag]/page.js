@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
 import { postInclude } from '@/lib/feed';
-import { attachPostReactions } from '@/lib/reactions';
+import { attachCommentLikes, attachPostReactions } from '@/lib/reactions';
 import { isAdmin } from '@/lib/moderation';
 import { cleanTag } from '@/lib/tags';
 import { postsWithTag, trendingTags, groupPostsWithTag } from '@/lib/mentions';
@@ -33,7 +33,7 @@ export default async function TagPage({ params, searchParams }) {
     trendingTags(10),
     before ? [] : groupPostsWithTag(me, tag, 8),
   ]);
-  await attachPostReactions(posts, me.id);
+  await Promise.all([attachPostReactions(posts, me.id), attachCommentLikes(posts.map((p) => [p.comments, 'pc']), me.id)]);
   const admin = isAdmin(me);
   const back = `/tag/${tag}`;
 

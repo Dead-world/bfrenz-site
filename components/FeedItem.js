@@ -10,6 +10,8 @@ import { addPostComment, deletePost, deletePostComment } from '@/app/actions/pos
 import LikeBar from '@/components/LikeBar';
 import ShareButton from '@/components/ShareButton';
 import EditPost, { EditPostButton } from '@/components/EditPost';
+import CommentLike from '@/components/CommentLike';
+import EditCommentForm, { EditCommentButton } from '@/components/EditComment';
 import { addItemComment, deleteItemComment } from '@/app/actions/itemComments';
 import { addBlogComment, deleteBlogComment } from '@/app/actions/blogs';
 import { replyToGroupPost, deleteGroupReply } from '@/app/actions/groups';
@@ -44,9 +46,13 @@ function FeedComment({ c, thread, me, mine, admin, back, small = false, del = de
       <Link href={`/${c.author.username}`}><Pic user={c.author} size={small ? 24 : 30} /></Link>
       <div className="feed-comment-main">
         <Who user={c.author} /> <PostText text={c.body} className="post-text inline" />
+        {c.authorId === me.id && <EditCommentForm kind={prefix} id={c.id} body={c.body} back={back} max={prefix === 'bc' ? 3000 : 1000} />}
         <div className="feed-comment-meta small">
           <When at={c.createdAt} />
+          {c.editedAt && <span className="muted" title={`Edited ${new Date(c.editedAt).toLocaleString('en-US')}`}>· Edited</span>}
+          <CommentLike k={`${prefix}-${c.id}`} rx={c.rx} />
           {canReply && c.authorId !== me.id && <ReplyButton thread={thread} target={c.id} username={c.author.username} />}
+          {c.authorId === me.id && <EditCommentButton kind={prefix} id={c.id} />}
           {deletable && (
             <form action={del} className="inline">
               <input type="hidden" name="id" value={c.id} />

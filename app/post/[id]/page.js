@@ -5,7 +5,7 @@ import { prisma } from '@/lib/db';
 import { canSeePost, postInclude } from '@/lib/feed';
 import { isAdmin } from '@/lib/moderation';
 import { PostCard } from '@/components/FeedItem';
-import { attachPostReactions, loadReactions } from '@/lib/reactions';
+import { attachCommentLikes, attachPostReactions, loadReactions } from '@/lib/reactions';
 import { Pic } from '@/components/Avatar';
 import PostText from '@/components/PostText';
 import MiniSong from '@/components/MiniSong';
@@ -62,7 +62,7 @@ export default async function PostPage({ params, searchParams }) {
   if (!post) notFound();
   const author = await prisma.user.findUnique({ where: { id: post.authorId }, select: { bannedAt: true } });
   if ((author?.bannedAt && !admin) || !(await canSeePost(me, post, admin))) notFound();
-  await attachPostReactions([post], me.id);
+  await Promise.all([attachPostReactions([post], me.id), attachCommentLikes([[post.comments, 'pc']], me.id)]);
 
   return (
     <div style={{ maxWidth: 680, margin: '0 auto' }}>

@@ -172,6 +172,7 @@ model Comment {
   authorId  String
   body      String
   createdAt DateTime @default(now())
+  editedAt  DateTime? // set when the author edits it
   parentId  String? // set on replies; points at the top-level comment
 
   profile User      @relation("profile", fields: [profileId], references: [id], onDelete: Cascade)
@@ -367,6 +368,7 @@ model PostComment {
   authorId  String
   body      String
   createdAt DateTime @default(now())
+  editedAt  DateTime? // set when the author edits it
   parentId  String? // set on replies; always points at the top-level comment
 
   post    Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
@@ -459,6 +461,7 @@ model BlogComment {
   authorId  String
   body      String
   createdAt DateTime @default(now())
+  editedAt  DateTime? // set when the author edits it
   post      BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
   author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
 
@@ -520,6 +523,7 @@ model GroupReply {
   authorId  String
   body      String
   createdAt DateTime  @default(now())
+  editedAt  DateTime? // set when the author edits it
   post      GroupPost @relation(fields: [postId], references: [id], onDelete: Cascade)
   author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
 
@@ -731,6 +735,7 @@ model ItemComment {
   body      String
   parentId  String?
   createdAt DateTime @default(now())
+  editedAt  DateTime? // set when the author edits it
 
   author  User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
   parent  ItemComment?  @relation("itemCommentReplies", fields: [parentId], references: [id], onDelete: Cascade)

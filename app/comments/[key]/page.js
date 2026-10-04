@@ -5,7 +5,7 @@ import { isAdmin, hiddenUserIds } from '@/lib/moderation';
 import { resolveTarget } from '@/lib/feedTargets';
 import { ITEM_COMMENT_KINDS, keyKind } from '@/lib/feedKeys';
 import { allItemComments } from '@/lib/itemComments';
-import { loadReactions } from '@/lib/reactions';
+import { attachCommentLikes, loadReactions } from '@/lib/reactions';
 import { ItemThread } from '@/components/FeedItem';
 import LikeBar from '@/components/LikeBar';
 import Notice from '@/components/Notice';
@@ -24,6 +24,7 @@ export default async function ItemCommentsPage({ params, searchParams }) {
   if (!ITEM_COMMENT_KINDS.includes(keyKind(key))) redirect(t.url);
 
   const [cm, rx] = await Promise.all([allItemComments(key, await hiddenUserIds(me.id)), loadReactions([key], me.id)]);
+  await attachCommentLikes([[cm.list, 'ic']], me.id);
   const back = `/comments/${key}`;
   return (
     <div style={{ maxWidth: 680, margin: '0 auto' }}>

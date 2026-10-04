@@ -1,5 +1,7 @@
 import { Fragment } from 'react';
-import { attachPostReactions } from '@/lib/reactions';
+import { attachCommentLikes, attachPostReactions } from '@/lib/reactions';
+import CommentLike from '@/components/CommentLike';
+import EditCommentForm, { EditCommentButton } from '@/components/EditComment';
 import Link from 'next/link';
 import { supportButtons } from '@/lib/support';
 import { normalizeLayout, isDefaultLayout, CUSTOM_LAYOUT_CSS } from '@/lib/profileLayout';
@@ -114,6 +116,8 @@ export default async function ProfilePage({ params, searchParams }) {
     prisma.comment.count({ where: { profileId: user.id, parentId: null, author: { bannedAt: null } } }),
     me && !isMe ? getFriendship(me.id, user.id) : null,
   ]);
+  // Likes on the comment wall (members only).
+  if (me && comments.length) await attachCommentLikes([[comments, 'c']], me.id);
 
   const [profileVideo, status, blogs, groups] = await Promise.all([
     prisma.video.findFirst({ where: { userId: user.id, onProfile: true } }),
@@ -675,12 +679,15 @@ export default async function ProfilePage({ params, searchParams }) {
                         </Link>
                       </td>
                       <td className="said">
-                        <div className="when">{fmtDate(c.createdAt)}</div>
-                        <div dangerouslySetInnerHTML={{ __html: cleanHtml(c.body) }} />
+                        <div className="when">{fmtDate(c.createdAt)}{c.editedAt && <span className="muted"> · edited</span>}</div>
+                        <div className="comment-html" dangerouslySetInnerHTML={{ __html: cleanHtml(c.body) }} />
+                        {me && c.authorId === me.id && <EditCommentForm kind="c" id={c.id} body={c.body} back={back} max={5000} rich />}
                         <section className="actions comment-actions">
+                          {me && <CommentLike k={`c-${c.id}`} rx={c.rx} />}
                           {me && (canComment || c.authorId === me.id) && !blocked && (
                             <a href={`#reply-${c.id}`} className="linkbtn small reply-link">Reply</a>
                           )}
+                          {me && c.authorId === me.id && <EditCommentButton kind="c" id={c.id} />}
                           {me && (isMe || c.authorId === me.id) && (
                             <form action={deleteComment}>
                               <input type="hidden" name="id" value={c.id} />
@@ -703,11 +710,13 @@ export default async function ProfilePage({ params, searchParams }) {
                                     <Link href={`/${r.author.username}`}><b><Name user={r.author} /></b></Link>
                                     <Badges user={r.author} />
                                     {r.authorId === user.id && <span className="owner-tag">owner</span>}
-                                    <span className="muted"> &middot; {fmtDate(r.createdAt)}</span>
+                                    <span className="muted"> &middot; {fmtDate(r.createdAt)}{r.editedAt ? ' · edited' : ''}</span>
                                   </section>
                                   <section className="reply-body" dangerouslySetInnerHTML={{ __html: cleanHtml(r.body) }} />
+                                  {me && r.authorId === me.id && <EditCommentForm kind="c" id={r.id} body={r.body} back={back} max={5000} rich />}
                                   {me && (
                                     <section className="actions comment-actions">
+                                      <CommentLike k={`c-${r.id}`} rx={r.rx} />
                                       {(canComment || c.authorId === me.id) && !blocked && r.authorId !== me.id && (
                                         <Link
                                           href={`/${user.username}?replyto=${r.id}${showAll ? '&comments=all' : ''}#reply-${c.id}`}
@@ -717,6 +726,7 @@ export default async function ProfilePage({ params, searchParams }) {
                                           Reply
                                         </Link>
                                       )}
+                                      {r.authorId === me.id && <EditCommentButton kind="c" id={r.id} />}
                                       {(isMe || r.authorId === me.id) && (
                                         <form action={deleteComment}>
                                           <input type="hidden" name="id" value={r.id} />
