@@ -8,6 +8,7 @@ import { isAdmin, isBlockedEither, hiddenUserIds } from '@/lib/moderation';
 import { getFriendIds } from '@/lib/friends';
 import { notify } from '@/lib/push';
 import { parseStreamLink } from '@/lib/liveEmbed';
+import { getTier } from '@/lib/supers';
 
 export const dynamic = 'force-dynamic';
 
@@ -114,8 +115,15 @@ export async function POST(request) {
       if (!body) return fail('Type something first.');
       const recent = await prisma.liveChat.count({ where: { userId: me.id, createdAt: { gte: new Date(Date.now() - 30 * 1000) } } });
       if (recent >= 10) return fail('Slow down a little!', 429);
-      const c = await prisma.liveChat.create({ data: { streamId: stream.id, userId: me.id, body }, include: { user: CHAT_USER } });
-      return NextResponse.json({ chat: publicChat(c) });
+      // Super Chat: coins come off first (only if you have enough), then it's highlighted and pinned.
+      const tier = mine ? null : getTier(d.super);
+      if (tier) {
+        const paid = await prisma.user.updateMany({ where: { id: me.id, coins: { gte: tier.coins } }, data: { coins: { decrement: tier.coins } } });
+        if (!paid.count) return fail(`The ${tier.emoji} ${tier.name} Chat costs 🪙 ${tier.coins} coins.`, 402);
+      }
+      const c = await prisma.liveChat.create({ data: { streamId: stream.id, userId: me.id, body, superCoins: tier?.coins || 0 }, include: { user: CHAT_USER } });
+      const left = tier ? (await prisma.user.findUnique({ where: { id: me.id }, select: { coins: true } }))?.coins : undefined;
+      return NextResponse.json({ chat: publicChat(c), coins: left });
     }
     case 'end': {
       const admin = isAdmin(me);

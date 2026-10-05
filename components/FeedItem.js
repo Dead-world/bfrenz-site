@@ -12,6 +12,8 @@ import ShareButton from '@/components/ShareButton';
 import EditPost, { EditPostButton } from '@/components/EditPost';
 import CommentLike from '@/components/CommentLike';
 import GiftButton from '@/components/GiftButton';
+import SuperPick from '@/components/SuperPick';
+import { isPinned, tierFor } from '@/lib/supers';
 import EditCommentForm, { EditCommentButton } from '@/components/EditComment';
 import { addItemComment, deleteItemComment } from '@/app/actions/itemComments';
 import { addBlogComment, deleteBlogComment } from '@/app/actions/blogs';
@@ -42,10 +44,12 @@ function When({ at, href }) {
  */
 function FeedComment({ c, thread, me, mine, admin, back, small = false, del = deletePostComment, rk = 'postcomment', prefix = 'pc', canReply = true, canDelete }) {
   const deletable = canDelete ?? (c.authorId === me.id || mine || admin);
+  const sup = c.superCoins ? tierFor(c.superCoins) : null;
   return (
-    <div className={`feed-comment${small ? ' is-reply' : ''}`} id={`${prefix}-${c.id}`}>
+    <div className={`feed-comment${small ? ' is-reply' : ''}${sup ? ' is-super' : ''}`} id={`${prefix}-${c.id}`} style={sup ? { '--super': sup.color } : undefined}>
       <Link href={`/${c.author.username}`}><Pic user={c.author} size={small ? 24 : 30} /></Link>
       <div className="feed-comment-main">
+        {sup && <span className="super-badge">{sup.emoji} {sup.name} · 🪙 {c.superCoins}{isPinned(c) ? ' · 📌' : ''}</span>}
         <Who user={c.author} /> <PostText text={c.body} className="post-text inline" />
         {c.authorId === me.id && <EditCommentForm kind={prefix} id={c.id} body={c.body} back={back} max={prefix === 'bc' ? 3000 : 1000} />}
         <div className="feed-comment-meta small">
@@ -73,7 +77,9 @@ function FeedComment({ c, thread, me, mine, admin, back, small = false, del = de
 /** One status post with its likes, comments and comment box. */
 export function PostCard({ post, me, back, admin = false, allComments = false, promoted = false }) {
   const mine = post.authorId === me.id;
-  const comments = allComments ? post.comments : [...post.comments].reverse();
+  const ordered = allComments ? post.comments : [...post.comments].reverse();
+  // Pinned Super Comments go on top (biggest first).
+  const comments = [...ordered.filter((c) => isPinned(c)).sort((a, b) => b.superCoins - a.superCoins), ...ordered.filter((c) => !isPinned(c))];
   const shown = comments.reduce((n, c) => n + 1 + (c.replies?.length || 0), 0);
   const hidden = post._count.comments - shown;
   return (
@@ -156,6 +162,7 @@ export function PostCard({ post, me, back, admin = false, allComments = false, p
           <input type="hidden" name="back" value={back} />
           <Pic user={{ avatarUrl: me.avatarUrl, displayName: me.displayName }} size={30} />
           <MentionInput type="text" name="body" maxLength={1000} placeholder="Write a comment… (@ to tag)" required />
+          <SuperPick coins={me.coins || 0} />
           <button type="submit" className="btn small-btn">Send</button>
         </form>
       </section>

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { HALLOWEEN } from '@/lib/cosmetics';
 import { getCurrentUser } from '@/lib/auth';
 import { stripeConfigured } from '@/lib/stripe';
 import { THEMES } from '@/lib/themes';
@@ -122,7 +123,10 @@ export default async function ShopPage({ searchParams }) {
               )}
             </>
           ) : (
-            <BuyButton kind="supporter" label={`Become a Supporter · ${money(PRICES.supporterMonthly)}/mo`} />
+            <div className="supporter-plans">
+              <BuyButton kind="supporter" label={`Monthly · ${money(PRICES.supporterMonthly)}/mo`} />
+              <BuyButton kind="supporter_yearly" label={`Yearly · ${money(PRICES.supporterYearly)}/yr (save ${Math.round((1 - PRICES.supporterYearly / (PRICES.supporterMonthly * 12)) * 100)}%)`} />
+            </div>
           )}
           {me && !me.lifetimeSupporter && (
             <div className="lifetime-box">
@@ -293,6 +297,12 @@ export default async function ShopPage({ searchParams }) {
         </div>
       </div>
 
+      {Date.now() < Date.parse(HALLOWEEN.until) && (
+        <Link href={me ? '/edit?tab=design#frame' : '/signup'} className="season-banner" style={{ display: 'block' }}>
+          <b>🎃 Halloween pack is here, until Oct 31 only!</b> Pumpkin, witchy, ghostly and blood moon frames, 🦇 bat trails, and 👻 ghosts, 🎃 pumpkins and 🍬 candy falling on your page. Keep them forever &raquo;
+        </Link>
+      )}
+
       {/* ---------------- Boosts ---------------- */}
       <div className="box" id="boosts">
         <div className="box-h">Get Noticed</div>
@@ -342,6 +352,7 @@ export default async function ShopPage({ searchParams }) {
             <b>Coins &amp; Gifts</b>
             <p className="small muted">Send 🌹 🔥 👑 💎 gifts on posts, profiles and live streams.{me ? <> You have <b>🪙 {me.coins}</b>.</> : ''}</p>
             <Link href="/coins" className="btn ghost small-btn">Get coins · from {money(PRICES.coinPacks[0].cents)}</Link>
+            <Link href="/coins#send-coins" className="small" style={{ marginTop: 6 }}>🎁 Send coins to a fren</Link>
           </div>
         </div>
       </div>

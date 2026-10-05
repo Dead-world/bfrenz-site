@@ -18,6 +18,9 @@ const MESSAGES = {
   stamp: ['Stamp unlocked! 🎟️', 'You can give it to as many frenz as you like. Visit a profile and hit "Give a stamp".'],
   tip: ['Thank you! 🧡', 'Your tip helps keep BFRENZ free for everyone.'],
   post_boost: ['Your post is boosted! 🚀', 'It now shows as Promoted near the top of everyone\'s feed. Check its views from the 🚀 Boost button on the post.'],
+  supporter_yearly: ["You're a Supporter for the year! ★", 'Every theme is unlocked, your Top 16 is ready, and you saved about 30% by going yearly. Thank you! 🧡'],
+  gift_coins: ['Coins sent! 🪙🎁', 'Your fren just got the coins and a notification saying they were from you.'],
+  username: ['New username! ✨', 'Your profile link has changed. Old links to your page still work.'],
   coins: ['Coins added! 🪙', 'Send gifts from the 🎁 button on posts, profiles and live streams.'],
 };
 

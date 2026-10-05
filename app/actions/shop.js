@@ -16,6 +16,7 @@ import { canUseTheme, canUseAboutTemplate, cleanColor, isSupporter, ownedThemeSl
 import { withParam } from '@/lib/util';
 import { findSubscription, syncSubscription } from '@/lib/fulfill';
 import { inAndroidApp } from '@/lib/appMode';
+import { usernameProblem } from '@/lib/usernames';
 
 function fail(path, msg) {
   redirect(withParam(path, 'error', msg));
@@ -36,6 +37,28 @@ async function describe(me, kind, itemId, amountRaw) {
     }
     case 'supporter':
       return { amount: PRICES.supporterMonthly, name: 'BFRENZ Supporter (monthly)', recurring: true };
+    case 'supporter_yearly':
+      return { amount: PRICES.supporterYearly, name: 'BFRENZ Supporter (yearly)', recurring: true, interval: 'year' };
+    case 'gift_coins': {
+      // itemId is "username:coins" from the form; the checkout stores the member's id instead.
+      const [who, coinsRaw] = String(itemId).split(':');
+      const pack = PRICES.coinPacks.find((p) => String(p.coins) === String(coinsRaw));
+      if (!pack) return null;
+      const to = await prisma.user.findFirst({
+        where: { OR: [{ username: who.trim().replace(/^@/, '').toLowerCase() }, { id: who }] },
+        select: { id: true, displayName: true, bannedAt: true },
+      });
+      if (!to || to.bannedAt) return { error: 'We couldn’t find that member. Check their username.' };
+      if (to.id === me.id) return { error: 'That’s you! To get coins for yourself, pick a pack above.' };
+      if (await isBlockedEither(me.id, to.id)) return { error: "You can't send coins to this member." };
+      return { amount: pack.cents, name: `Gift: ${pack.coins.toLocaleString('en-US')} BFRENZ coins for ${to.displayName}`, itemId: `${to.id}:${pack.coins}` };
+    }
+    case 'username': {
+      const name = String(itemId).trim().toLowerCase();
+      const problem = await usernameProblem(me, name);
+      if (problem) return { error: problem };
+      return { amount: PRICES.usernameChange, name: `Change your BFRENZ username to @${name}`, itemId: name };
+    }
     case 'supporter_lifetime':
       return { amount: PRICES.supporterLifetime, name: 'BFRENZ Lifetime Supporter (one time, forever)' };
     case 'gift_supporter': {
@@ -97,14 +120,16 @@ async function describe(me, kind, itemId, amountRaw) {
 export async function startCheckout(formData) {
   const me = await requireUser();
   const kind = String(formData.get('kind') || '');
-  const itemId = String(formData.get('itemId') || '');
+  let itemId = String(formData.get('itemId') || '');
+  // The "send coins to a fren" form sends the username and pack separately.
+  if (!itemId && formData.get('to')) itemId = `${String(formData.get('to')).slice(0, 30)}:${String(formData.get('pack') || '')}`;
   const back = String(formData.get('back') || '/shop');
   const safeBack = back.startsWith('/') && !back.startsWith('//') ? back : '/shop';
 
   if (!stripeConfigured()) fail(safeBack, "Payments aren't switched on yet. Check back soon!");
   if (await inAndroidApp()) fail(safeBack, "Purchases aren't available in the Android app.");
 
-  if (kind === 'supporter' && isSupporter(me) && me.stripeSubscription) {
+  if ((kind === 'supporter' || kind === 'supporter_yearly') && isSupporter(me) && me.stripeSubscription) {
     fail('/shop', "You're already a Supporter. Thank you!");
   }
   if (kind === 'pro_artist' && me.artistPro) fail('/shop', 'You already have the Pro Artist badge.');
@@ -119,7 +144,7 @@ export async function startCheckout(formData) {
   if (item.error) fail(safeBack, item.error);
 
   const base = siteUrl();
-  const metadata = { userId: me.id, kind, itemId };
+  const metadata = { userId: me.id, kind, itemId: item.itemId ?? itemId };
   const params = {
     mode: item.recurring ? 'subscription' : 'payment',
     client_reference_id: me.id,
@@ -132,7 +157,7 @@ export async function startCheckout(formData) {
           currency: 'usd',
           unit_amount: item.amount,
           product_data: { name: item.name, tax_code: TAX_CODE },
-          ...(item.recurring ? { recurring: { interval: 'month' } } : {}),
+          ...(item.recurring ? { recurring: { interval: item.interval || 'month' } } : {}),
         },
       },
     ],

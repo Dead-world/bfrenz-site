@@ -826,6 +826,7 @@ export default async function ProfilePage({ params, searchParams }) {
         </div>
       )}
       <Notice sp={sp} />
+      {sp?.renamed && isMe && <div className="notice ok">✨ Your new username is live: bfrenz.com/{user.username}. Old links to your page still work.</div>}
       {sp?.requested && <div className="notice ok">Friend request sent!</div>}
       {sp?.blocked && <div className="notice ok">Blocked. They can&apos;t message you, comment, or add you.</div>}
       {sp?.unblocked && <div className="notice ok">Unblocked.</div>}

@@ -13,6 +13,7 @@ import { isAdmin, isBlockedEither } from '@/lib/moderation';
 import { notify } from '@/lib/push';
 import { sendMentions } from '@/lib/mentions';
 import { after } from 'next/server';
+import { getTier } from '@/lib/supers';
 
 const BLOB = /^https:\/\/[a-z0-9-]+\.public\.blob\.vercel-storage\.com\//i;
 const MAX_IMAGES = 4;
@@ -153,7 +154,22 @@ export async function addPostComment(formData) {
     where: { authorId: me.id, createdAt: { gte: new Date(Date.now() - 60 * 1000) } },
   });
   if (recent >= 15) redirect(withParam(to, 'error', 'Slow down! Too many comments in a minute.'));
-  const comment = await prisma.postComment.create({ data: { postId: post.id, authorId: me.id, body, parentId: parent?.id || null } });
+
+  // Super Comment: coins come off first (only if you have enough), then it's pinned to the top.
+  const tier = parent ? null : getTier(formData.get('super'));
+  if (tier) {
+    const paid = await prisma.user.updateMany({ where: { id: me.id, coins: { gte: tier.coins } }, data: { coins: { decrement: tier.coins } } });
+    if (!paid.count) redirect(withParam(to, 'error', `The ${tier.emoji} ${tier.name} Comment costs 🪙 ${tier.coins} coins. Get coins at bfrenz.com/coins.`));
+  }
+  const comment = await prisma.postComment.create({
+    data: {
+      postId: post.id,
+      authorId: me.id,
+      body,
+      parentId: parent?.id || null,
+      ...(tier ? { superCoins: tier.coins, superUntil: new Date(Date.now() + tier.hours * 3600 * 1000) } : {}),
+    },
+  });
 
   const url = `/post/${post.id}#pc-${comment.id}`;
   const told = new Set([me.id]);
@@ -164,7 +180,7 @@ export async function addPostComment(formData) {
   };
   if (replyTo) tell(replyTo.authorId, `↩︎ ${me.displayName} replied to you`);
   if (parent) tell(parent.authorId, `↩︎ ${me.displayName} replied to your comment`);
-  tell(post.authorId, parent ? `💬 ${me.displayName} replied on your post` : `💬 ${me.displayName} commented on your post`);
+  tell(post.authorId, tier ? `${tier.emoji} ${me.displayName} sent a ${tier.name} Comment on your post` : parent ? `💬 ${me.displayName} replied on your post` : `💬 ${me.displayName} commented on your post`);
   if (body.includes('@')) {
     after(() => sendMentions(me, body, { kind: 'comment', targetId: comment.id, url, post, skip: [...told] }));
   }

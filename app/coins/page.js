@@ -6,6 +6,9 @@ import { GIFTS, getGift } from '@/lib/gifts';
 import { timeAgo } from '@/lib/util';
 import BuyButton from '@/components/BuyButton';
 import Notice from '@/components/Notice';
+import { startCheckout } from '@/app/actions/shop';
+import { inAndroidApp } from '@/lib/appMode';
+import { HALLOWEEN } from '@/lib/cosmetics';
 
 export const metadata = { title: 'Coins & Gifts | BFRENZ.com', robots: { index: false } };
 export const dynamic = 'force-dynamic';
@@ -53,6 +56,35 @@ export default async function CoinsPage({ searchParams }) {
           ))}
         </div>
       </div>
+
+      {!(await inAndroidApp()) && (
+        <div className="box" id="send-coins">
+          <div className="box-h">🎁 Send coins to a fren</div>
+          <form action={startCheckout} className="box-b gift-coins-form">
+            <input type="hidden" name="kind" value="gift_coins" />
+            <input type="hidden" name="back" value="/coins#send-coins" />
+            <p className="small muted" style={{ margin: 0 }}>Perfect for birthdays. They get the coins right away, plus a notification that it was from you.</p>
+            <label>
+              <span>Their username</span>
+              <input name="to" defaultValue={sp?.to ? String(sp.to).slice(0, 20) : ''} placeholder="username" required autoCapitalize="none" autoCorrect="off" />
+            </label>
+            <label>
+              <span>How many</span>
+              <select name="pack" defaultValue="550">
+                {PRICES.coinPacks.map((p) => <option key={p.coins} value={p.coins}>🪙 {p.coins.toLocaleString('en-US')} · {money(p.cents)}</option>)}
+              </select>
+            </label>
+            <input type="hidden" name="itemId" value="" />
+            <button type="submit" className="btn">Send coins</button>
+          </form>
+        </div>
+      )}
+
+      {Date.now() < Date.parse(HALLOWEEN.until) && (
+        <Link href="/edit?tab=design#frame" className="season-banner" style={{ display: 'block' }}>
+          <b>🎃 Halloween pack, on sale until Oct 31 only:</b> spooky frames, 🦇 bat trails, 👻 ghosts and 🎃 pumpkins falling on your page. Spend your coins &raquo;
+        </Link>
+      )}
 
       <div className="box">
         <div className="box-h">Gifts</div>

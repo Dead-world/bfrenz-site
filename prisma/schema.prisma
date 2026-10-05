@@ -68,6 +68,7 @@ model User {
   cursorFx           String    @default("") // cursor trail on their profile
   fallFx             String    @default("") // falling effect on their profile
   cosmetics          String[]  @default([]) // ones they own, e.g. "frame:fire", "cursor:hearts", "fall:snow"
+  usernameChanges    Int       @default(0) // how many times they've changed their @username (first is free)
   design             Json? // "Design my profile" colors, font and corners (lib/design.js)
   bonusSupporterUntil DateTime? // free Supporter time earned from invites or gifted by a friend
   lifetimeSupporter  Boolean   @default(false) // bought Lifetime Supporter (never expires)
@@ -114,6 +115,7 @@ model User {
   emojiReactions   EmojiReaction[]
   itemComments     ItemComment[]
   alerts           Alert[]
+  oldUsernames     UsernameHistory[]
   giftsSent        Gift[]           @relation("giftFrom")
   giftsReceived    Gift[]           @relation("giftTo")
   pushSubs         PushSubscription[]
@@ -381,6 +383,8 @@ model PostComment {
   createdAt DateTime @default(now())
   editedAt  DateTime? // set when the author edits it
   parentId  String? // set on replies; always points at the top-level comment
+  superCoins Int      @default(0) // Super Comment: coins paid to highlight it (0 = normal)
+  superUntil DateTime? // pinned to the top of the post until this time
 
   post    Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
   author  User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
@@ -700,6 +704,7 @@ model LiveChat {
   streamId  String
   userId    String
   body      String
+  superCoins Int       @default(0) // Super Chat: coins paid to highlight and pin it
   createdAt DateTime   @default(now())
   stream    LiveStream @relation(fields: [streamId], references: [id], onDelete: Cascade)
   user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -790,4 +795,15 @@ model Gift {
   @@index([key])
   @@index([toId, createdAt])
   @@index([fromId, createdAt])
+}
+
+// Usernames someone used before. Old profile links and @mentions redirect to their new name.
+model UsernameHistory {
+  old       String   @id
+  userId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }

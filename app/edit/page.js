@@ -18,19 +18,25 @@ import LayoutEditor from '@/components/LayoutEditor';
 import { getTheme } from '@/lib/themes';
 import { themeHasOwnLayout, normalizeLayout, isDefaultLayout } from '@/lib/profileLayout';
 import DesignPanel from '@/components/DesignPanel';
+import { changeUsername } from '@/app/actions/username';
+import { startCheckout } from '@/app/actions/shop';
+import { PRICES, money } from '@/lib/pricing';
+import { inAndroidApp } from '@/lib/appMode';
 import { applyCosmetic } from '@/app/actions/cosmetics';
-import { CURSORS, FALLS, FRAMES, ownsCosmetic } from '@/lib/cosmetics';
+import { HALLOWEEN, ownsCosmetic, visibleList } from '@/lib/cosmetics';
 import { cleanDesign } from '@/lib/design';
 
 /** One row of frames / cursor trails / falling effects: preview, price or "owned", and a button. */
-function ExtrasGrid({ me, kind, list, current, preview }) {
+function ExtrasGrid({ me, kind, current, preview }) {
+  const list = visibleList(me, kind);
   return (
     <div className="extras-grid">
       {list.map((c) => {
         const owned = ownsCosmetic(me, kind, c.slug);
         const on = current === c.slug;
         return (
-          <form key={c.slug} action={applyCosmetic} className={`extra${on ? ' on' : ''}`}>
+          <form key={c.slug} action={applyCosmetic} className={`extra${on ? ' on' : ''}${c.season ? ' seasonal' : ''}`}>
+            {c.season && <span className="extra-season">{c.season.name}</span>}
             <input type="hidden" name="kind" value={kind} />
             <input type="hidden" name="slug" value={on ? '' : c.slug} />
             <span className="extra-prev">{preview(c)}</span>
@@ -60,6 +66,7 @@ const TABS = [
   ['layout', '🧩 Layout'],
   ['creator', '🎥 Creator'],
   ['design', '🎨 Design'],
+  ['username', '@ Username'],
   ['css', 'Customize (CSS)'],
   ['notify', 'Notifications'],
 ];
@@ -368,6 +375,11 @@ export default async function EditPage({ searchParams }) {
       {tab === 'design' && sp?.bought && <div className="notice ok">🎉 {String(sp.bought).slice(0, 40)} is yours, and it&apos;s on your profile now!</div>}
       {tab === 'design' && (
         <>
+          {Date.now() < Date.parse(HALLOWEEN.until) && (
+            <div className="season-banner">
+              <b>🎃 Halloween pack is here!</b> Spooky frames, 🦇 bats, 👻 ghosts and 🎃 pumpkins, on sale until Oct 31 only. Keep them forever.
+            </div>
+          )}
           <div className="box" id="colors">
             <div className="box-h">🎨 Design my profile</div>
             <div className="box-b">
@@ -379,7 +391,7 @@ export default async function EditPage({ searchParams }) {
             <div className="box-h">🖼️ Picture frame</div>
             <div className="box-b">
               <p className="small muted" style={{ marginTop: 0 }}>Shows around your picture everywhere: your profile, posts, comments and Top 8s.</p>
-              <ExtrasGrid me={me} kind="frame" list={FRAMES} current={me.picFrame} preview={(c) => <Pic user={{ avatarUrl: me.avatarUrl, displayName: '', picFrame: c.slug }} size={56} />} />
+              <ExtrasGrid me={me} kind="frame" current={me.picFrame} preview={(c) => <Pic user={{ avatarUrl: me.avatarUrl, displayName: '', picFrame: c.slug }} size={56} />} />
             </div>
           </div>
 
@@ -387,7 +399,7 @@ export default async function EditPage({ searchParams }) {
             <div className="box-h">✨ Cursor trail</div>
             <div className="box-b">
               <p className="small muted" style={{ marginTop: 0 }}>Little sparkles follow the mouse when people visit your profile on a computer.</p>
-              <ExtrasGrid me={me} kind="cursor" list={CURSORS} current={me.cursorFx} preview={(c) => <span className="extra-emoji">{c.emoji}</span>} />
+              <ExtrasGrid me={me} kind="cursor" current={me.cursorFx} preview={(c) => <span className="extra-emoji">{c.emoji}</span>} />
             </div>
           </div>
 
@@ -395,13 +407,52 @@ export default async function EditPage({ searchParams }) {
             <div className="box-h">❄️ Falling effect</div>
             <div className="box-b">
               <p className="small muted" style={{ marginTop: 0 }}>Gently falls down your profile page, on phones and computers. Visitors can switch it off.</p>
-              <ExtrasGrid me={me} kind="fall" list={FALLS} current={me.fallFx} preview={(c) => <span className="extra-emoji">{c.emoji}</span>} />
+              <ExtrasGrid me={me} kind="fall" current={me.fallFx} preview={(c) => <span className="extra-emoji">{c.emoji}</span>} />
             </div>
           </div>
           <p className="small muted" style={{ textAlign: 'center' }}>
             You have <b>🪙 {me.coins.toLocaleString('en-US')}</b> coins. <Link href="/coins">Get more</Link> · <Link href={`/${me.username}`}>View my profile &raquo;</Link>
           </p>
         </>
+      )}
+      {tab === 'username' && (
+        <div className="box" id="username">
+          <div className="box-h">@ Change your username</div>
+          <div className="box-b">
+            <p style={{ marginTop: 0 }}>
+              Your page is <b>bfrenz.com/{me.username}</b>. Old links and @mentions to your old name will still bring people to you.
+            </p>
+            {(me.usernameChanges || 0) === 0 ? (
+              <form action={changeUsername} className="username-form">
+                <span className="username-at">bfrenz.com/</span>
+                <input name="itemId" required minLength={3} maxLength={20} pattern="[A-Za-z0-9_]{3,20}" placeholder="newname" autoCapitalize="none" autoCorrect="off" />
+                <button className="btn" type="submit">Change it · Free</button>
+                <p className="small muted" style={{ gridColumn: '1 / -1', margin: 0 }}>Your first change is free. After that it costs 🪙 {PRICES.usernameChangeCoins} coins or {money(PRICES.usernameChange)}.</p>
+              </form>
+            ) : (
+              <>
+                <form action={changeUsername} className="username-form">
+                  <span className="username-at">bfrenz.com/</span>
+                  <input name="itemId" required minLength={3} maxLength={20} pattern="[A-Za-z0-9_]{3,20}" placeholder="newname" autoCapitalize="none" autoCorrect="off" />
+                  <button className="btn" type="submit" disabled={me.coins < PRICES.usernameChangeCoins}>Use 🪙 {PRICES.usernameChangeCoins}</button>
+                  <p className="small muted" style={{ gridColumn: '1 / -1', margin: 0 }}>
+                    You have 🪙 {me.coins.toLocaleString('en-US')}.{me.coins < PRICES.usernameChangeCoins && <> <Link href="/coins">Get coins</Link> or pay by card below.</>}
+                  </p>
+                </form>
+                {!(await inAndroidApp()) && (
+                  <form action={startCheckout} className="username-form" style={{ marginTop: 12 }}>
+                    <input type="hidden" name="kind" value="username" />
+                    <input type="hidden" name="back" value="/edit?tab=username" />
+                    <span className="username-at">bfrenz.com/</span>
+                    <input name="itemId" required minLength={3} maxLength={20} pattern="[A-Za-z0-9_]{3,20}" placeholder="newname" autoCapitalize="none" autoCorrect="off" />
+                    <button className="btn ghost" type="submit">Pay {money(PRICES.usernameChange)}</button>
+                  </form>
+                )}
+              </>
+            )}
+            <p className="small muted">3–20 letters, numbers or underscores. Your old usernames stay reserved for you, so nobody else can grab them.</p>
+          </div>
+        </div>
       )}
       {tab === 'notify' && (
         <div className="box">

@@ -115,7 +115,7 @@ export default function LiveViewer({ streamId, streamer, admin, link, coins, gif
       <div className="live-side box">
         <div className="box-h">💬 Live chat</div>
         <div className="box-b">
-          <LiveChatBox streamId={streamId} chats={chats} disabled={status === 'ended'} onSent={(c) => setChats((l) => mergeChats(l, [c]))} />
+          <LiveChatBox streamId={streamId} chats={chats} disabled={status === 'ended'} onSent={(c) => setChats((l) => mergeChats(l, [c]))} coins={coins} canSuper={!mine} />
           {status !== 'ended' && !mine && (
             <div className="live-gift-row">
               <GiftButton k={`l-${streamId}`} totals={gifts} coins={coins} look="live" label={`Gift ${streamer.name}`} />

@@ -5,7 +5,7 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { requireUser } from '@/lib/auth';
 import { str, withParam } from '@/lib/util';
-import { COSMETIC_KINDS, getCosmetic, ownsCosmetic } from '@/lib/cosmetics';
+import { COSMETIC_KINDS, getCosmetic, onSale, ownsCosmetic } from '@/lib/cosmetics';
 import { cleanDesign } from '@/lib/design';
 
 const PAGE = '/edit?tab=design';
@@ -29,6 +29,7 @@ export async function applyCosmetic(formData) {
   if (!c) redirect(withParam(PAGE, 'error', 'That item isn’t available.'));
 
   if (!ownsCosmetic(me, kind, slug)) {
+    if (!onSale(c)) redirect(withParam(PAGE, 'error', `${c.name} was a limited-time item and isn't sold anymore.`));
     const paid = await prisma.user.updateMany({ where: { id: me.id, coins: { gte: c.coins } }, data: { coins: { decrement: c.coins } } });
     if (!paid.count) redirect(withParam(PAGE, 'error', `You need 🪙 ${c.coins} coins for ${c.name}. Get coins at bfrenz.com/coins.`) + `#${kind}`);
     await prisma.user.update({ where: { id: me.id }, data: { cosmetics: { push: `${kind}:${slug}` }, [k.field]: slug } });
