@@ -149,7 +149,7 @@ export default async function ShopPage({ searchParams }) {
       </div>
 
       {/* ---------------- Name effects ---------------- */}
-      <StickerShop me={me} payments={payments} />
+      <StickerShop me={me} payments={payments} error={sp?.src === 'stickers' && sp?.error ? String(sp.error).slice(0, 500) : ''} />
 
       <div className="box" id="name-effects">
         <div className="box-h">

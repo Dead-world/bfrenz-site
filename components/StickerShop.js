@@ -6,7 +6,7 @@ import { STICKERS, STICKER_MAX_QTY, STICKER_SHIPPING_CENTS, stickerStock } from 
 import { fmtDay } from '@/lib/util';
 
 /** Real BFRENZ stickers, mailed to your door. */
-export default async function StickerShop({ me, payments }) {
+export default async function StickerShop({ me, payments, error = '' }) {
   const st = STICKERS[0];
   const left = await stickerStock(st.slug);
   const soldOut = left !== null && left < 1;
@@ -27,6 +27,7 @@ export default async function StickerShop({ me, payments }) {
             Stick it on your laptop, phone case, water bottle or skateboard. Mailed to you
             {STICKER_SHIPPING_CENTS ? ` (${money(STICKER_SHIPPING_CENTS)} shipping per order, any amount)` : ' with free shipping'}. US only for now.
           </p>
+          {error && <div className="notice error" style={{ marginBottom: 10 }}>{error}</div>}
           {left !== null && !soldOut && left <= 20 && <div className="small sticker-left">🔥 Only {left} left!</div>}
           {soldOut ? (
             <div className="notice">Sold out right now. More are on the way!</div>
@@ -37,7 +38,7 @@ export default async function StickerShop({ me, payments }) {
           ) : (
             <form action={startCheckout} className="actions sticker-form">
               <input type="hidden" name="kind" value="sticker" />
-              <input type="hidden" name="back" value="/shop#stickers" />
+              <input type="hidden" name="back" value="/shop?src=stickers#stickers" />
               <select name="qtyPick" aria-label="How many" defaultValue="1">
                 {Array.from({ length: max }, (_, i) => i + 1).map((n) => (
                   <option key={n} value={`${st.slug}:${n}`}>
