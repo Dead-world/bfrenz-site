@@ -11,6 +11,9 @@ import Notice from '@/components/Notice';
 import AdminStickers from '@/components/AdminStickers';
 import AdminMerch from '@/components/AdminMerch';
 
+// Admin buttons (like creating merch in Printful) can take up to a minute.
+export const maxDuration = 60;
+
 export const metadata = { title: 'Admin | BFRENZ.com', robots: { index: false } };
 
 const TABS = [
@@ -217,7 +220,7 @@ export default async function AdminPage({ searchParams }) {
         ))}
       </div>
 
-      {tab === 'merch' && <AdminMerch show={sp?.show === 'all' ? 'all' : 'open'} msg={sp?.mmsg ? String(sp.mmsg).slice(0, 200) : ''} />}
+      {tab === 'merch' && <AdminMerch show={sp?.show === 'all' ? 'all' : 'open'} msg={sp?.mmsg ? String(sp.mmsg).slice(0, 900) : ''} />}
       {tab === 'stickers' && <AdminStickers show={sp?.show === 'all' ? 'all' : 'todo'} msg={sp?.smsg ? String(sp.smsg).slice(0, 120) : ''} />}
 
       {growth && (

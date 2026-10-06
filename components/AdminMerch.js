@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/db';
-import { retryMerchOrder, checkMerchOrder, refreshMerch, connectPrintfulWebhook } from '@/app/actions/merchAdmin';
+import { retryMerchOrder, checkMerchOrder, refreshMerch, connectPrintfulWebhook, makeStarterMerch } from '@/app/actions/merchAdmin';
+import { STARTER } from '@/lib/merchStarter';
 import { printfulConfigured, pf } from '@/lib/printful';
 import { merchProducts } from '@/lib/merch';
 import { money } from '@/lib/pricing';
@@ -8,7 +9,7 @@ import { fmtDate } from '@/lib/util';
 const STATUS = { paid: '⏳ Paid', sent: '🧵 At Printful', failed: '⚠️ Didn’t reach Printful', shipped: '✅ Shipped', canceled: '✖ Canceled' };
 
 /** Admin tab: Printful setup and merch orders. */
-export default async function AdminMerch({ msg = '', show = 'open' }) {
+export default async function AdminMerch({ msg = '', error = '', show = 'open' }) {
   const on = printfulConfigured();
   let store = null;
   let storeErr = '';
@@ -29,6 +30,7 @@ export default async function AdminMerch({ msg = '', show = 'open' }) {
   return (
     <>
       {msg && <div className="notice ok">{msg}</div>}
+      {error && <div className="notice error">{error}</div>}
       <div className="box">
         <div className="box-h">👕 Merch setup (Printful)</div>
         <div className="box-b small">
@@ -37,6 +39,16 @@ export default async function AdminMerch({ msg = '', show = 'open' }) {
             {on && step(!!store && !storeErr, store ? <>Connected to Printful store <b>{store.name}</b>.</> : <>Couldn&apos;t reach Printful: {storeErr || 'unknown error'}. If your token is for the whole account, also add <code>PRINTFUL_STORE_ID</code>.</>)}
             {on && step(products.length > 0, products.length ? <>{products.length} {products.length === 1 ? 'product is' : 'products are'} live on <a href="/merch">/merch</a>.</> : 'Create products in Printful (with a retail price), then tap Refresh.')}
           </ol>
+          {on && store && (
+            <form action={makeStarterMerch} className="merch-starter">
+              <b>✨ Create starter merch</b>
+              <span className="muted">
+                Makes {STARTER.map((x) => x.name).join(', ')} in your Printful store with the BFRENZ designs and prices already set. Products you already have are skipped.
+                It takes up to a minute.
+              </span>
+              <button className="btn small-btn" type="submit">Create starter merch</button>
+            </form>
+          )}
           {on && (
             <div className="actions">
               <form action={refreshMerch}><button className="btn ghost small-btn" type="submit">🔄 Refresh products</button></form>

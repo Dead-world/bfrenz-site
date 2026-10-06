@@ -9,6 +9,7 @@ import { siteUrl } from '@/lib/email';
 import { str, withParam } from '@/lib/util';
 import { pf, webhookKey } from '@/lib/printful';
 import { sendToPrintful, syncFromPrintful } from '@/lib/merchOrders';
+import { createStarterMerch } from '@/lib/merchStarter';
 
 const BACK = '/admin?tab=merch';
 const done = (msg, bad = false) => redirect(withParam(BACK, bad ? 'error' : 'mmsg', msg));
@@ -63,4 +64,25 @@ export async function connectPrintfulWebhook() {
     done(String(err?.message || err).slice(0, 300), true);
   }
   done('Shipping updates are on. Buyers will get tracking automatically.');
+}
+
+/** Makes the starter BFRENZ merch line in your Printful store (tees, hoodie, hat, mug, phone case). */
+export async function makeStarterMerch() {
+  await requireAdmin();
+  let results;
+  try {
+    results = await createStarterMerch();
+  } catch (err) {
+    done(`Printful: ${String(err?.message || err).slice(0, 250)}`, true);
+  }
+  revalidateTag('merch');
+  const made = results.filter((r) => r.status === 'made');
+  const later = results.filter((r) => r.status === 'later');
+  const failed = results.filter((r) => r.status === 'failed');
+  const parts = [];
+  if (made.length) parts.push(`Created ${made.map((r) => r.name).join(', ')}.`);
+  if (!made.length && !failed.length && !later.length) parts.push('All the starter merch is already in your Printful store.');
+  if (later.length) parts.push(`Tap the button again to finish: ${later.map((r) => r.name).join(', ')}.`);
+  if (failed.length) parts.push(`Couldn't make: ${failed.map((r) => `${r.name} (${r.error})`).join('; ')}.`);
+  redirect(withParam(BACK, failed.length ? 'error' : 'mmsg', parts.join(' ').slice(0, 900)));
 }

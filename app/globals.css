@@ -2177,3 +2177,5 @@ img.pic.fr.fr-blood { box-shadow: 0 0 0 3px #7a0010, 0 0 0 5px #ff1f3d, 0 6px 18
 .merch-orders { display: grid; gap: 4px; }
 .merch-steps { margin: 0 0 10px 18px; padding: 0; display: grid; gap: 6px; list-style: none; }
 .merch-steps li { margin-left: -18px; }
+.merch-starter { display: grid; gap: 6px; padding: 12px; margin: 6px 0 12px; border-radius: 14px; border: 2px dashed rgba(255,122,26,.6); background: rgba(255,122,26,.08); }
+.merch-starter .btn { justify-self: start; }
