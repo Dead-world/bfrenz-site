@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 import { requireUser } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { isAdmin, reasonLabel, reportTarget } from '@/lib/moderation';
-import { handleReport, banUser, unbanUser, giftPerk, runBotNow, createOfficialGroupsNow, cleanupCopiedReplies } from '@/app/actions/moderation';
+import { handleReport, banUser, unbanUser, giftPerk, giveCoins, runBotNow, createOfficialGroupsNow, cleanupCopiedReplies } from '@/app/actions/moderation';
 import { fmtDate, fmtDay } from '@/lib/util';
 import { Pic } from '@/components/Avatar';
 import Notice from '@/components/Notice';
@@ -108,6 +108,13 @@ function GiftForm({ user, back }) {
         </select>
         <button className="btn small-btn" type="submit">Give</button>
       </form>
+      <form action={giveCoins} className="actions" style={{ marginTop: 8, justifyContent: 'flex-end' }}>
+        <input type="hidden" name="userId" value={user.id} />
+        <input type="hidden" name="back" value={back} />
+        <span className="small muted">🪙 {(user.coins || 0).toLocaleString('en-US')}</span>
+        <input type="number" name="amount" defaultValue="500" step="1" style={{ width: 100 }} aria-label="Coins" />
+        <button className="btn small-btn" type="submit">Give coins</button>
+      </form>
     </details>
   );
 }
@@ -176,6 +183,7 @@ export default async function AdminPage({ searchParams }) {
       </div>
       <Notice sp={sp} />
       {sp?.gifted && <div className="notice ok">Gift sent to @{String(sp.gifted)}. 🎁</div>}
+      {sp?.coins && <div className="notice ok">🪙 {Number(sp.coins) > 0 ? 'Gave' : 'Took'} {Math.abs(Number(sp.coins)).toLocaleString('en-US')} coins {Number(sp.coins) > 0 ? 'to' : 'from'} @{String(sp.to || '')}.</div>}
 
       <div className="stat-row">
         <div className="stat"><b>{members.toLocaleString()}</b><span>members</span></div>
@@ -184,6 +192,16 @@ export default async function AdminPage({ searchParams }) {
         <div className={`stat${openReports ? ' hot' : ''}`}><b>{openReports}</b><span>open reports</span></div>
         <div className="stat"><b>{bannedCount}</b><span>banned</span></div>
       </div>
+
+      <form action={giveCoins} className="box admin-coins">
+        <input type="hidden" name="back" value={`/admin?tab=${tab}`} />
+        <b>🪙 Give coins</b>
+        <input name="username" defaultValue={me.username} aria-label="Username" placeholder="username" autoCapitalize="none" />
+        <input type="number" name="amount" defaultValue="1000" step="1" aria-label="How many coins" />
+        <input name="note" placeholder="Note (optional, they see it)" maxLength={120} aria-label="Note" />
+        <button className="btn small-btn" type="submit">Give</button>
+        <span className="small muted admin-coins-tip">Your balance: 🪙 {(me.coins || 0).toLocaleString('en-US')}. Use a minus number (like -500) to take coins away.</span>
+      </form>
 
       <div className="tabs">
         {TABS.map(([k, label]) => (

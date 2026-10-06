@@ -6,6 +6,7 @@ import { requireUser } from '@/lib/auth';
 import { emailConfigured, sendEmail, siteUrl } from '@/lib/email';
 import { REPORT_KINDS, REPORT_REASONS, isAdmin, reasonLabel } from '@/lib/moderation';
 import { safeBack, str, withParam } from '@/lib/util';
+import { notify } from '@/lib/push';
 
 // ------------------------------------------------------------------
 // Members: report and block
@@ -342,6 +343,36 @@ export async function giftPerk(formData) {
   await prisma.user.update({ where: { id: userId }, data });
   console.log(`[admin] @${me.username} gifted ${gift}${gift === 'pro_artist' ? '' : ` (${days}d)`} to @${u.username}`);
   redirect(withParam(back, 'gifted', u.username));
+}
+
+/**
+ * Admin: add coins to any member (yourself included), e.g. for giveaways or contest prizes.
+ * A negative amount takes coins away (never below zero). Every grant is logged.
+ */
+export async function giveCoins(formData) {
+  const me = await requireAdmin();
+  const back = adminBack(formData);
+  const who = str(formData, 'username', 40).replace(/^@/, '').toLowerCase();
+  const userId = str(formData, 'userId', 40);
+  const amount = Math.max(-1000000, Math.min(1000000, parseInt(str(formData, 'amount', 9), 10) || 0));
+  const note = str(formData, 'note', 120);
+  if (!amount) redirect(withParam(back, 'error', 'Enter how many coins.'));
+  const u = userId
+    ? await prisma.user.findUnique({ where: { id: userId } })
+    : await prisma.user.findUnique({ where: { username: who || me.username } });
+  if (!u || u.bannedAt) redirect(withParam(back, 'error', 'Member not found.'));
+
+  const next = Math.max(0, (u.coins || 0) + amount);
+  await prisma.user.update({ where: { id: u.id }, data: { coins: next } });
+  // Logged like a purchase (worth $0) so there's a record of every grant.
+  await prisma.purchase.create({
+    data: { userId: u.id, kind: 'admin_coins', itemId: `${amount}:${me.username}${note ? `:${note}` : ''}`.slice(0, 190), amountCents: 0, stripeSessionId: `admin-coins:${u.id}:${Date.now()}:${Math.random().toString(36).slice(2, 8)}` },
+  });
+  if (amount > 0 && u.id !== me.id) {
+    notify(u.id, { title: `🪙 You got ${amount.toLocaleString('en-US')} coins from BFRENZ!`, body: note || 'Spend them on gifts, Super Comments, frames and effects.', url: '/coins' });
+  }
+  console.log(`[admin] @${me.username} gave ${amount} coins to @${u.username}${note ? ` (${note})` : ''}`);
+  redirect(withParam(withParam(back, 'coins', String(amount)), 'to', u.username));
 }
 
 /** Admin button: run BFRENZ Bot's daily posts right now (it skips anything already posted today). */
