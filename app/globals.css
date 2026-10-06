@@ -2185,3 +2185,14 @@ img.pic.fr.fr-blood { box-shadow: 0 0 0 3px #7a0010, 0 0 0 5px #ff1f3d, 0 6px 18
 .merch-starter { display: grid; gap: 6px; padding: 12px; margin: 6px 0 12px; border-radius: 14px; border: 2px dashed rgba(255,122,26,.6); background: rgba(255,122,26,.08); }
 .merch-starter .btn { justify-self: start; }
 .auto-continue { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+
+/* ---------- Shop category menu ---------- */
+.shop-nav { display: flex; flex-wrap: wrap; gap: 8px; padding: 4px 0; margin: 0 0 16px; }
+.shop-cat { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 999px; background: rgba(22,22,26,.95); border: 1px solid #34343a; color: inherit; font-weight: 700; font-size: 14px; text-decoration: none; white-space: nowrap; }
+.shop-cat:hover { border-color: var(--accent, #ff7a1a); }
+.shop-cat.on { background: var(--accent, #ff7a1a); border-color: var(--accent, #ff7a1a); color: #000; }
+.shop-cat.on .muted { color: rgba(0,0,0,.6); }
+.shop-cat.small { padding: 6px 12px; font-size: 13px; }
+.shop-cat-go { opacity: .6; margin-left: -2px; }
+.shop [id], .merch [id] { scroll-margin-top: calc(var(--site-header-h, 0px) + 12px); }
+@media (max-width: 700px) { .shop-cat { padding: 7px 11px; font-size: 13px; } }

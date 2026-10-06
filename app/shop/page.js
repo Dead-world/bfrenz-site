@@ -12,7 +12,8 @@ import { refreshSupporter, diagnoseSupporter } from '@/lib/fulfill';
 import { prisma } from '@/lib/db';
 import BuyButton from '@/components/BuyButton';
 import StickerShop from '@/components/StickerShop';
-import { merchProducts } from '@/lib/merch';
+import ShopNav from '@/components/ShopNav';
+import { merchProducts, merchCat, MERCH_CATS } from '@/lib/merch';
 import Notice from '@/components/Notice';
 import { fmtDay } from '@/lib/util';
 import { inAndroidApp } from '@/lib/appMode';
@@ -43,7 +44,9 @@ export default async function ShopPage({ searchParams }) {
   const isOwner = !!me && (process.env.FOUNDER_USERNAME || '').toLowerCase() === me.username;
   const debug = isOwner && payments && sp?.debug ? await diagnoseSupporter(me) : null;
   const merch = process.env.MERCH_URL || '';
-  const merchItems = (await merchProducts()).slice(0, 6);
+  const allMerch = await merchProducts();
+  const merchItems = allMerch.slice(0, 6);
+  const merchCats = MERCH_CATS.filter(([k]) => allMerch.some((p) => merchCat(p.name) === k));
   const androidApp = await inAndroidApp();
 
   const signIn = (label) => (
@@ -61,6 +64,7 @@ export default async function ShopPage({ searchParams }) {
           <div className="notice error">Payments aren&apos;t switched on yet, so buttons won&apos;t work until they are.</div>
         )}
       </div>
+      <ShopNav merch={merchItems.length > 0} me={me} />
       <Notice sp={sp} />
       {androidApp && (
         <div className="notice ok">
@@ -164,7 +168,12 @@ export default async function ShopPage({ searchParams }) {
                 </Link>
               ))}
             </div>
-            <Link href="/merch" className="btn small-btn" style={{ marginTop: 10 }}>See all merch</Link>
+            <div className="actions" style={{ marginTop: 10 }}>
+              <Link href="/merch" className="btn small-btn">See all merch</Link>
+              {merchCats.map(([k, label]) => (
+                <Link key={k} href={`/merch?cat=${k}`} className="shop-cat small">{label}</Link>
+              ))}
+            </div>
           </div>
         </div>
       )}
