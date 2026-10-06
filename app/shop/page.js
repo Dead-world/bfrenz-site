@@ -11,6 +11,7 @@ import { NAME_EFFECTS, ownsNameEffect } from '@/lib/nameEffects';
 import { refreshSupporter, diagnoseSupporter } from '@/lib/fulfill';
 import { prisma } from '@/lib/db';
 import BuyButton from '@/components/BuyButton';
+import StickerShop from '@/components/StickerShop';
 import Notice from '@/components/Notice';
 import { fmtDay } from '@/lib/util';
 import { inAndroidApp } from '@/lib/appMode';
@@ -148,6 +149,8 @@ export default async function ShopPage({ searchParams }) {
       </div>
 
       {/* ---------------- Name effects ---------------- */}
+      <StickerShop me={me} payments={payments} />
+
       <div className="box" id="name-effects">
         <div className="box-h">
           ✨ Name Effects

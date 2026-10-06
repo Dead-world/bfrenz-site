@@ -91,6 +91,7 @@ model User {
 
   passwordResets PasswordReset[]
   purchases      Purchase[]
+  stickerOrders StickerOrder[]
 
   @@index([stripeSubscription])
   @@index([referredById])
@@ -268,6 +269,39 @@ model PasswordReset {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
+}
+
+/// A real (mailed) sticker order. Created when Stripe confirms payment.
+model StickerOrder {
+  id              String    @id @default(cuid())
+  userId          String
+  slug            String    @default("bfrenz-logo")
+  qty             Int
+  amountCents     Int
+  stripeSessionId String    @unique
+  shipName        String    @default("")
+  line1           String    @default("")
+  line2           String    @default("")
+  city            String    @default("")
+  state           String    @default("")
+  postal          String    @default("")
+  country         String    @default("US")
+  status          String    @default("paid") // paid | shipped | refunded
+  tracking        String    @default("")
+  shippedAt       DateTime?
+  createdAt       DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status, createdAt])
+  @@index([userId])
+}
+
+/// How many of a physical item are left (no row = not tracked).
+model ShopStock {
+  slug      String   @id
+  stock     Int
+  updatedAt DateTime @updatedAt
 }
 
 model Purchase {

@@ -8,6 +8,7 @@ import { handleReport, banUser, unbanUser, giftPerk, giveCoins, runBotNow, creat
 import { fmtDate, fmtDay } from '@/lib/util';
 import { Pic } from '@/components/Avatar';
 import Notice from '@/components/Notice';
+import AdminStickers from '@/components/AdminStickers';
 
 export const metadata = { title: 'Admin | BFRENZ.com', robots: { index: false } };
 
@@ -17,6 +18,7 @@ const TABS = [
   ['members', 'Members'],
   ['banned', 'Banned'],
   ['growth', 'Growth'],
+  ['stickers', '📦 Stickers'],
 ];
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -128,12 +130,13 @@ export default async function AdminPage({ searchParams }) {
   const back = `/admin?tab=${tab}${q ? `&q=${encodeURIComponent(q)}` : ''}`;
   const week = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
-  const [members, newThisWeek, onlineNow, openReports, bannedCount] = await Promise.all([
+  const [members, newThisWeek, onlineNow, openReports, bannedCount, stickerTodo] = await Promise.all([
     prisma.user.count({ where: { bannedAt: null } }),
     prisma.user.count({ where: { createdAt: { gte: week } } }),
     prisma.user.count({ where: { lastSeen: { gte: new Date(Date.now() - 10 * 60 * 1000) } } }),
     prisma.report.count({ where: { status: 'OPEN' } }),
     prisma.user.count({ where: { bannedAt: { not: null } } }),
+    prisma.stickerOrder.count({ where: { status: 'paid' } }).catch(() => 0),
   ]);
 
   let reports = [];
@@ -159,7 +162,7 @@ export default async function AdminPage({ searchParams }) {
     reports = await Promise.all(
       rows.map(async (r) => ({ ...r, target: await reportTarget(r), who: byId[r.targetUserId], whoReports: countBy[r.targetUserId] || 0 })),
     );
-  } else if (tab !== 'growth') {
+  } else if (tab !== 'growth' && tab !== 'stickers') {
     const where = tab === 'banned' ? { bannedAt: { not: null } } : {};
     if (q) {
       where.OR = [
@@ -206,10 +209,12 @@ export default async function AdminPage({ searchParams }) {
       <div className="tabs">
         {TABS.map(([k, label]) => (
           <Link key={k} href={`/admin?tab=${k}`} className={tab === k ? 'on' : ''}>
-            {label}{k === 'reports' && openReports ? ` (${openReports})` : ''}
+            {label}{k === 'reports' && openReports ? ` (${openReports})` : ''}{k === 'stickers' && stickerTodo ? ` (${stickerTodo})` : ''}
           </Link>
         ))}
       </div>
+
+      {tab === 'stickers' && <AdminStickers show={sp?.show === 'all' ? 'all' : 'todo'} msg={sp?.smsg ? String(sp.smsg).slice(0, 120) : ''} />}
 
       {growth && (
         <>

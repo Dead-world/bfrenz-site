@@ -2131,3 +2131,22 @@ img.pic.fr.fr-blood { box-shadow: 0 0 0 3px #7a0010, 0 0 0 5px #ff1f3d, 0 6px 18
 .admin-coins input[name=amount] { width: 110px; }
 .admin-coins input[name=note] { flex: 1; min-width: 160px; }
 .admin-coins-tip { flex-basis: 100%; }
+
+/* ---------- Real stickers (shop) ---------- */
+.sticker-shop { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+.sticker-pic { flex: 1 1 260px; max-width: 360px; padding: 10px; background: #fff; border-radius: 18px; transform: rotate(-3deg); box-shadow: 0 10px 26px rgba(0,0,0,.45); }
+.sticker-pic img { display: block; width: 100%; height: auto; border-radius: 10px; }
+.sticker-info { flex: 1 1 240px; min-width: 0; }
+.sticker-price { font-size: 26px; font-weight: 800; color: var(--accent, #ff7a1a); }
+.sticker-left { color: #ffb27a; font-weight: 700; margin-bottom: 8px; }
+.sticker-form select { max-width: 100%; }
+.sticker-orders { margin-top: 12px; display: grid; gap: 3px; }
+.sticker-shipped { color: #4ade80; }
+.admin-orders { width: 100%; border-collapse: collapse; }
+.admin-orders td { padding: 10px 6px; border-top: 1px solid #2c2c31; vertical-align: top; }
+.admin-orders address { font-style: normal; white-space: pre-line; }
+.admin-orders .shipped td { opacity: .6; }
+@media (max-width: 600px) {
+  .admin-orders tr { display: block; border-top: 1px solid #2c2c31; padding: 6px 0; }
+  .admin-orders td { display: block; border: 0; padding: 4px 6px; }
+}

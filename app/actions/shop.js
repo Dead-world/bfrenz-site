@@ -17,6 +17,7 @@ import { withParam } from '@/lib/util';
 import { findSubscription, syncSubscription } from '@/lib/fulfill';
 import { inAndroidApp } from '@/lib/appMode';
 import { usernameProblem } from '@/lib/usernames';
+import { getSticker, stickerStock, STICKER_COUNTRIES, STICKER_MAX_QTY, STICKER_SHIPPING_CENTS, STICKER_TAX_CODE } from '@/lib/stickers';
 
 function fail(path, msg) {
   redirect(withParam(path, 'error', msg));
@@ -108,6 +109,17 @@ async function describe(me, kind, itemId, amountRaw) {
       if (!pack) return null;
       return { amount: pack.cents, name: `${pack.coins.toLocaleString('en-US')} BFRENZ coins` };
     }
+    case 'sticker': {
+      // itemId is "slug:qty"
+      const [slug, qtyRaw] = String(itemId).split(':');
+      const st = getSticker(slug);
+      const qty = parseInt(qtyRaw, 10);
+      if (!st || !(qty >= 1 && qty <= STICKER_MAX_QTY)) return null;
+      const left = await stickerStock(slug);
+      if (left !== null && left < 1) return { error: 'Stickers are sold out right now. Check back soon!' };
+      if (left !== null && qty > left) return { error: `Only ${left} left. Pick ${left} or fewer.` };
+      return { amount: st.cents, qty, name: st.name, physical: true, itemId: `${slug}:${qty}` };
+    }
     case 'tip': {
       const amount = parseInt(amountRaw, 10);
       if (!PRICES.tips.includes(amount)) return null;
@@ -122,12 +134,14 @@ export async function startCheckout(formData) {
   const kind = String(formData.get('kind') || '');
   let itemId = String(formData.get('itemId') || '');
   // The "send coins to a fren" form sends the username and pack separately.
+  if (!itemId && formData.get('qtyPick')) itemId = String(formData.get('qtyPick')).slice(0, 60);
   if (!itemId && formData.get('to')) itemId = `${String(formData.get('to')).slice(0, 30)}:${String(formData.get('pack') || '')}`;
   const back = String(formData.get('back') || '/shop');
   const safeBack = back.startsWith('/') && !back.startsWith('//') ? back : '/shop';
 
   if (!stripeConfigured()) fail(safeBack, "Payments aren't switched on yet. Check back soon!");
-  if (await inAndroidApp()) fail(safeBack, "Purchases aren't available in the Android app.");
+  // Google Play's billing rules are for digital items, so real stickers can be bought in the app.
+  if (kind !== 'sticker' && (await inAndroidApp())) fail(safeBack, "Purchases aren't available in the Android app.");
 
   if ((kind === 'supporter' || kind === 'supporter_yearly') && isSupporter(me) && me.stripeSubscription) {
     fail('/shop', "You're already a Supporter. Thank you!");
@@ -152,11 +166,11 @@ export async function startCheckout(formData) {
     cancel_url: `${base}${safeBack}`,
     line_items: [
       {
-        quantity: 1,
+        quantity: item.qty || 1,
         price_data: {
           currency: 'usd',
           unit_amount: item.amount,
-          product_data: { name: item.name, tax_code: TAX_CODE },
+          product_data: { name: item.name, tax_code: item.physical ? STICKER_TAX_CODE : TAX_CODE },
           ...(item.recurring ? { recurring: { interval: item.interval || 'month' } } : {}),
         },
       },
@@ -165,6 +179,20 @@ export async function startCheckout(formData) {
     allow_promotion_codes: 'true',
   };
   params.customer_email = me.email;
+  if (item.physical) {
+    // Mailed items: Stripe asks for the address and adds the flat shipping charge.
+    params.shipping_address_collection = { allowed_countries: STICKER_COUNTRIES };
+    params.shipping_options = [
+      {
+        shipping_rate_data: {
+          type: 'fixed_amount',
+          display_name: STICKER_SHIPPING_CENTS ? 'Mailed by USPS' : 'Free shipping (USPS)',
+          fixed_amount: { amount: STICKER_SHIPPING_CENTS, currency: 'usd' },
+          delivery_estimate: { minimum: { unit: 'business_day', value: 3 }, maximum: { unit: 'business_day', value: 10 } },
+        },
+      },
+    ];
+  }
   if (item.recurring) params.subscription_data = { metadata };
   else params.payment_intent_data = { metadata };
 
