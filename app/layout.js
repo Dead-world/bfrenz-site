@@ -69,7 +69,11 @@ export default async function RootLayout({ children }) {
           <footer>
             <Link href="/app">📲 Get the app</Link> &middot; <Link href="/help">Help</Link> &middot; <Link href="/browse">Browse</Link> &middot;{' '}
             <Link href="/shop">Shop</Link> &middot; <Link href="/shop#tip">Support BFRENZ</Link> &middot;{' '}
-            {process.env.MERCH_URL && (
+            {process.env.PRINTFUL_API_KEY ? (
+              <>
+                <Link href="/merch">Merch</Link> &middot;{' '}
+              </>
+            ) : process.env.MERCH_URL && (
               <>
                 <a href={process.env.MERCH_URL} target="_blank" rel="noopener noreferrer">Merch</a> &middot;{' '}
               </>

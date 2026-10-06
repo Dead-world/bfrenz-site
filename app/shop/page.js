@@ -12,6 +12,7 @@ import { refreshSupporter, diagnoseSupporter } from '@/lib/fulfill';
 import { prisma } from '@/lib/db';
 import BuyButton from '@/components/BuyButton';
 import StickerShop from '@/components/StickerShop';
+import { merchProducts } from '@/lib/merch';
 import Notice from '@/components/Notice';
 import { fmtDay } from '@/lib/util';
 import { inAndroidApp } from '@/lib/appMode';
@@ -42,6 +43,7 @@ export default async function ShopPage({ searchParams }) {
   const isOwner = !!me && (process.env.FOUNDER_USERNAME || '').toLowerCase() === me.username;
   const debug = isOwner && payments && sp?.debug ? await diagnoseSupporter(me) : null;
   const merch = process.env.MERCH_URL || '';
+  const merchItems = (await merchProducts()).slice(0, 6);
   const androidApp = await inAndroidApp();
 
   const signIn = (label) => (
@@ -149,6 +151,24 @@ export default async function ShopPage({ searchParams }) {
       </div>
 
       {/* ---------------- Name effects ---------------- */}
+      {merchItems.length > 0 && (
+        <div className="box" id="merch-shop">
+          <div className="box-h">👕 BFRENZ Merch</div>
+          <div className="box-b">
+            <div className="merch-grid small-grid">
+              {merchItems.map((p) => (
+                <Link key={p.id} href={`/merch/${p.id}`} className="merch-card">
+                  <span className="merch-img"><img src={p.img} alt="" loading="lazy" /></span>
+                  <b>{p.name}</b>
+                  <span className="merch-from">{money(p.from)}</span>
+                </Link>
+              ))}
+            </div>
+            <Link href="/merch" className="btn small-btn" style={{ marginTop: 10 }}>See all merch</Link>
+          </div>
+        </div>
+      )}
+
       <StickerShop me={me} payments={payments} error={sp?.src === 'stickers' && sp?.error ? String(sp.error).slice(0, 500) : ''} />
 
       <div className="box" id="name-effects">
@@ -375,7 +395,7 @@ export default async function ShopPage({ searchParams }) {
             </div>
           </div>
         </div>
-        {merch && (
+        {merch && !merchItems.length && (
           <div className="col-left">
             <div className="box" id="merch">
               <div className="box-h">👕 Merch</div>

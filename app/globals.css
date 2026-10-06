@@ -2150,3 +2150,30 @@ img.pic.fr.fr-blood { box-shadow: 0 0 0 3px #7a0010, 0 0 0 5px #ff1f3d, 0 6px 18
   .admin-orders tr { display: block; border-top: 1px solid #2c2c31; padding: 6px 0; }
   .admin-orders td { display: block; border: 0; padding: 4px 6px; }
 }
+
+/* ---------- Merch (Printful) ---------- */
+.merch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; margin-bottom: 16px; }
+.merch-grid.small-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); margin-bottom: 0; }
+.merch-card { display: flex; flex-direction: column; gap: 4px; padding: 10px; border-radius: 16px; background: rgba(22,22,26,.92); border: 1px solid #2c2c31; color: inherit; text-decoration: none; }
+.merch-card:hover { border-color: var(--accent, #ff7a1a); }
+.merch-img { aspect-ratio: 1; border-radius: 12px; overflow: hidden; background: #f4f4f4; display: block; }
+.merch-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.merch-card b { font-size: 15px; line-height: 1.2; }
+.merch-from { color: var(--accent, #ff7a1a); font-weight: 800; }
+.merch-detail { display: flex; flex-wrap: wrap; gap: 20px; }
+.merch-big { flex: 1 1 300px; max-width: 460px; aspect-ratio: 1; border-radius: 16px; overflow: hidden; background: #f4f4f4; }
+.merch-big img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.merch-opts { flex: 1 1 260px; min-width: 0; display: grid; gap: 12px; align-content: start; }
+.merch-title { font-size: 26px; margin: 0; }
+.merch-price { font-size: 28px; font-weight: 800; color: var(--accent, #ff7a1a); }
+.merch-row { display: grid; gap: 6px; }
+.merch-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.merch-chip { padding: 8px 14px; border-radius: 999px; border: 2px solid #3a3a40; background: #1a1a1e; color: inherit; font-weight: 700; cursor: pointer; }
+.merch-chip.size { min-width: 52px; }
+.merch-chip.on { border-color: var(--accent, #ff7a1a); background: rgba(255,122,26,.18); }
+.merch-chip:disabled { opacity: .35; text-decoration: line-through; cursor: not-allowed; }
+.merch-buy { width: 100%; padding: 14px; font-size: 18px; text-align: center; }
+.merch-total b { font-size: 16px; }
+.merch-orders { display: grid; gap: 4px; }
+.merch-steps { margin: 0 0 10px 18px; padding: 0; display: grid; gap: 6px; list-style: none; }
+.merch-steps li { margin-left: -18px; }
