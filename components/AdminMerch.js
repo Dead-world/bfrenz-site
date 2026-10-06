@@ -14,7 +14,13 @@ export default async function AdminMerch({ msg = '', error = '', show = 'open' }
   let store = null;
   let storeErr = '';
   if (on) {
-    try { store = await pf('GET', '/store'); } catch (err) { storeErr = String(err?.message || err).slice(0, 300); }
+    // Checks the key with the same permission the shop uses (store products), so no extra scopes are needed.
+    try {
+      await pf('GET', '/store/products?limit=1');
+      store = await pf('GET', '/store').catch(() => ({ name: '' }));
+    } catch (err) {
+      storeErr = String(err?.message || err).slice(0, 300);
+    }
   }
   const [products, orders] = await Promise.all([
     on ? merchProducts() : [],
@@ -36,7 +42,7 @@ export default async function AdminMerch({ msg = '', error = '', show = 'open' }
         <div className="box-b small">
           <ol className="merch-steps">
             {step(on, <>Add <code>PRINTFUL_API_KEY</code> in Vercel (Settings → Environment Variables), then redeploy.</>)}
-            {on && step(!!store && !storeErr, store ? <>Connected to Printful store <b>{store.name}</b>.</> : <>Couldn&apos;t reach Printful: {storeErr || 'unknown error'}. If your token is for the whole account, also add <code>PRINTFUL_STORE_ID</code>.</>)}
+            {on && step(!!store && !storeErr, store ? <>Connected to Printful{store.name ? <> store <b>{store.name}</b></> : ''}.</> : <>Couldn&apos;t reach Printful: {storeErr || 'unknown error'}. {/scope/i.test(storeErr) ? <> Make a new token at developers.printful.com with <b>all scopes</b> checked (or at least store products, orders, webhooks and file library), put it in <code>PRINTFUL_API_KEY</code>, and redeploy.</> : <> If your token is for the whole account, also add <code>PRINTFUL_STORE_ID</code>.</>}</>)}
             {on && step(products.length > 0, products.length ? <>{products.length} {products.length === 1 ? 'product is' : 'products are'} live on <a href="/merch">/merch</a>.</> : 'Create products in Printful (with a retail price), then tap Refresh.')}
           </ol>
           {on && store && (
