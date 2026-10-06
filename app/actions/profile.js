@@ -1,6 +1,7 @@
 'use server';
 
 import { redirect } from 'next/navigation';
+import { payInviteReward } from '@/lib/invites';
 import { prisma } from '@/lib/db';
 import { requireUser } from '@/lib/auth';
 import { cleanCss } from '@/lib/sanitize';
@@ -66,7 +67,9 @@ export async function updateInterests(formData) {
 export async function updatePic(formData) {
   const me = await requireUser();
   const avatarUrl = tryUrl(formData.get('avatarUrl'), 'pic');
-  await prisma.user.update({ where: { id: me.id }, data: { avatarUrl } });
+  const saved = await prisma.user.update({ where: { id: me.id }, data: { avatarUrl } });
+  // Joined with a fren's invite link? Adding a pic is what earns that fren their coins.
+  if (avatarUrl) await payInviteReward(saved);
   if (avatarUrl) {
     // Keep a copy in their photos too.
     const exists = await prisma.photo.findFirst({ where: { userId: me.id, url: avatarUrl } });

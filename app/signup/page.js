@@ -8,7 +8,20 @@ import { Pic } from '@/components/Avatar';
 import { cookies } from 'next/headers';
 import { HEARD_FROM, cleanSrc } from '@/lib/sources';
 
-export const metadata = { title: 'Sign Up | BFRENZ.com' };
+import { WELCOME_COINS } from '@/lib/invites';
+
+/** Invite links (bfrenz.com/signup?ref=maya) show a personal preview when shared in other apps. */
+export async function generateMetadata({ searchParams }) {
+  const sp = await searchParams;
+  const ref = String(sp?.ref || '').toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 40);
+  const inviter = ref ? await prisma.user.findFirst({ where: { username: ref, bannedAt: null }, select: { displayName: true } }) : null;
+  const title = inviter ? `${inviter.displayName} invited you to BFRENZ 🧡` : 'Sign Up | BFRENZ.com';
+  const description = inviter
+    ? `Join free and get 🪙 ${WELCOME_COINS} coins. Custom profiles, Top 8, profile songs, video calls and going live.`
+    : 'Join BFRENZ free: custom profiles, Top 8, profile songs, video calls and going live.';
+  const images = [{ url: '/invite-card.png', width: 1200, height: 630, alt: 'You are invited to BFRENZ' }];
+  return { title, description, openGraph: { title, description, images }, twitter: { card: 'summary_large_image', title, description, images: ['/invite-card.png'] } };
+}
 
 export default async function SignupPage({ searchParams }) {
   if (await getCurrentUser()) redirect('/home');
@@ -20,6 +33,7 @@ export default async function SignupPage({ searchParams }) {
   // Pre-pick the answer when they came in on a tagged link (bfrenz.com/?src=tiktok) or an invite.
   const src = cleanSrc((await cookies()).get('bfrenz_src')?.value);
   const guess = inviter ? 'friend' : HEARD_FROM.some(([k]) => k === src) ? src : '';
+  const members = await prisma.user.count({ where: { bannedAt: null } }).catch(() => 0);
   return (
     <div className="cols">
       <div className="col-right">
@@ -33,9 +47,11 @@ export default async function SignupPage({ searchParams }) {
                 <div>
                   <b>{inviter.displayName}</b> invited you to BFRENZ!
                   <div className="small muted">Sign up and you&apos;ll be frenz right away.</div>
+                  <div className="welcome-coins">🎁 Plus <b>🪙 {WELCOME_COINS} free coins</b> for gifts, frames and effects</div>
                 </div>
               </div>
             )}
+            {members >= 50 && !inviter && <p className="join-proof">🧡 Join <b>{members.toLocaleString('en-US')}</b> members already on BFRENZ</p>}
             <form action={signup}>
               {inviter && <input type="hidden" name="ref" value={inviter.username} />}
               <table className="form-table">
@@ -91,12 +107,14 @@ export default async function SignupPage({ searchParams }) {
         <div className="box orange">
           <div className="box-h orange">Why join?</div>
           <div className="box-b">
-            <ul style={{ margin: 0, paddingLeft: 16, lineHeight: 1.8 }}>
-              <li>Make your profile look however you want</li>
-              <li>Pick your Top 8</li>
-              <li>Put a song on your page</li>
-              <li>Post bulletins to all your frenz</li>
-              <li>Leave comments &amp; send messages</li>
+            <ul className="why-join">
+              <li>🎨 Design your page: 30+ themes, your own colors, glowing picture frames</li>
+              <li>👯 Pick your Top 8 and see who&apos;s been creeping</li>
+              <li>🎵 Put a song (or a whole playlist) on your page</li>
+              <li>💬 Chat, video call your frenz and go live</li>
+              <li>🎁 Likes, emoji reactions, gifts and comments on everything</li>
+              <li>💸 Creators get followers and tips that go straight to them</li>
+              <li>✅ 100% free. No algorithm, just your frenz</li>
             </ul>
           </div>
         </div>

@@ -2095,3 +2095,32 @@ img.pic.fr.fr-blood { box-shadow: 0 0 0 3px #7a0010, 0 0 0 5px #ff1f3d, 0 6px 18
 .username-form input[name=itemId] { min-width: 0; text-transform: lowercase; }
 @media (max-width: 480px) { .username-form { grid-template-columns: auto minmax(0, 1fr); } .username-form .btn { grid-column: 1 / -1; } }
 .supporter-plans { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* ================= invite & earn ================= */
+.welcome-coins { margin-top: 6px; padding: 6px 10px; border-radius: 10px; background: rgba(255, 210, 74, 0.14); border: 1px solid rgba(255, 210, 74, 0.45); font-size: 14px; }
+.join-proof { margin: 0 0 10px; padding: 8px 10px; border-radius: 10px; background: var(--orange-soft, rgba(255,122,26,.14)); font-size: 14px; }
+.why-join { margin: 0; padding-left: 0; list-style: none; display: grid; gap: 8px; line-height: 1.4; }
+
+.invite-hero { padding: 20px; background: radial-gradient(600px 260px at 100% 0%, rgba(255, 122, 26, 0.28), transparent 70%), var(--surface); }
+.invite-hero-top { display: flex; gap: 16px; align-items: flex-start; }
+.invite-coin { width: 74px; height: 74px; flex-shrink: 0; border-radius: 50%; display: grid; place-items: center; font-size: 42px; background: radial-gradient(circle at 35% 30%, #fff3b0, #ffd24a 40%, #c48a00); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45); }
+.invite-kicker { font-size: 12px; font-weight: 800; letter-spacing: 2px; color: var(--orange-hot, #ff9a45); }
+.invite-hero h1 { font-family: var(--display); font-size: 30px; margin: 2px 0 6px; letter-spacing: -0.5px; }
+.invite-link-row { margin: 16px 0 10px; }
+.invite-link { display: block; padding: 10px 14px; border-radius: 12px; background: var(--surface-2); border: 1px dashed var(--orange, #ff7a1a); font-size: 15px; overflow-wrap: anywhere; }
+.invite-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 16px; }
+.invite-stats div { display: grid; justify-items: center; padding: 10px 6px; border-radius: 12px; background: var(--surface-2); }
+.invite-stats b { font-size: 22px; }
+.invite-stats span { font-size: 12px; color: var(--text-dim); }
+.contest-prizes { display: grid; gap: 6px; font-weight: 700; }
+.contest-prizes div { padding: 8px 12px; border-radius: 10px; background: var(--surface-2); }
+.contest-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.contest-list li { display: flex; align-items: center; gap: 10px; padding: 6px 10px; border-radius: 12px; background: var(--surface-2); }
+.contest-list li.me { box-shadow: inset 0 0 0 2px var(--orange, #ff7a1a); }
+.contest-list .pic { width: 34px; height: 34px; border-radius: 50%; margin: 0; }
+.contest-rank { width: 34px; text-align: center; font-weight: 800; }
+.contest-name { flex: 1; min-width: 0; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.invite-card-feed { display: flex; align-items: center; gap: 14px; padding: 14px 16px; background: linear-gradient(135deg, rgba(255, 122, 26, 0.18), rgba(124, 58, 237, 0.16)); border: 1px solid rgba(255, 122, 26, 0.45); }
+.invite-card-feed .invite-coin { width: 52px; height: 52px; font-size: 28px; }
+.invite-card-feed .grow { flex: 1; min-width: 0; }
+.invite-card-feed b { display: block; }

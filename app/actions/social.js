@@ -1,6 +1,7 @@
 'use server';
 
 import { redirect } from 'next/navigation';
+import { payInviteReward } from '@/lib/invites';
 import { prisma } from '@/lib/db';
 import { requireUser } from '@/lib/auth';
 import { cleanUrl, str, withParam } from '@/lib/util';
@@ -124,6 +125,9 @@ export async function deletePhoto(formData) {
 export async function makeProfilePic(formData) {
   const me = await requireUser();
   const photo = await prisma.photo.findFirst({ where: { id: String(formData.get('id') || ''), userId: me.id } });
-  if (photo) await prisma.user.update({ where: { id: me.id }, data: { avatarUrl: photo.url } });
+  if (photo) {
+    const saved = await prisma.user.update({ where: { id: me.id }, data: { avatarUrl: photo.url } });
+    await payInviteReward(saved);
+  }
   redirect(withParam(safeBackPhotos(formData.get('back'), me.username), 'saved', '1'));
 }

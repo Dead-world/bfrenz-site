@@ -69,6 +69,7 @@ model User {
   fallFx             String    @default("") // falling effect on their profile
   cosmetics          String[]  @default([]) // ones they own, e.g. "frame:fire", "cursor:hearts", "fall:snow"
   usernameChanges    Int       @default(0) // how many times they've changed their @username (first is free)
+  inviteRewardPaid   Boolean   @default(false) // (on an invited member) their inviter already got coins for them
   design             Json? // "Design my profile" colors, font and corners (lib/design.js)
   bonusSupporterUntil DateTime? // free Supporter time earned from invites or gifted by a friend
   lifetimeSupporter  Boolean   @default(false) // bought Lifetime Supporter (never expires)

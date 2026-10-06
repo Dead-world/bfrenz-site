@@ -5,6 +5,7 @@ import { imBuddyIds } from '@/lib/im';
 import { notifyNow } from '@/lib/push';
 import { currentChampion } from '@/lib/potw';
 import { runDailyBot } from '@/lib/houseBot';
+import { awardLastMonth } from '@/lib/inviteContest';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -25,6 +26,14 @@ export async function GET(req) {
     bot = await runDailyBot();
   } catch (err) {
     console.error('[cron] bot failed:', err?.message);
+  }
+
+  // Invite contest: pay last month's top inviters (only happens once per month).
+  let contest = null;
+  try {
+    contest = await awardLastMonth();
+  } catch (err) {
+    console.error('[cron] invite contest failed:', err?.message);
   }
 
   // Profile of the Week: crown last week's winner (once) and tell them.
@@ -87,5 +96,5 @@ export async function GET(req) {
     );
     sent += results.filter((r) => r.status === 'fulfilled' && r.value > 0).length;
   }
-  return NextResponse.json({ birthdays: people.length, notified: sent, potw, bot });
+  return NextResponse.json({ birthdays: people.length, notified: sent, potw, bot, contest });
 }

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { INVITE_COINS, WELCOME_COINS } from '@/lib/invites';
 import { requireUser } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { getFriendIds } from '@/lib/friends';
@@ -71,6 +72,17 @@ export default async function HomePage({ searchParams }) {
             videoMaxMb={videoMaxMb()}
             creator={!!me.creatorType}
           />
+        )}
+
+        {!before && (
+          <Link href="/invite" className="box invite-card-feed">
+            <span className="invite-coin">🪙</span>
+            <span className="grow">
+              <b>Invite frenz, you both get coins</b>
+              <span className="small muted">They get 🪙{WELCOME_COINS} for joining, you get 🪙{INVITE_COINS} for each fren. Plus this month&apos;s 🏆 invite contest.</span>
+            </span>
+            <span className="btn small-btn">Invite</span>
+          </Link>
         )}
 
         {live.length > 0 && (

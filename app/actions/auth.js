@@ -9,6 +9,7 @@ import { cookies } from 'next/headers';
 import { HEARD_FROM, cleanSrc } from '@/lib/sources';
 import { after } from 'next/server';
 import { welcomeNewMember } from '@/lib/houseBot';
+import { WELCOME_COINS } from '@/lib/invites';
 
 function fail(path, msg) {
   redirect(withParam(path, 'error', msg));
@@ -52,6 +53,8 @@ export async function signup(formData) {
         passwordHash: await bcrypt.hash(password, 10),
         headline: 'new to bfrenz!',
         referredById: referrer?.id || null,
+        // Joined with a fren's invite link: welcome coins right away.
+        coins: referrer ? WELCOME_COINS : 0,
         heardFrom: HEARD_FROM.some(([k]) => k === str(formData, 'heardFrom', 20)) ? str(formData, 'heardFrom', 20) : '',
         signupSrc: cleanSrc((await cookies()).get('bfrenz_src')?.value),
       },
