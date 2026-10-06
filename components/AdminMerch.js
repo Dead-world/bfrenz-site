@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/db';
 import { retryMerchOrder, checkMerchOrder, refreshMerch, connectPrintfulWebhook, makeStarterMerch, makeMerchPhotosNow } from '@/app/actions/merchAdmin';
 import { STARTER } from '@/lib/merchStarter';
+import AutoContinue from '@/components/AutoContinue';
 import { printfulConfigured, pf } from '@/lib/printful';
 import { merchProducts } from '@/lib/merch';
 import { money } from '@/lib/pricing';
@@ -9,7 +10,7 @@ import { fmtDate } from '@/lib/util';
 const STATUS = { paid: '⏳ Paid', sent: '🧵 At Printful', failed: '⚠️ Didn’t reach Printful', shipped: '✅ Shipped', canceled: '✖ Canceled' };
 
 /** Admin tab: Printful setup and merch orders. */
-export default async function AdminMerch({ msg = '', error = '', show = 'open' }) {
+export default async function AdminMerch({ msg = '', error = '', show = 'open', auto = 0 }) {
   const on = printfulConfigured();
   let store = null;
   let storeErr = '';
@@ -37,6 +38,7 @@ export default async function AdminMerch({ msg = '', error = '', show = 'open' }
     <>
       {msg && <div className="notice ok">{msg}</div>}
       {error && <div className="notice error">{error}</div>}
+      {auto > 0 && <AutoContinue seconds={auto} action={makeMerchPhotosNow} />}
       <div className="box">
         <div className="box-h">👕 Merch setup (Printful)</div>
         <div className="box-b small">

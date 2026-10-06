@@ -91,21 +91,26 @@ export async function makeStarterMerch() {
 /** Makes real product photos (models, flat lays, lifestyle) with Printful's mockup generator. */
 export async function makeMerchPhotosNow(formData) {
   await requireAdmin();
+  // "Redo" only clears photos on the first step; the automatic follow-up steps just continue.
   const redo = formData?.get?.('redo') === '1';
-  let results;
+  let out;
   try {
-    results = await makeMerchPhotos({ redo });
+    out = await makeMerchPhotos({ redo });
   } catch (err) {
     done(String(err?.message || err).slice(0, 300), true);
   }
   revalidateTag('merch');
+  const { results, waitSeconds } = out;
   const made = results.filter((r) => r.status === 'made');
   const later = results.filter((r) => r.status === 'later');
   const failed = results.filter((r) => r.status === 'failed');
   const parts = [];
   if (made.length) parts.push(`📸 New photos for ${made.map((r) => `${r.name} (${r.count})`).join(', ')}.`);
-  if (later.length) parts.push(`Tap again to finish: ${later.map((r) => r.name).join(', ')}.`);
-  if (!made.length && !later.length && !failed.length) parts.push('Every product already has photos. Use "Redo all photos" to make fresh ones.');
+  if (later.length) parts.push(`Still to do: ${later.map((r) => r.name).join(', ')}.`);
+  if (!made.length && !later.length && !failed.length) parts.push('✅ Every product has photos. Use "Redo all photos" to make fresh ones.');
   if (failed.length) parts.push(`Couldn't make photos for: ${failed.map((r) => `${r.name} (${r.error})`).join('; ')}.`);
-  redirect(withParam(BACK, failed.length && !made.length ? 'error' : 'mmsg', parts.join(' ').slice(0, 900)));
+  let to = withParam(BACK, failed.length && !made.length && !later.length ? 'error' : 'mmsg', parts.join(' ').slice(0, 900));
+  // More to do: the page counts down and carries on by itself.
+  if (later.length) to = withParam(to, 'mauto', String(Math.min(90, Math.max(5, waitSeconds ? waitSeconds + 3 : 5))));
+  redirect(to);
 }

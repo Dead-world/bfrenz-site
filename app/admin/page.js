@@ -220,7 +220,7 @@ export default async function AdminPage({ searchParams }) {
         ))}
       </div>
 
-      {tab === 'merch' && <AdminMerch show={sp?.show === 'all' ? 'all' : 'open'} msg={sp?.mmsg ? String(sp.mmsg).slice(0, 900) : ''} />}
+      {tab === 'merch' && <AdminMerch show={sp?.show === 'all' ? 'all' : 'open'} msg={sp?.mmsg ? String(sp.mmsg).slice(0, 900) : ''} auto={Math.min(120, parseInt(sp?.mauto, 10) || 0)} />}
       {tab === 'stickers' && <AdminStickers show={sp?.show === 'all' ? 'all' : 'todo'} msg={sp?.smsg ? String(sp.smsg).slice(0, 120) : ''} />}
 
       {growth && (
