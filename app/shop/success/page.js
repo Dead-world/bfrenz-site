@@ -21,6 +21,7 @@ const MESSAGES = {
   supporter_yearly: ["You're a Supporter for the year! ★", 'Every theme is unlocked, your Top 16 is ready, and you saved about 30% by going yearly. Thank you! 🧡'],
   gift_coins: ['Coins sent! 🪙🎁', 'Your fren just got the coins and a notification saying they were from you.'],
   username: ['New username! ✨', 'Your profile link has changed. Old links to your page still work.'],
+  merch: ['Order placed! 👕', "Printful is making your merch now. It usually ships in 2 to 5 business days, and we'll send you a notification with tracking when it does."],
   sticker: ['Order placed! 📦', "Your stickers will be mailed to the address you entered. We'll send you a notification when they ship."],
   coins: ['Coins added! 🪙', 'Send gifts from the 🎁 button on posts, profiles and live streams.'],
 };

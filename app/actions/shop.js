@@ -17,6 +17,7 @@ import { withParam } from '@/lib/util';
 import { findSubscription, syncSubscription } from '@/lib/fulfill';
 import { inAndroidApp } from '@/lib/appMode';
 import { usernameProblem } from '@/lib/usernames';
+import { merchVariant, merchShipping, MERCH_COUNTRIES, MERCH_MAX_QTY, MERCH_TAX_CODE } from '@/lib/merch';
 import { getSticker, stickerStock, STICKER_COUNTRIES, STICKER_MAX_QTY, STICKER_SHIPPING_CENTS, STICKER_TAX_CODE } from '@/lib/stickers';
 
 function fail(path, msg) {
@@ -120,6 +121,21 @@ async function describe(me, kind, itemId, amountRaw) {
       if (left !== null && qty > left) return { error: `Only ${left} left. Pick ${left} or fewer.` };
       return { amount: st.cents, qty, name: st.name, physical: true, itemId: `${slug}:${qty}` };
     }
+    case 'merch': {
+      // itemId is "printfulVariantId:qty"; the price always comes fresh from Printful.
+      const [variantId, qtyRaw] = String(itemId).split(':');
+      const qty = parseInt(qtyRaw, 10);
+      if (!(qty >= 1 && qty <= MERCH_MAX_QTY)) return null;
+      const v = await merchVariant(variantId);
+      if (!v) return { error: 'That item isn’t available right now.' };
+      if (!v.inStock) return { error: 'That size/color is out of stock right now. Try another one.' };
+      return {
+        amount: v.cents, qty, name: v.name, physical: true, image: v.img,
+        shipping: { cents: merchShipping(qty), label: 'Standard shipping', countries: MERCH_COUNTRIES, days: [5, 12] },
+        tax: MERCH_TAX_CODE, itemId: `${v.id}:${qty}`,
+        extra: { name: v.name.slice(0, 200), img: v.img.slice(0, 400), productId: v.productId },
+      };
+    }
     case 'tip': {
       const amount = parseInt(amountRaw, 10);
       if (!PRICES.tips.includes(amount)) return null;
@@ -141,7 +157,7 @@ export async function startCheckout(formData) {
 
   if (!stripeConfigured()) fail(safeBack, "Payments aren't switched on yet. Check back soon!");
   // Google Play's billing rules are for digital items, so real stickers can be bought in the app.
-  if (kind !== 'sticker' && (await inAndroidApp())) fail(safeBack, "Purchases aren't available in the Android app.");
+  if (kind !== 'sticker' && kind !== 'merch' && (await inAndroidApp())) fail(safeBack, "Purchases aren't available in the Android app.");
 
   if ((kind === 'supporter' || kind === 'supporter_yearly') && isSupporter(me) && me.stripeSubscription) {
     fail('/shop', "You're already a Supporter. Thank you!");
@@ -158,7 +174,7 @@ export async function startCheckout(formData) {
   if (item.error) fail(safeBack, item.error);
 
   const base = siteUrl();
-  const metadata = { userId: me.id, kind, itemId: item.itemId ?? itemId };
+  const metadata = { userId: me.id, kind, itemId: item.itemId ?? itemId, ...(item.extra || {}) };
   const params = {
     mode: item.recurring ? 'subscription' : 'payment',
     client_reference_id: me.id,
@@ -170,7 +186,11 @@ export async function startCheckout(formData) {
         price_data: {
           currency: 'usd',
           unit_amount: item.amount,
-          product_data: { name: item.name, tax_code: item.physical ? STICKER_TAX_CODE : TAX_CODE },
+          product_data: {
+            name: item.name,
+            tax_code: item.tax || (item.physical ? STICKER_TAX_CODE : TAX_CODE),
+            ...(item.image && /^https:\/\//.test(item.image) ? { images: [item.image] } : {}),
+          },
           ...(item.recurring ? { recurring: { interval: item.interval || 'month' } } : {}),
         },
       },
@@ -180,15 +200,19 @@ export async function startCheckout(formData) {
   };
   params.customer_email = me.email;
   if (item.physical) {
+    // Managed Payments (on by default for this Stripe account) only allows digital items,
+    // so real stickers and merch use a normal checkout. Everything else keeps Managed Payments.
+    params.managed_payments = { enabled: 'false' };
     // Mailed items: Stripe asks for the address and adds the flat shipping charge.
-    params.shipping_address_collection = { allowed_countries: STICKER_COUNTRIES };
+    const sh = item.shipping || { cents: STICKER_SHIPPING_CENTS, label: STICKER_SHIPPING_CENTS ? 'Mailed by USPS' : 'Free shipping (USPS)', countries: STICKER_COUNTRIES, days: [3, 10] };
+    params.shipping_address_collection = { allowed_countries: sh.countries };
     params.shipping_options = [
       {
         shipping_rate_data: {
           type: 'fixed_amount',
-          display_name: STICKER_SHIPPING_CENTS ? 'Mailed by USPS' : 'Free shipping (USPS)',
-          fixed_amount: { amount: STICKER_SHIPPING_CENTS, currency: 'usd' },
-          delivery_estimate: { minimum: { unit: 'business_day', value: 3 }, maximum: { unit: 'business_day', value: 10 } },
+          display_name: sh.label,
+          fixed_amount: { amount: sh.cents, currency: 'usd' },
+          delivery_estimate: { minimum: { unit: 'business_day', value: sh.days[0] }, maximum: { unit: 'business_day', value: sh.days[1] } },
         },
       },
     ];

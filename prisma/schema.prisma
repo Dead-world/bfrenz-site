@@ -92,6 +92,7 @@ model User {
   passwordResets PasswordReset[]
   purchases      Purchase[]
   stickerOrders StickerOrder[]
+  merchOrders   MerchOrder[]
 
   @@index([stripeSubscription])
   @@index([referredById])
@@ -288,6 +289,39 @@ model StickerOrder {
   country         String    @default("US")
   status          String    @default("paid") // paid | shipped | refunded
   tracking        String    @default("")
+  shippedAt       DateTime?
+  createdAt       DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status, createdAt])
+  @@index([userId])
+}
+
+/// A Printful merch order. Paid on BFRENZ through Stripe, then sent to Printful to print and mail.
+model MerchOrder {
+  id              String    @id @default(cuid())
+  userId          String
+  variantId       String
+  productId       String    @default("")
+  name            String
+  img             String    @default("")
+  qty             Int
+  amountCents     Int
+  stripeSessionId String    @unique
+  email           String    @default("")
+  shipName        String    @default("")
+  line1           String    @default("")
+  line2           String    @default("")
+  city            String    @default("")
+  state           String    @default("")
+  postal          String    @default("")
+  country         String    @default("US")
+  status          String    @default("paid") // paid | sent | failed | shipped | canceled
+  printfulId      String    @default("")
+  error           String    @default("")
+  tracking        String    @default("")
+  trackingUrl     String    @default("")
   shippedAt       DateTime?
   createdAt       DateTime  @default(now())
 
