@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/db';
-import { retryMerchOrder, checkMerchOrder, refreshMerch, connectPrintfulWebhook, makeStarterMerch } from '@/app/actions/merchAdmin';
+import { retryMerchOrder, checkMerchOrder, refreshMerch, connectPrintfulWebhook, makeStarterMerch, makeMerchPhotosNow } from '@/app/actions/merchAdmin';
 import { STARTER } from '@/lib/merchStarter';
 import { printfulConfigured, pf } from '@/lib/printful';
 import { merchProducts } from '@/lib/merch';
@@ -57,6 +57,8 @@ export default async function AdminMerch({ msg = '', error = '', show = 'open' }
           )}
           {on && (
             <div className="actions">
+              <form action={makeMerchPhotosNow}><button className="btn small-btn" type="submit">📸 Make product photos</button></form>
+              <form action={makeMerchPhotosNow}><input type="hidden" name="redo" value="1" /><button className="btn ghost small-btn" type="submit">Redo all photos</button></form>
               <form action={refreshMerch}><button className="btn ghost small-btn" type="submit">🔄 Refresh products</button></form>
               <form action={connectPrintfulWebhook}><button className="btn ghost small-btn" type="submit">📬 Turn on shipping updates</button></form>
             </div>

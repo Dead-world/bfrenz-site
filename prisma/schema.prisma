@@ -331,6 +331,19 @@ model MerchOrder {
   @@index([userId])
 }
 
+/// Product photos (Printful mockups: flat lays, models, lifestyle) saved to our own storage.
+model MerchPhoto {
+  id        String   @id @default(cuid())
+  productId String // Printful store product id
+  color     String   @default("")
+  url       String
+  title     String   @default("")
+  sort      Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([productId, sort])
+}
+
 /// How many of a physical item are left (no row = not tracked).
 model ShopStock {
   slug      String   @id

@@ -10,6 +10,7 @@ import { str, withParam } from '@/lib/util';
 import { pf, webhookKey } from '@/lib/printful';
 import { sendToPrintful, syncFromPrintful } from '@/lib/merchOrders';
 import { createStarterMerch } from '@/lib/merchStarter';
+import { makeMerchPhotos } from '@/lib/merchPhotos';
 
 const BACK = '/admin?tab=merch';
 const done = (msg, bad = false) => redirect(withParam(BACK, bad ? 'error' : 'mmsg', msg));
@@ -85,4 +86,26 @@ export async function makeStarterMerch() {
   if (later.length) parts.push(`Tap the button again to finish: ${later.map((r) => r.name).join(', ')}.`);
   if (failed.length) parts.push(`Couldn't make: ${failed.map((r) => `${r.name} (${r.error})`).join('; ')}.`);
   redirect(withParam(BACK, failed.length ? 'error' : 'mmsg', parts.join(' ').slice(0, 900)));
+}
+
+/** Makes real product photos (models, flat lays, lifestyle) with Printful's mockup generator. */
+export async function makeMerchPhotosNow(formData) {
+  await requireAdmin();
+  const redo = formData?.get?.('redo') === '1';
+  let results;
+  try {
+    results = await makeMerchPhotos({ redo });
+  } catch (err) {
+    done(String(err?.message || err).slice(0, 300), true);
+  }
+  revalidateTag('merch');
+  const made = results.filter((r) => r.status === 'made');
+  const later = results.filter((r) => r.status === 'later');
+  const failed = results.filter((r) => r.status === 'failed');
+  const parts = [];
+  if (made.length) parts.push(`📸 New photos for ${made.map((r) => `${r.name} (${r.count})`).join(', ')}.`);
+  if (later.length) parts.push(`Tap again to finish: ${later.map((r) => r.name).join(', ')}.`);
+  if (!made.length && !later.length && !failed.length) parts.push('Every product already has photos. Use "Redo all photos" to make fresh ones.');
+  if (failed.length) parts.push(`Couldn't make photos for: ${failed.map((r) => `${r.name} (${r.error})`).join('; ')}.`);
+  redirect(withParam(BACK, failed.length && !made.length ? 'error' : 'mmsg', parts.join(' ').slice(0, 900)));
 }

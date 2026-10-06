@@ -20,13 +20,27 @@ export default function MerchPicker({ product, shipping, maxQty = 10, canBuy = t
   const pickSize = sizes.includes(size) ? size : sizes.find((s) => vs.some((v) => v.size === s && (!color || v.color === color) && v.inStock)) || sizes[0] || '';
   const v = vs.find((x) => (!color || x.color === color) && (!pickSize || x.size === pickSize)) || vs[0];
   const [qty, setQty] = useState(1);
+  const shots = (product.photos || []).filter((x) => !x.color || !color || x.color === color);
+  const [shot, setShot] = useState(0);
+  const mainImg = shots[shot]?.url || v.img || product.img;
   const [busy, setBusy] = useState(false);
   const ship = shipping.first + shipping.extra * (qty - 1);
 
   return (
     <div className="merch-detail">
-      <div className="merch-big">
-        <img src={v.img || product.img} alt={product.name} />
+      <div className="merch-gallery">
+        <div className="merch-big">
+          <img src={mainImg} alt={product.name} />
+        </div>
+        {shots.length > 1 && (
+          <div className="merch-thumbs">
+            {shots.map((x, i) => (
+              <button key={x.url} type="button" className={`merch-thumb${i === shot ? ' on' : ''}`} onClick={() => setShot(i)} aria-label={x.title || `Photo ${i + 1}`}>
+                <img src={x.url} alt="" loading="lazy" />
+              </button>
+            ))}
+          </div>
+        )}
       </div>
       <div className="merch-opts">
         <h1 className="merch-title">{product.name}</h1>
@@ -36,7 +50,7 @@ export default function MerchPicker({ product, shipping, maxQty = 10, canBuy = t
             <span className="small muted">Color: <b>{color}</b></span>
             <div className="merch-chips">
               {colors.map((c) => (
-                <button key={c} type="button" className={`merch-chip${c === color ? ' on' : ''}`} onClick={() => setColor(c)}>{c}</button>
+                <button key={c} type="button" className={`merch-chip${c === color ? ' on' : ''}`} onClick={() => { setColor(c); setShot(0); }}>{c}</button>
               ))}
             </div>
           </div>
